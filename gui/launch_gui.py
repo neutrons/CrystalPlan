@@ -3,15 +3,16 @@
 
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov
 # Version: $Id: CrystalPlan.py 1127 2010-04-01 19:28:43Z 8oz $
+#print "CrystalPlan.gui.launch_gui is being imported. __name__ is", __name__
+#print "CrystalPlan.gui.launch_gui __file__ is", __file__
 
 #--- GUI Imports ---
-from __future__ import absolute_import
-
-import gui
-from gui import frame_main, frame_qspace_view, display_thread
+import frame_main
+import frame_qspace_view
+import display_thread
 import wx
 import model
-#from .. import model
+   
 
 
 #-------------------------------------------------------------------------
@@ -65,6 +66,9 @@ class CrystalPlanApp(wx.App):
 #-------------------------------------------------------------------------
 #if __name__ == '__main__':
 def launch_gui():
+#    print "CrystalPlan GUI launching from", __file__
+#    print "__name__ is", __name__
+    
     #TODO: Here pick the latest instrument, load other configuration
     #Make the goniometers
     model.goniometer.initialize_goniometers()
@@ -107,5 +111,10 @@ def launch_gui():
     application.MainLoop()
 
     #Exit the program and do all necessary clean-up.
-    print "Exiting CrystalPlan."
+    print "Exiting CrystalPlan. Have a nice day!"
     background_display.abort()
+
+
+if __name__=="__main__":
+    #For launching from source
+    launch_gui()

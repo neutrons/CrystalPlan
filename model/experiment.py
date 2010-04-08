@@ -1081,7 +1081,7 @@ class Experiment:
             h, m = divmod(m, 60.)
             d, h = divmod(h, 24.)
             w, d = divmod(d, 7.)
-            y, w = divmod(w, 52.)
+            y, w = divmod(w, 52.) #Approximately!
             ages, y = divmod(y, 14e9) #age of the universe
             if ages>0:
                 return "%d age%s of the universe, %d year%s, %d week%s, %d day%s and %0dh %02dm %02ds" % (ages,  ['', 's'][ages>0], y,  ['', 's'][y>0], w,  ['', 's'][w>0], d,  ['', 's'][d>0],  h, m, s)

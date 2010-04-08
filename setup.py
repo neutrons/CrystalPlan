@@ -5,21 +5,23 @@
 # Version: $Id$
 
 #--- Imports ---
-from distutils.core import setup
-#from setuptools import setup
+from setuptools import setup, find_packages
 import sys
 import CrystalPlan_version
 
 #Two packages: the GUI and the model code
+packages = find_packages()
 packages = ['CrystalPlan', 'CrystalPlan.model', 'CrystalPlan.gui', 'CrystalPlan.model.pygene']
-package_dir = {'CrystalPlan': '',  'CrystalPlan.model':'model', 'CrystalPlan.gui':'gui', 'CrystalPlan.model.pygene':'model/pygene'}
+package_dir = {'CrystalPlan': '.',  'CrystalPlan.model':'model', 'CrystalPlan.gui':'gui', 'CrystalPlan.model.pygene':'model/pygene'}
 #data_files = [ ('instruments', './instruments/*.csv'), ('instruments', './instruments/*.xls') ]
 data_files = []
-package_data = {'CrystalPlan':['instruments/*.xls', 'instruments/*.csv']}
-scripts = ['CrystalPlan.py']
+package_data = {'CrystalPlan':['instruments/*.xls', 'instruments/*.csv'],
+    'CrystalPlan.model':['sampleubMatrix.txt']
+}
+scripts = ['crystalplan.py']
 
-#Package requiremetns
-install_requires = ['enthought']
+#Package requirements
+install_requires = ['EnthoughtBase', 'Traits', 'Mayavi', 'numpy', 'scipy']
 
 def pythonVersionCheck():
     # Minimum version of Python
@@ -43,4 +45,8 @@ if __name__ == "__main__":
           packages=packages,
           package_dir=package_dir,
           data_files=data_files,
-          package_data=package_data)
+          package_data=package_data,
+          include_package_data=True,
+          install_requires=install_requires,
+          #test_suite='model.test_all.get_all_tests'
+          )

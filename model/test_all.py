@@ -9,42 +9,41 @@ module_list = ['config', 'crystal_calc', 'crystals', 'detectors', 'experiment', 
 import unittest
 import string
 
-#@type all_tests TestSuite
-all_tests = unittest.TestSuite()
+def get_all_tests():
+    """Returns a unittest.TestSuite containing all the tests in all the model modules."""
+    #@type all_tests TestSuite
+    all_tests = unittest.TestSuite()
 
-for module_name in module_list:
-    #print "------------------ Testing Module %s ---------------------------" % module_name
-    #Import it!
-    module = __import__(module_name)
-    
-    test_classes = []
-    for member_name in dir(module):
-        if len(member_name) > 4:
-            if member_name[0:4]=="Test":
-                #Starts with Test, it is a test class
-                test_classes += [member_name]
+    for module_name in module_list:
+        #print "------------------ Testing Module %s ---------------------------" % module_name
+        #Import it!
+        module = __import__(module_name)
 
-    if len(test_classes) == 0:
-        print "No tests found in module %s" % (module_name)
+        test_classes = []
+        for member_name in dir(module):
+            if len(member_name) > 4:
+                if member_name[0:4]=="Test":
+                    #Starts with Test, it is a test class
+                    test_classes += [member_name]
 
-    for test_class_name in test_classes:
-        #Create an instance of it
-        #print "making", test_class_name
-        test_class = getattr(module, test_class_name)
-        for test_method_name in dir(test_class):
-            if len(test_method_name) > 4:
-                if test_method_name[0:4].lower() == "test":
-                    test_instance = test_class(test_method_name)
-                    #print "Adding test: %s.%s" % (test_class_name, test_method_name)
-                    all_tests.addTests([test_instance])
-                    #test_instance.runTest()
+        if len(test_classes) == 0:
+            print "No tests found in module %s" % (module_name)
 
-#Run the tests
-result = unittest.TestResult()
-#all_tests.run(result)
+        for test_class_name in test_classes:
+            #Create an instance of it
+            #print "making", test_class_name
+            test_class = getattr(module, test_class_name)
+            for test_method_name in dir(test_class):
+                if len(test_method_name) > 4:
+                    if test_method_name[0:4].lower() == "test":
+                        test_instance = test_class(test_method_name)
+                        #print "Adding test: %s.%s" % (test_class_name, test_method_name)
+                        all_tests.addTests([test_instance])
+                        #test_instance.runTest()
 
-unittest.TextTestRunner(verbosity=2).run(all_tests)
-#unittest.main()
+    return all_tests
 
 
-
+if __name__=="__main__":
+    all_tests = get_all_tests()
+    unittest.TextTestRunner(verbosity=2).run(all_tests)

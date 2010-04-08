@@ -227,7 +227,7 @@ class Instrument:
         self.set_parameters(params)
 
         #Goniometer
-        self.set_goniometer( goniometer.TopazInHouseGoniometer(), False )
+        self.set_goniometer( goniometer.TopazAmbientGoniometer(), False )
 
         #This 3D array holds the q-radius (i.e. |q| ) at all points of the grid. Indices are x,y,z
         #   It is used to quickly do slices.
@@ -296,6 +296,8 @@ class Instrument:
         #Calculate
         poscov.coverage = self.calculate_coverage(self.detectors, poscov.angles,
                             sample_U_matrix=new_sample_U_matrix, quick_calc=False)
+        #And make sure to save the U matrix (changed or not)
+        poscov.sample_U_matrix = new_sample_U_matrix
 
     #========================================================================================================
     def evaluate_position_list(self, angles_lists, ignore_gonio):
