@@ -1,10 +1,22 @@
 """GUI launcher for CrystalPlan."""
+import os.path
 #Boa:App:CrystalPlanApp
 
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov
 # Version: $Id: CrystalPlan.py 1127 2010-04-01 19:28:43Z 8oz $
 #print "CrystalPlan.gui.launch_gui is being imported. __name__ is", __name__
 #print "CrystalPlan.gui.launch_gui __file__ is", __file__
+
+
+if __name__=="__main__":
+    #Manipulate the PYTHONPATH to put model directly in view of it
+    #   This way, "import model" works.
+    import sys
+    import os
+    #(head, tail) = os.path.split(__file__)
+    #parent = (os.path.join(head, ".."))
+    sys.path.insert(0, "..")
+    
 
 #--- GUI Imports ---
 import frame_main
@@ -117,4 +129,5 @@ def launch_gui():
 
 if __name__=="__main__":
     #For launching from source
+
     launch_gui()

@@ -500,7 +500,7 @@ class Instrument:
                         long index;
                         double qx, qy, qz;
                         long iqx, iqy, iqz;
-                        unsigned int* coverage_int = (unsigned int*) coverage;
+                        // unsigned int* coverage_int = (unsigned int*) coverage;
 
                         double lim_min = -qlim;
                         double lim_max = +qlim;
@@ -508,6 +508,7 @@ class Instrument:
                         double q_min_x = double(q_min[0]);
                         double q_min_y = double(q_min[1]);
                         double q_min_z = double(q_min[2]);
+                        //printf("Setvalue1 is %d\\n", set_value1);
 
                         //Okay now we draw the line from q_min to q_max.
                         long i;
@@ -535,23 +536,7 @@ class Instrument:
                                         {
                                             COVERAGE4(iqx,iqy,iqz,0) |= set_value1;
                                         }
-
-                                        /*
-                                        index = (iqx*stride*stride + iqy*stride + iqz)*number_of_ints;
-                                        if ( (index >=0) && (index < max_index*number_of_ints) )
-                                        {
-                                            coverage_int[index] = coverage_int[index] | set_value1;
-                                            if (number_of_ints==2)
-                                            {
-                                                coverage_int[index+1] = coverage_int[index+1] | set_value2;
-                                            }
-
-                                            //this line has 64-bit problems - only 32 bits are used
-                                            //coverage[index] = coverage[index] | set_value;
-                                        }
-                                        */
-                                        
-                                        //else printf("inline C: Warning! Calculation indicated wrong index!\\n");
+                  
                                     }
                                 }
                             }
@@ -642,13 +627,12 @@ class Instrument:
                 if count % 10 == 0: messages.send_message(messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
 
             #The binary flag to use here.
-            set_value = long(2**count)
-            if count < 32:
-                set_value1 = np.uint32(2**count)
-                set_value2 = np.uint32(0)
+            if count < 31:
+                set_value1 = (2**count)
+                set_value2 = (0)
             else:
-                set_value1 = np.uint32(0)
-                set_value2 = np.uint32(2**(count-32))
+                set_value1 = (0)
+                set_value2 = (2**(count-31))
             count = count+1
 
             #Two nearby pixels
@@ -1021,30 +1005,30 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         #Make a mostly empty list
         det_list = [None for x in xrange(48)]
         my_nums = [0,1]
-        if more_det: my_nums += [45]
+        if more_det: my_nums += [30, 31, 32, 45]
         for x in my_nums:
             det_list[x] = tst_inst.detectors[x]
-        #Calculate it (using C)
-        ret = tst_inst.calculate_coverage(det_list, angles, quick_calc=False, use_inline_c=True)
-        assert np.any(ret == 1), "Coverage has some bits equal to 1."
-        assert np.any(ret == 2), "Coverage has some bits equal to 2."
-        assert not np.any(ret == 4), "Coverage has no bits equal to 4."
-        if more_det: assert np.any(ret == 2**(45-32)), "Coverage has some bits equal to 2**45."
-        #if more_det: assert np.sum(ret > 0) == 8490, "8490 points with coverage with these settings."
-        #Let's compare with the (much slower) pure python version
-        c_ret = ret
-        ret = tst_inst.calculate_coverage(det_list, angles, quick_calc=False, use_inline_c=False)
-        assert np.any(ret == 1), "Coverage has some bits equal to 1."
-        assert np.any(ret == 2), "Coverage has some bits equal to 2."
-        assert not np.any(ret == 4), "Coverage has no bits equal to 4."
-        if more_det: assert np.any(ret == 2**(45-32)), "Coverage has some bits equal to 2**45."
+            
+        for use_inline_c in [True, False]:
+            #Calculate it (using C)
+            msg = ["(python only)", "(inline C"][use_inline_c]
+            ret = tst_inst.calculate_coverage(det_list, angles, quick_calc=False, use_inline_c=use_inline_c)
+            assert np.any(ret == 1), "Coverage %s has some bits equal to 1." % msg
+            assert np.any(ret == 2), "Coverage %s has some bits equal to 2." % msg
+            assert not np.any(ret == 4), "Coverage %s has no bits equal to 4." % msg
+            if more_det: assert np.any(ret == 2**(30)), "Coverage %s has some bits equal to 2**30." % msg
+            if more_det: assert np.any(ret == 2**(45-31)), "Coverage %s has some bits equal to 2**45-31." % msg
+            if use_inline_c: c_ret = ret
         #Find differences
         (x,y,z,byte) = np.nonzero(ret != c_ret)
         #assert abs(np.sum(ret > 0) - np.sum(c_ret > 0)) < 10, "Number of points found (C vs Python) match within 10. C: %d,  "
-        assert len(x) < 10, "Coverage calculated by C and python match within 10 differences. We found %s differences" % x
+        assert len(x) < 20, "Coverage calculated by C and python match within 20 differences. We found %s differences" % len(x)
         #Do a full list at 0
-        #ret = tst_inst.calculate_coverage(tst_inst.detectors, [0, 0, 0], quick_calc=False, use_inline_c=True)
-        #assert np.sum(ret > 0) == 155052, "155052 points found with all 48 detectors."
+        ret = tst_inst.calculate_coverage(tst_inst.detectors, [0, 0, 0], quick_calc=False, use_inline_c=True)
+        found = np.sum(ret > 0)
+        wanted = 52152
+        if more_det: wanted = 155896
+        assert found == wanted, "%d points found with %d detectors. We expected %d points" % (found, len(tst_inst.detectors), wanted)
 
     def test_simulate_and_total(self):
         """test_simulate_and_total: test of simulate_coverage() and total_coverage()"""

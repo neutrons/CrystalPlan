@@ -226,8 +226,8 @@ class PanelStartup(wx.Panel):
     def _init_ctrls(self, prnt):
         # generated method, don't edit
         wx.Panel.__init__(self, id=wxID_DIALOGSTARTUP, name=u'PanelStartup',
-              parent=prnt, pos=wx.Point(702, 235), size=wx.Size(475, 600))
-        self.SetClientSize(wx.Size(475, 600))
+              parent=prnt, pos=wx.Point(702, 235), size=wx.Size(600, 600))
+        self.SetClientSize(wx.Size(600, 600))
 
         self.staticTextHelp = wx.StaticText(id=wxID_DIALOGSTARTUPSTATICTEXTHELP,
               label=u"The CrystalPlan application is used to simulate the coverage of reciprocal space of an instrument's detectors, given a list of sample orientations.",

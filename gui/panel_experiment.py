@@ -398,8 +398,8 @@ class PanelExperiment(wx.Panel):
         # generated method, don't edit
         wx.Panel.__init__(self, id=wxID_PANELEXPERIMENT,
               name=u'PanelExperiment', parent=prnt, pos=wx.Point(633, 252),
-              size=wx.Size(398, 849), style=wx.TAB_TRAVERSAL)
-        self.SetClientSize(wx.Size(398, 849))
+              size=wx.Size(600, 849), style=wx.TAB_TRAVERSAL)
+        self.SetClientSize(wx.Size(600, 849))
         self.SetAutoLayout(True)
 
         self.gridExp = wx.grid.Grid(id=wxID_PANELEXPERIMENTGRIDEXP,
@@ -423,6 +423,8 @@ class PanelExperiment(wx.Panel):
               name=u'staticTextHelp', parent=self, pos=wx.Point(0, 8),
               style=0)
         self.staticTextHelp.SetAutoLayout(True)
+        if gui_utils.is_mac():
+            self.staticTextHelp.Wrap(self.GetSize()[0]-50)
 
         self.staticTextEstimatedTime = wx.StaticText(id=wxID_PANELEXPERIMENTSTATICTEXTESTIMATEDTIME,
               label=u'Estimated Time:', name=u'staticTextEstimatedTime',
