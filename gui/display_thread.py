@@ -193,8 +193,6 @@ def handle_change_of_qspace(changed_sample_U_matrix=None):
     Parameters:
         changed_sample_U_matrix: set to a 3x3 matrix if the sample orientation has changed too.
     """
-    #TODO: This isn't quite right yet.
-
     #Re-init the qspace frame first.
     model.messages.send_message(model.messages.MSG_EXPERIMENT_QSPACE_SETTINGS_CHANGED)
     

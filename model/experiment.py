@@ -1521,8 +1521,8 @@ class Experiment:
         if (len(self.coverage_stats) == 0):
             #Nothing in the coverage data. We generate some fake coverage for debugging purposes.
             coverage_q = np.linspace(0, 8, 10)
-            #TODO: Debug mode switch?
             if False:
+                #Debugging and testing mode
                 y = 100*np.random.rand(10)
             else:
                 y = coverage_q * 0.

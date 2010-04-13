@@ -152,7 +152,8 @@ class Crystal(HasTraits):
             #Save here
             self.lattice_lengths = lattice_lengths
             self.lattice_angles_deg = lattice_angles_deg
-            self.ub_matrix = ub_matrix * 2 * np.pi #TODO: Do we need to multiply by 2pi? Depends on input source.
+            #From ISAW, multiply by 2*pi the UB matrix. This will depend on input
+            self.ub_matrix = ub_matrix * 2 * np.pi 
             #print "Determinant of UB READ FROM FILE is ", np.linalg.det(ub_matrix)
             self.calculate_reciprocal()
 

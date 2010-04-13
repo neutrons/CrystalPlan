@@ -351,8 +351,6 @@ def getq_python(azimuth, elevation, wl, rot_matrix):
     #So is the incident beam direction.
     #Therefore, the q-vector measured is simply rotated by the supplied rotation matrix (which has reversed angles)
 
-    #TODO: Might need to use inverted ROT MATRIX HERE!!!
-
     q = np.dot(rot_matrix, q)
 
     return q

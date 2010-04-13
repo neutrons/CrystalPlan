@@ -108,38 +108,10 @@ class FlatDetector(Detector):
     pixel_rotation_matrix = np.identity(3)
 
     #---------------------------------------------------------------------------------------------
-    def __init__(self, detector_name, nexus_file=None):
-        """Constructor for a detector object.
-        Loads from an open NXS file if supplied. Will continue to read a NXS file to read in the
-        geometry of one detector. The particular detector group should already be open
-        in the NXS file object, e.g.  when using the nxs.entries() enumerator.
+    def __init__(self, detector_name):
+        """Constructor for a FlatDetector object.
         """
         self.name = detector_name
-
-        _nxs = nexus_file
-        if _nxs is None: return None
-
-        #Read in the required pixel positions
-        _nxs.opendata("azimuthal_angle")
-        self.azimuthal_angle = _nxs.getdata()
-        _nxs.closedata()
-        _nxs.opendata("polar_angle")
-        #TODO: Check if angle is Polar or elevation angle???
-        self.elevation_angle = _nxs.getdata()
-        _nxs.closedata()
-        _nxs.opendata("time_of_flight")
-        self.time_of_flight =  _nxs.getdata()
-        _nxs.closedata()
-
-        #Get the # of pixels
-        (self.ypixels, self.xpixels) = self.azimuthal_angle.shape #TODO: Check if the row/column order is right: =(y,x)
-        self.tof_pixels = self.time_of_flight.size
-
-        #TODO: Perhaps need to read more data here?
-        print "Az %s, elev %s" % (self.azimuthal_angle[0,0], self.elevation_angle[0,0] )
-#        print _nxs.getentries()
-
-
 
 
     #-------------------------------------------------------------------------------

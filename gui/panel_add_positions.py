@@ -463,7 +463,7 @@ class PanelAddPositions(wx.Panel):
         #Disable the multiprocessing checkbox if using an older python.
         if multiprocessing_installed:
             self.checkMultiprocessing.Enable()
-            #TODO: Re-enable this checkbox when multiprocessign can be used again.
+            #TODO: Re-enable this checkbox when multiprocessing can be used again.
             self.checkMultiprocessing.Disable()
         else:
             self.checkMultiprocessing.Disable()

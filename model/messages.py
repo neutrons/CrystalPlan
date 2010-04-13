@@ -38,18 +38,19 @@ MSG_UPDATE_MAIN_STATUSBAR = "MSG_UPDATE_MAIN_STATUSBAR"
 #========================================================================================================
 MSG_GONIOMETER_CHANGED = "MSG_GONIOMETER_CHANGED"
 MSG_DETECTOR_LIST_CHANGED = "MSG_DETECTOR_LIST_CHANGED"
+MSG_SCRIPT_COMMAND = "MSG_SCRIPT_COMMAND"
 
+class FunctionCall:
+    """Class holding a function and the arguments to it."""
+    def __init__(function, *args, **kwargs):
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
 
 #----------------------------------------------------------------------
 def send_message(message_id, data=None):
     """Thread-safe replacement for pubsub sendMessage."""
-    try:
-        wx.CallAfter(pub.sendMessage, topic=message_id, data=data)
-        return True
-    except StandardError, e:
-        #TODO: Proper error handling?
-        print e
-        return False
+    wx.CallAfter(pub.sendMessage, topic=message_id, data=data)
 
 
 #----------------------------------------------------------------------

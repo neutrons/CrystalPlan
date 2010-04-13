@@ -97,6 +97,12 @@ class DialogPreferences(wx.Dialog):
                 label="General Options"
                  ))
 
+        #Save the starting config values
+        self.starting_config_gui = config_gui.GuiConfig()
+        self.starting_config_gui.copy_traits(config_gui.cfg)
+        self.starting_model_config = model.config.ModelConfig()
+        self.starting_model_config.copy_traits(model.config.cfg)
+
         #Make it into a control
         self.handler = None
         self.control = config_gui.cfg.edit_traits(parent=self, view=view, kind='subpanel', handler=self.handler,
@@ -112,7 +118,10 @@ class DialogPreferences(wx.Dialog):
         event.Skip()
 
     def OnButtonCancelButton(self, event):
-        #TODO: Revert!
+        #Revert the configs back to what we saved
+        config_gui.cfg.copy_traits(self.starting_config_gui)
+        model.config.cfg.copy_traits(self.starting_model_config)
+        #Close it.
         self.Close()
         event.Skip()
 

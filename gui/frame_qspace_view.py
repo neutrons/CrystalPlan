@@ -151,9 +151,6 @@ class QspaceViewController(HasTraits):
         #This vtk picker object will be used later
         self.pointpicker = tvtk.PointPicker()
 
-        #TODO: Fix it!
-#        self.scene.picker.pointpicker.add_observer('EndPickEvent', picker_callback)
-#        self.reflection_picker = ReflectionPicker(self.scene.picker.pointpicker)
         self.scene.interactor.add_observer('RightButtonPressEvent', self.on_button_press)
         self.scene.interactor.add_observer('MouseMoveEvent', self.on_mouse_move)
         self.scene.interactor.add_observer('RightButtonReleaseEvent', self.on_button_release)

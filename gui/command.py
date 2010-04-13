@@ -177,7 +177,8 @@ class CommandController(Thread):
         atd.discard(Actions.full_coverage)
         atd.discard(Actions.invert_coverage)
 
-        #TODO: Notifications
+        # TODO: Notifications
+        
         #--- Reflection point calculations ----
         if Actions.reflections in atd:
             model.experiment.exp.recalculate_reflections(None)

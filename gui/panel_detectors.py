@@ -438,11 +438,11 @@ class PanelDetectors(wx.Panel):
     def OnButtonOptimizeButton(self, event):
         """Start optimizing using GA."""
         dop = model.optimize_coverage.DetectorOptimizationParameters()
-        dop.configure_traits()
-        #TODO: Handle clicking cancel
-        det_list = model.optimize_coverage.optimize_detector_choice(dop, gui=True)
-        #This will check the boxes as well as update the other ui windows.
-        self.controller.select_detector_list(det_list)
+        if dop.configure_traits():
+            #User clicked OKAY, do optimization
+            det_list = model.optimize_coverage.optimize_detector_choice(dop, gui=True)
+            #This will check the boxes as well as update the other ui windows.
+            self.controller.select_detector_list(det_list)
         event.Skip()
 
     def OnButtonLoadDetectors(self, event):

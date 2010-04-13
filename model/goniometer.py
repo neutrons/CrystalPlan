@@ -1401,7 +1401,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         if self._plot_title is None:
             self._plot_title = mlab.title(title_string, size=0.2)
         else:
-            #TODO: This doesn't work
+            #This doesn't work :(
             self._plot_title.set(title_string)
 
     #===============================================================================================
