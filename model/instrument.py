@@ -828,22 +828,22 @@ class Instrument:
         if self.positions is None: return None
 
         #Create a bitwise AND mask that will only show the detectors we want
-        mask = np.uint64(0)
-        mask1 = np.uint32(0)
-        mask2 = np.uint32(0)
+        mask = 0
+        mask1 = 0
+        mask2 = 0
         if detectors_used is None:
             mask = np.uint64(-1) #Will show all the bits.
-            mask1 = np.uint32(2**32-1)
-            mask2 = np.uint32(2**32-1)
+            mask1 = 2**31-1
+            mask2 = 2**32-1
         else:
             for i in range(len(detectors_used)):
                 if detectors_used[i]:
                     mask = np.uint64(mask + 2**i) #64-bit mask
                     #Also make two 32-bit masks
-                    if i < 32:
-                        mask1 = np.uint32(mask1 + 2**i)
+                    if i < 31:
+                        mask1 = mask1 + 2**i
                     else:
-                        mask2 = np.uint32(mask2 + 2**(i-32))
+                        mask2 = mask2 + 2**(i-31)
 
         #Make sure the list of positions makes sense
         if orientations_used is None:
@@ -1062,12 +1062,38 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         print "Total coverage test 3"
         cov = tst_inst.total_coverage(None, tst_inst.positions)
         cov_sum = np.sum(cov)
-        # assert cov_sum==620079, "total_coverage() total should be 620079 for these settings, but we got %s." % cov_sum
-        #assert np.sum(cov)==total, "total_coverage() total (%s) should match the total those of each individual position (%s)." % (cov_sum, total)
+        expected = 208332
+        assert cov_sum==expected, "total_coverage() total should be %d for these settings, but we got %s." % (expected, cov_sum)
+        assert np.sum(cov)==total, "total_coverage() total (%s) should match the total those of each individual position (%s)." % (cov_sum, total)
         #Compare without inline_c
         print "Total coverage test 4"
         cov_python = tst_inst.total_coverage(None, tst_inst.positions, use_inline_c=False)
         assert np.all(cov == cov_python), "total_coverage() gives the same using pure Python as with inline C. There are %d differences." % (np.nonzero(cov == cov_python)[0].size)
+
+    def test_simulate_and_total_more_detectors(self):
+        self.tst_inst = Instrument("../instruments/TOPAZ_detectors_all.csv")
+        tst_inst = self.tst_inst
+        tst_inst.set_goniometer(goniometer.Goniometer())
+        tst_inst.d_min = 0.7
+        tst_inst.q_resolution = 0.15
+        tst_inst.wl_min = 0.7
+        tst_inst.wl_max = 3.6
+        tst_inst.make_qspace()
+        tst_inst.positions = []
+        assert len(self.tst_inst.detectors) == 48, "Correct # of detectors for test_simulate_and_total_more_detectors"
+        angles = [0,0,0]
+        tst_inst.simulate_position(angles, use_multiprocessing=False, quick_calc=False)
+        assert len(tst_inst.positions)==1, "There should be 1 position saved. There are %d" % len(tst_inst.positions)
+        #Total coverage of all detectors
+        cov = tst_inst.total_coverage([True]*48, tst_inst.positions)
+        cov_sum = np.sum(cov)
+        position_coverage_sum = np.sum( (tst_inst.positions[0].coverage[:,:,:,0] | tst_inst.positions[0].coverage[:,:,:,1])   != 0 )
+        assert cov_sum==position_coverage_sum, "The sum of total_coverage() and that of of all non-zero elements in the PositionCoverage object matches."
+        cov_python = tst_inst.total_coverage([True]*48, tst_inst.positions, use_inline_c=False)
+        cov_python_sum = np.sum(cov)
+        assert cov_python_sum==position_coverage_sum, "The sum of total_coverage(use_inline_c=False) and that of of all non-zero elements in the PositionCoverage object matches."
+
+
 
 
 
@@ -1075,10 +1101,9 @@ class TestInstrumentWithDetectors(unittest.TestCase):
 #---------------------------------------------------------------------
 if __name__ == "__main__":
 
-#    tst = TestInstrumentWithDetectors('test_simulate_and_total')
+#    tst = TestInstrumentWithDetectors('test_simulate_and_total_more_detectors')
 #    tst.setUp()
-#    tst.test_simulate_and_total()
-#    print "test complete."
+#    tst.test_simulate_and_total_more_detectors()
 
     unittest.main()
 

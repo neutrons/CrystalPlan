@@ -152,7 +152,7 @@ class DetectorListController:
         #Add each item to the list
         for i in range( len(model.instrument.inst.detectors) ):
             det = model.instrument.inst.detectors[i]
-            s = "%7s" % det.name
+            s = "%2d: %7s" % (i, det.name)
             if use_coverage: s = s + (" : %6.2f%%" % self.detector_coverage[i])
             items.append(s)
             
@@ -239,12 +239,16 @@ class DetectorListController:
         worst_coverage = temp[num-1]
 
         #Select the items that are as good or better
+        print "Selecting the best", num, "detectors:",
         count = 0
         for x in range(self.lst.GetCount()):
             b = (self.detector_coverage[x] >= worst_coverage)
             if b: count = count + 1
             if count > num: b = False
+            if b:
+                print model.experiment.exp.inst.detectors[x].name,
             self.lst.Check(x,  b )
+        print ""
 
         #Redo the list
         self.changed()
