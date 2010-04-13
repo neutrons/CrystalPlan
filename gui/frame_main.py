@@ -180,6 +180,7 @@ class FrameMain(wx.Frame):
         self.SetMinSize(wx.Size(100, 100))
         self.SetAutoLayout(True)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.Bind(wx.EVT_IDLE, self.OnIdle)
 
         self.statusBar_main = wx.StatusBar(id=wxID_FRAMEMAINSTATUSBAR_MAIN,
               name=u'statusBar_main', parent=self,
@@ -203,8 +204,9 @@ class FrameMain(wx.Frame):
         
         #Subscribe to messages
         model.messages.subscribe(self.OnStatusBarUpdate, model.messages.MSG_UPDATE_MAIN_STATUSBAR)
-#        model.messages.subscribe(self.OnScriptCommand, model.messages.MSG_SCRIPT_COMMAND)
-
+        model.messages.subscribe(self.OnScriptCommand, model.messages.MSG_SCRIPT_COMMAND)
+        
+        self.count = 0
 
     #--------------------------------------------------------------------
     def LoadNotebook(self):
@@ -247,8 +249,17 @@ class FrameMain(wx.Frame):
         #print message
         self.statusBar_main.SetStatusText(message.data)
 
-    def OnScriptcommand(self, message):
+    def OnScriptCommand(self, message):
         """Called to execute a scripted GUI command."""
+        # @type call FunctionCall
+        call = message.data
+        #Call that function
+        call.function(*call.args, **call.kwargs)
+
+    def OnIdle(self, event):
+        self.count += 1
+        #print "Idle", self.count
+        event.Skip()
         
 
 

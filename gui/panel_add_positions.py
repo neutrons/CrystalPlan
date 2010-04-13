@@ -320,9 +320,6 @@ class AddPositionsController():
 #========================================================================================================
 class PanelAddPositions(wx.Panel):
                 
-    #The views/controllers for this GUI
-    addPositionsController = None
-  
     
     def _init_coll_boxSizerMiddle_Items(self, parent):
         # generated method, don't edit
@@ -470,9 +467,9 @@ class PanelAddPositions(wx.Panel):
     def __init__(self, parent):
         self._init_ctrls(parent)        
         #Additional code
-        self.addPositionsController = AddPositionsController(self)
-        self.addPositionsController.make_angle_controls()
-        self.addPositionsController.OnTextbox_Text(None)
+        self.controller = AddPositionsController(self)
+        self.controller.make_angle_controls()
+        self.controller.OnTextbox_Text(None)
 
         #Disable the multiprocessing checkbox if using an older python.
         if multiprocessing_installed:
@@ -489,11 +486,11 @@ class PanelAddPositions(wx.Panel):
 
 
     def OnButtonCalculateButton(self, event):
-        self.addPositionsController.execute()        
+        self.controller.execute()
         event.Skip()
 
     def OnButtonCancelButton(self, event):
-        self.addPositionsController.abort()
+        self.controller.abort()
         event.Skip()
 
     def OnCheckMultiprocessingCheckbox(self, event):
@@ -501,7 +498,7 @@ class PanelAddPositions(wx.Panel):
 
     def OnCheckIgnoreGonioCheckbox(self, event):
         #To re-evaluate
-        self.addPositionsController.OnTextbox_Text(None)
+        self.controller.OnTextbox_Text(None)
         event.Skip()
 
 

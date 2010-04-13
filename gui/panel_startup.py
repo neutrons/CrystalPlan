@@ -21,7 +21,7 @@ import model
 # ===========================================================================================
 # ===========================================================================================
 # ===========================================================================================
-from enthought.traits.api import HasTraits,Int,Float,Str,Property,Bool
+from enthought.traits.api import HasTraits,Int,Float,Str,Property,Bool,Range
 from enthought.traits.ui.api import View,Item,Label,Heading, Spring, Handler, Group
 from enthought.traits.ui.menu import OKButton, CancelButton,RevertButton
 
@@ -100,8 +100,8 @@ class StartupParameters(HasTraits):
     q_resolution = Float(0.05)
     d_max = Str(" +infinity ")
     #Detector wavelength limits in A
-    wl_min = Float(2.0)
-    wl_max = Float(4.0)
+    wl_min = Range(1e-3, +np.inf, 0.5, exclude_low=False)
+    wl_max = Range(1e-3, +np.inf, 4.0, exclude_low=False)
 
     #q-space limit property
     q_lim = Property(Float,depends_on=["d_min"])
