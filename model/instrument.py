@@ -184,7 +184,9 @@ class Instrument:
             return
 
         #Initialize members
+        old_list = self.detectors
         self.detectors = list()
+        
         try:
             reader = csv.reader( open(filename) )
             count = 0
@@ -207,8 +209,11 @@ class Instrument:
                     det.calculate_pixel_angles()
                     self.detectors.append(det)
                 count = count + 1
-        except IOError, exc:
-            print "IO Error while reading '%s':" % filename, exc
+        except:
+            #Uh-oh! Let's go back to the original list
+            self.detectors = old_list
+            #And handle the error normally.
+            raise
 
 
 

@@ -10,6 +10,7 @@ from threading import Thread
 import time
 import string
 import numpy as np
+import sys
 
 #--- GUI Imports ---
 import gui_utils
@@ -137,19 +138,31 @@ class PlacerMapThread(Thread):
                 self._do_reset = False
 
             if step > 0:
-                #Calculate more!
-                t1 = time.time()
-                self.frame.placer.calculate_allowed_map(xpixels, ypixels, step, allowed, wavelength_map, calculated, block_filled, self.frame.placer.brute_search, callback=self.frame.calculation_callback)
-                #print "step ", step, "took ", time.time()-t1, " seconds."
-                if not self._want_abort:
-                    #To avoid bug when closing
-                    self.frame.detectorPlot.background_image = make_image()
-                    self.frame.detectorPlot.Refresh()
-                #Reduce the step size by 2 for next time
-                step = step / 2
-                if step < 1:
-                    step = 0
-                    wx.CallAfter(self.frame.calculation_callback, step, 0)
+
+                #The calculations are wrapped in this error handler.
+                try:
+                    #Calculate more!
+                    t1 = time.time()
+                    self.frame.placer.calculate_allowed_map(xpixels, ypixels, step, allowed, wavelength_map, calculated, block_filled, self.frame.placer.brute_search, callback=self.frame.calculation_callback)
+                    #print "step ", step, "took ", time.time()-t1, " seconds."
+                    if not self._want_abort:
+                        #To avoid bug when closing
+                        self.frame.detectorPlot.background_image = make_image()
+                        self.frame.detectorPlot.Refresh()
+                    #Reduce the step size by 2 for next time
+                    step = step / 2
+                    if step < 1:
+                        step = 0
+                        wx.CallAfter(self.frame.calculation_callback, step, 0)
+                        
+                except (KeyboardInterrupt, SystemExit):
+                    #Allow breaking the program
+                    raise
+                except:
+                    #Unhandled exceptions get thrown to log and message boxes.
+                    (type, value, traceback) = sys.exc_info()
+                    sys.excepthook(type, value, traceback, thread_information="reflection_placer.PlacerMapThread")
+                
             else:
                 #We just wait a bit
                 time.sleep(0.1)

@@ -90,13 +90,20 @@ def do_recalculation_with_progress_bar(new_sample_U_matrix=None):
 
     keep_going = True
     for i in xrange(len(model.instrument.inst.positions)):
-        #Do the recalculation
-        poscov = model.instrument.inst.positions[i]
-        model.instrument.inst.recalculate(poscov, new_sample_U_matrix=new_sample_U_matrix)
-        #Check in the dialog
-        count += 1
-        (keep_going) = prog_dlg.Update(count, "Calculating orientation %s of %s..." % (i+1, len(model.instrument.inst.positions)))
-        if not keep_going: break
+        try:
+            #Do the recalculation
+            poscov = model.instrument.inst.positions[i]
+            model.instrument.inst.recalculate(poscov, new_sample_U_matrix=new_sample_U_matrix)
+            #Check in the dialog
+            count += 1
+            (keep_going) = prog_dlg.Update(count, "Calculating orientation %s of %s..." % (i+1, len(model.instrument.inst.positions)))
+            if not keep_going: break
+        except:
+            #We destroy the dialog so it doesn't get stuck.
+            prog_dlg.Destroy()
+            # We re-raise the exception
+            # We are in the main loop, so the sys.excepthook will catch it and display a dialog.
+            raise
 
     #Should we recalculate reflections here?
 

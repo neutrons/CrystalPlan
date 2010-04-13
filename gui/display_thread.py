@@ -11,6 +11,7 @@ from threading import Thread
 import time
 import copy
 import numpy as np
+import sys
 
 #--- GUI Imports ---
 
@@ -47,9 +48,22 @@ class DisplayThread(Thread):
         
         while not self._want_abort:
             #Loop until aborted
-            #print "NextParams is %s, id:%s"% (NextParams, id(NextParams) )
-            if check_for_changes():
-                #The function does all the work.
+            there_were_changes = False
+
+            #Check for changes, wrapped with exception handler
+            try:
+                there_were_changes = check_for_changes()
+            except (KeyboardInterrupt, SystemExit):
+                #Allow breaking the program
+                raise
+            except:
+                #Unhandled exceptions get thrown to log and message boxes.
+                (type, value, traceback) = sys.exc_info()
+                sys.excepthook(type, value, traceback, thread_information="DisplayThread")
+                #Hurray, the thread doesn't die!
+
+            if there_were_changes:
+                #The function does all the work. No need to sleep
                 pass
             else:
                 #No change in the requested display.

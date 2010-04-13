@@ -8,6 +8,7 @@ calculation."""
 #--- General Imports ---
 import wx
 from threading import Thread
+import sys
 
 #--- GUI Imports ---
 import display_thread
@@ -27,7 +28,7 @@ except ImportError, e:
 
 [wxID_PANELADDPOSITIONS, wxID_PANELADDPOSITIONSBUTTONCALCULATE, 
  wxID_PANELADDPOSITIONSBUTTONCANCEL, 
- wxID_PANELADDPOSITIONSCHECKDEBUGCALCULATION, 
+ wxID_PANELADDPOSITIONScheckQuickCalculation,
  wxID_PANELADDPOSITIONSCHECKIGNOREGONIO, 
  wxID_PANELADDPOSITIONSCHECKMULTIPROCESSING, 
  wxID_PANELADDPOSITIONSGAUGEPROGRESS, wxID_PANELADDPOSITIONSSTATICTEXTHELP, 
@@ -75,15 +76,27 @@ class CalculationThread(Thread):
     def run(self):
         """Actually perform the calculation"""
         for i in range( len(self.positions) ):
-            angles = self.positions[i]
-            model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, i)
-            #This performs the calculation
-            newpos = model.instrument.inst.simulate_position(angles,
-                model.experiment.exp.crystal.get_u_matrix(),
-                use_multiprocessing=self.use_multiprocessing, quick_calc=self.quick_calc)
-            self.poscov_list.append(newpos)
+            try:
+                #These are the angles to calculate
+                angles = self.positions[i]
+                model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, i)
+                #This performs the calculation
+                newpos = model.instrument.inst.simulate_position(angles,
+                    model.experiment.exp.crystal.get_u_matrix(),
+                    use_multiprocessing=self.use_multiprocessing, quick_calc=self.quick_calc)
+                self.poscov_list.append(newpos)
+            except (KeyboardInterrupt, SystemExit):
+                #Allow breaking the program
+                raise
+            except:
+                #Unhandled exceptions get thrown to log and message boxes.
+                (type, value, traceback) = sys.exc_info()
+                sys.excepthook(type, value, traceback, thread_information="PanelAddPositions.CalculationThread")
+
+            #Premature abortion?
             if self._want_abort:
                 break
+                
         #Ok, we either finished or aborted.
         model.messages.send_message( MSG_POSITION_CALCULATION_DONE, self.poscov_list)
 
@@ -291,7 +304,7 @@ class AddPositionsController():
         self.panel.gaugeProgress.SetRange( len(self.valid) )
         #This will start it!
         self.calculationThread = CalculationThread(self.valid, self.panel.checkMultiprocessing.GetValue(), 
-                                    self.panel.checkDebugCalculation.GetValue())
+                                    self.panel.checkQuickCalculation.GetValue())
         
     #-------------------------------------------------------------------------------
     def abort(self):
@@ -353,7 +366,7 @@ class PanelAddPositions(wx.Panel):
         # generated method, don't edit
 
         parent.AddWindow(self.checkMultiprocessing, 0, border=0, flag=0)
-        parent.AddWindow(self.checkDebugCalculation, 0, border=0, flag=0)
+        parent.AddWindow(self.checkQuickCalculation, 0, border=0, flag=0)
 
     def _init_sizers(self):
         # generated method, don't edit
@@ -434,11 +447,12 @@ class PanelAddPositions(wx.Panel):
               self.OnCheckMultiprocessingCheckbox,
               id=wxID_PANELADDPOSITIONSCHECKMULTIPROCESSING)
 
-        self.checkDebugCalculation = wx.CheckBox(id=wxID_PANELADDPOSITIONSCHECKDEBUGCALCULATION,
+        self.checkQuickCalculation = wx.CheckBox(id=wxID_PANELADDPOSITIONScheckQuickCalculation,
               label=u'Quick Calculation (for debugging)',
-              name=u'checkDebugCalculation', parent=self, pos=wx.Point(222,
+              name=u'checkQuickCalculation', parent=self, pos=wx.Point(222,
               397), size=wx.Size(260, 22), style=0)
-        self.checkDebugCalculation.SetValue(False)
+        self.checkQuickCalculation.SetValue(False)
+        self.checkQuickCalculation.Hide()
 
         self.checkIgnoreGonio = wx.CheckBox(id=wxID_PANELADDPOSITIONSCHECKIGNOREGONIO,
               label=u'Ignore goniometer limits (allow all angles)',
