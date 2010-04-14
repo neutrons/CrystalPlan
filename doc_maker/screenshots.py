@@ -2,8 +2,10 @@
 and run scripts/GUI unittests.
 General to wxPython applications.
 """
+import gui_utils
 import os.path
 import wx
+import numpy as np
 
 base_screenshot_path = "/home/janik/Code/GenUtils/trunk/python/CrystalPlan/docs/screenshots/"
 title_bar_height = 24
@@ -65,8 +67,26 @@ def screenshot_frame(frame, filename):
     #Save to PNG file
     bmp.SaveFile(os.path.join(base_screenshot_path, os.path.splitext(filename)[0] + ".png"), wx.BITMAP_TYPE_PNG)
 
+
 #--------------------------------------------------------------------------------
-def screenshot_of(window, filename, margin=0):
+def get_screen_rect(widget):
+    """Get the ScreenRect of a window or sizer."""
+    if isinstance(widget, wx.Window):
+        return widget.GetScreenRect()
+    elif isinstance(widget, wx.Sizer):
+        #Find the offset of the parent window
+        frame_pos = widget.GetContainingWindow().GetScreenPosition()
+        #Adjust the rectangle to get the screenRect
+        pos = widget.GetPosition() + frame_pos
+        size = widget.GetSize()
+        rect = wx.Rect(pos.x, pos.y, size.width, size.height)
+        return rect
+    else:
+        raise NotImplementedError("cannot get a ScreenRect for the object %s" % widget)
+
+
+#--------------------------------------------------------------------------------
+def screenshot_of(window, filename, margin=0, gradient_edge=4):
     """Take a screenshot of any wx.Window object on screen.
 
     Parameters:
@@ -77,6 +97,9 @@ def screenshot_of(window, filename, margin=0):
         margin: margin, in pixels, to add to all sides.
             - single scalar: applied to all sides
             - list: [left right top bottom]
+        gradient_edge: define a gradient to fade out the edges of the screenshot.
+            - scalar: the # will be SUBTRACTED from the margins on all sides to find the gradient size.
+                this leaves this many pixels normal before fade commences
 
     """
     #@type rect Rect
@@ -89,13 +112,13 @@ def screenshot_of(window, filename, margin=0):
         if hasattr(window, "__iter__"):
             for (i, wnd) in enumerate(window):
                 if i == 0:
-                    rect = wnd.GetScreenRect()
+                    rect = get_screen_rect(wnd)
                 else:
                     #Adding rectangles calculates the smallest rect containing all. Yay!
-                    rect += wnd.GetScreenRect()
+                    rect += get_screen_rect(wnd)
         else:
             #Single window
-            rect = window.GetScreenRect()
+            rect = get_screen_rect(window)
 
     #Make a 4-element list for margins
     if not hasattr(margin, "__iter__"):
@@ -109,24 +132,35 @@ def screenshot_of(window, filename, margin=0):
         rect.Width += margin[0] + margin[1]
         
     bmp = take_screenshot(rect)
-    #TODO: Nice faded edges?
 
-    #Create a memory DC of the BMP
-    #@type memDC MemoryDC
-    memDC = wx.MemoryDC()
-    memDC.SelectObject(bmp)
+    #Make the gradient pixel size list
+    if gradient_edge is None:
+        gradient = margin
+    else:
+        gradient = [x-gradient_edge for x in margin]
+
+    #--- Make nice smoothed edges ----
+    #@type img wx.Image
+    img = bmp.ConvertToImage()
+    img.InitAlpha()
+    print "hasalpha", img.HasAlpha()
+    # Buffer, 1st dimension = y axis, 2nd = x axis.
+    alpha_buffer = np.zeros( (rect.Height, rect.Width), dtype=np.byte ) + 255
+    min = 0
     #Left gradient
-    for i in xrange(margin[0]):
-        alpha=(i*255.)/margin[0]
-        print "alpha", alpha
-        x = i
-        memDC.SetPen( wx.Pen(wx.Color(255,255,255, alpha=alpha), width=1, style=wx.SOLID) )
-        memDC.DrawLine(x, 0, x, rect.Height)
-    #Select the Bitmap out of the memory DC
-    memDC.SelectObject(wx.NullBitmap)
+    alpha_buffer[:,0:gradient[0]] = np.linspace(min, 255, gradient[0])
+    #Right gradient
+    alpha_buffer[:,-gradient[1]:] = np.linspace(255, min, gradient[1])
+    #Top gradient
+    alpha_buffer[0:gradient[2], :] = np.linspace(min, 255, gradient[2]).reshape(gradient[2],1)
+    #Bottom
+    alpha_buffer[-gradient[3]:, :] = np.linspace(255, min, gradient[3]).reshape(gradient[3],1)
+
+    #Set the alpha channel
+    img.SetAlphaData(alpha_buffer.data)
 
     #Save to PNG file
-    bmp.SaveFile(os.path.join(base_screenshot_path, os.path.splitext(filename)[0] + ".png"), wx.BITMAP_TYPE_PNG)
+    img.SaveFile(os.path.join(base_screenshot_path, os.path.splitext(filename)[0] + ".png"), wx.BITMAP_TYPE_PNG)
 
 
 
@@ -135,7 +169,7 @@ if __name__=="__main__":
     frame = wx.Frame(None, title='Testing screenshot')
     
     def onClose(event):
-        screenshot_of(wx.Rect(20,20,100,100), "test", margin=20)
+        screenshot_of(wx.Rect(20,20,200,100), "test", margin=20, gradient_edge=5)
         event.Skip()
 
     frame.Bind(wx.EVT_CLOSE, onClose)

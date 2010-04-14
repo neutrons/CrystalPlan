@@ -297,6 +297,19 @@ def place_frame_next_to(parent, child, margin, follow_top=True):
         child.Move( wx.Point(screen_width - cw, cy) )
 
 
+#-------------------------------------------------------
+def find_parent_frame(window):
+    """Find the wx.Frame that is the ultimate parent of this window."""
+#    print "find_parent_frame", window.Name
+    if window is None:
+        return None
+    prnt = window.GetParent()
+    if isinstance(prnt, wx.Frame):
+#        print "find_parent_frame FOUND", prnt.Name
+        return prnt
+    else:
+        #Recurse
+        return find_parent_frame(prnt)
 
 
 if __name__=="__main__":

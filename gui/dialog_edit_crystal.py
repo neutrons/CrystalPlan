@@ -27,6 +27,7 @@ class CrystalEditorTraitsHandler(Handler):
     def __init__(self, frame, *args, **kwargs):
         Handler.__init__(self, *args, **kwargs)
         self.add_trait('frame', frame)
+        self.add_trait('user_clicked_okay', False)
 
     #---------------------------------------------------------------------------
     def setattr(self, info, object, name, value):
@@ -58,9 +59,8 @@ class CrystalEditorTraitsHandler(Handler):
             #Modify the crystal data in the experiment.
             self.frame.original_crystal.copy_traits(self.frame.crystal)
         #Close it
-        self.add_trait('user_clicked_okay', apply_change)
+        self.user_clicked_okay = apply_change
         self.frame.Close()
-
 
 
 

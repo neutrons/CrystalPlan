@@ -72,7 +72,7 @@ class FrameMain(wx.Frame):
 
     def _init_menuHelp(self, parent):
         id = wx.NewId()
-        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Generate User Guide')
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Generate User Guide\tCtrl+H')
         self.Bind(wx.EVT_MENU, self.OnMenuGenerateUserGuide, id=id)
 
         id = wx.NewId()
@@ -148,6 +148,7 @@ class FrameMain(wx.Frame):
         event.Skip()
 
     def OnMenuGenerateUserGuide(self, event):
+#        gui_utils.find_parent_frame(self.tab_add.staticTextHelp)
         #Make the user guide screenshots
         doc_maker.user_guide.generate_user_guide(self, frame_qspace_view.get_instance(self))
         event.Skip()

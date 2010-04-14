@@ -90,22 +90,6 @@ class UserGuideThread(Thread):
         print "-> Script Complete!"
 
 
-#        #@type fm FrameMain
-#        ca(take_screenshot, wx.Rect(0,0,200,200), 'corner')
-#        #Trial positions.
-#        ca(fm.notebook.SetSelection, 4)
-#        ca(wait, 100)
-#        ca(doprint, "FrameMain refreshing")
-#        ca(fm.Refresh)
-#        ca(screenshot_of, fm.tab_try.checkAdd, 'try_position_checkAdd')
-#        ca(screenshot_of, fm.tab_try, 'add_trial_position')
-#        #The "add position" tab
-#        ca(fm.notebook.SetSelection, 5)
-#        #Call the click event
-#        ca(call_event, fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
-#        ca(wait, 1000)
-#        ca(do_assert, len(model.experiment.exp.inst.positions)==1, "Length of positions calculated.")
-
 
 
 #The following function will be executed line-by-line by a separate thread.
@@ -113,6 +97,12 @@ class UserGuideThread(Thread):
 # - No loops or changes of indentation!
 # - Finish with "#---END---\n"
 def user_guide_script():
+    ca(screenshot_frame, fm, 'frame_main')
+    # ---- Q-Space Tab ------
+    ca(fm.notebook.SetSelection, 1)
+
+
+    #
     ca(fm.notebook.SetSelection, 4)
     wait(100)
     ca(screenshot_of, fm.tab_try, 'add_trial_position')
@@ -121,11 +111,14 @@ def user_guide_script():
     ca(call_event, fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
     wait(1000)
     assert len(model.experiment.exp.inst.positions)==1, "Length of positions calculated was to be 1, it was %d." % len(model.experiment.exp.inst.positions)
-    ca(fm.tab_add.controller.textAngles[0].SetValue, "arange(0,180,10)")
+#    ca(fm.tab_add.controller.textAngles[0].SetValue, "arange(0,180,10)")
+    ca(screenshot_of, [fm.tab_add.boxSizerAngles] , 'add_positions-text', margin=20)
     wait(100)
+    ca(screenshot_of, [fm.tab_add.buttonCalculate, fm.tab_add.buttonCancel] , 'add_positions-start_button', margin=20)
     ca(call_event, fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
     wait(400)
-    ca(screenshot_of, [fm.tab_add.gaugeProgress, fm.tab_add.staticTextProgress] , 'progress_bar', margin=10)
+    ca(screenshot_of, [fm.tab_add.gaugeProgress, fm.tab_add.staticTextProgress] , 'add_positions-progress_bar', margin=10)
+    ca(screenshot_of, [fm.tab_add.buttonCalculate, fm.tab_add.buttonCancel] , 'add_positions-cancel_button', margin=20)
     wait(2000)
     assert len(model.experiment.exp.inst.positions)==19, "Length of positions calculated was to be 19, it was %d." % len(model.experiment.exp.inst.positions)
 #---END---

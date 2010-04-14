@@ -1,6 +1,7 @@
 #Boa:FramePanel:PanelAddPositions
 """PanelAddPositions: GUI component to add positions to the calculated list, and run their coverage
 calculation."""
+import gui_utils
 
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov
 # Version: $Id$
@@ -167,10 +168,10 @@ class AddPositionsController():
                 #Do the static text
                 static = wx.StaticText(id=wx.NewId(), label=u"List of " + ang.name + ": ",
                     name=u'staticTextAngles'+str(i),
-                    parent=self.panel, pos=wx.Point(0, 0), size=wx.Size(151, 17), style=0)
+                    parent=self.panel, pos=wx.Point(0, 0), size=wx.Size(151, 14), style=0)
                 static_unit = wx.StaticText(id=wx.NewId(), label=u" " + ang.friendly_units,
                     name=u'staticTextAnglesUnits'+str(i),
-                    parent=self.panel, pos=wx.Point(0, 0), size=wx.Size(50, 17), style=0)
+                    parent=self.panel, pos=wx.Point(0, 0), size=wx.Size(50, 14), style=0)
 
                 #Now the editable textbox
                 id = wx.NewId()
@@ -429,7 +430,7 @@ class PanelAddPositions(wx.Panel):
 
         self.gaugeProgress = wx.Gauge(id=wxID_PANELADDPOSITIONSGAUGEPROGRESS,
               name=u'gaugeProgress', parent=self, pos=wx.Point(0, 361),
-              range=100, size=wx.Size(546, 28), style=wx.GA_HORIZONTAL)
+              range=100, style=wx.GA_HORIZONTAL)
 
         self.staticTextProgress = wx.StaticText(id=wxID_PANELADDPOSITIONSSTATICTEXTPROGRESS,
               label=u'Progress:', name=u'staticTextProgress', parent=self,
@@ -514,16 +515,9 @@ class PanelAddPositions(wx.Panel):
 
 if __name__ == '__main__':
     #Test routine
-    from wxPython.wx import *
-
-    class MyApp(wxApp):
-        def OnInit(self):
-            frame = wxFrame(NULL, -1, "PanelAddPositions test app.")
-            frame.Show(true)
-            ptp = PanelAddPositions(parent=frame)
-            return true
-
-
-    app = MyApp(0)
+    import gui_utils
+    model.instrument.inst = model.instrument.Instrument()
+    model.goniometer.initialize_goniometers()
+    (app, pnl) = gui_utils.test_my_gui(PanelAddPositions)
     app.MainLoop()
 
