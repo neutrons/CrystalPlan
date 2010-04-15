@@ -249,7 +249,6 @@ class Instrument:
         Parameters:
             params: a dictionary with the key as the name of the attribute."""
         for (param, value) in params.items():
-            print "Parameters!", (param, value)
             #Only set an attribute if the name exists already.
             if hasattr(self, param):
                 setattr(self, param, value)

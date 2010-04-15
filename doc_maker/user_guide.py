@@ -2,7 +2,11 @@
 CrystalPlan user guide.
 """
 
+from panel_goniometer import PanelGoniometer
 import wx
+import sys
+import os
+import warnings
 from screenshots import *
 
 import time
@@ -12,40 +16,32 @@ import model
 
 main_frame = None
 
+#-------------------------------------------------------------------------------
 def wait(ms):
     """Wait a given # of milliseconds."""
     print "Waiting for", ms, "ms"
     time.sleep(ms/1000.)
 
+#-------------------------------------------------------------------------------
 def ca(function, *args, **kwargs):
     """Alias for wx.CallAfter"""
     wx.CallAfter(function, *args, **kwargs)
-    
-#def ca(function, *args, **kwargs):
-#    #The FunctionCall object holds the call to do
-#    data = model.messages.FunctionCall(function, *args, **kwargs)
-#    #Send a message to do this call.
-#    model.messages.send_message(model.messages.MSG_SCRIPT_COMMAND, data)
-#
-#def ca(function, *args, **kwargs):
-#    #Just call it right now! YAY!
-#    function(*args, **kwargs)
 
-
-def doprint(*args):
-    for x in args:
-        print x,
-    print ""
-
+#-------------------------------------------------------------------------------
 def call_event(control, event_type):
     """Force an event to be called on the GUI."""
     evt = wx.CommandEvent(event_type.typeId, control.GetId())
     evt.SetEventObject(control)
     wx.PostEvent(control, evt)
-#    control.GetEventHandler().ProcessEvent(evt)
 
-def do_assert(assertion, message):
-    assert assertion, message
+#-------------------------------------------------------------------------------
+def click(widget):
+    """Simulate a click on a button. Sends the proper event to it."""
+    if isinstance(widget, wx.Button):
+        call_event(widget, wx.EVT_BUTTON)
+    else:
+        raise NotImplementedError("Can't simulate click on " + widget.Name)
+
 
 #========================================================================================================
 #========================================================================================================
@@ -88,39 +84,108 @@ class UserGuideThread(Thread):
 
         #Ok we are done.
         print "-> Script Complete!"
+        #Do the latex conversion
+        import eqhtml
+        #eqhtml.embed_latex_in_html("../docs/user_guide.html", "../docs/user_guide_eq.html")
+        #Close the main frame to exit the program
+        fm.Destroy()
 
+
+
+#==================================================================================================
+#==================================================================================================
+#==================================================================================================
+#==================================================================================================
+#==================================================================================================
+#==================================================================================================
+#==================================================================================================
+
+def make_animated_tab_click(fm):
+#    #Make a lot of screenshots to animate yay!
+#
+    rect = fm.notebook.GetScreenRect()
+    rect.Height = 45 #This will depend on platform!
+    for i in xrange(fm.notebook.GetPageCount()):
+        ca(fm.notebook.SetSelection, i)
+        wait(50)
+        ca(screenshot_of, rect, 'frame_main-tab'+str(i), margin=[10, 10, 20, 50], gradient_edge=5)
+
+    files = ['../docs/screenshots/frame_main-tab'+str(i)+".png" for i in xrange(fm.notebook.GetPageCount())]
+    #Assemble into animated png
+    ca(os.system, "../doc_maker/apngasm ../docs/screenshots/frame_main-tab_anim.png " + " ".join(files) + " 5 10")
 
 
 
 #The following function will be executed line-by-line by a separate thread.
 # - All commands should be on single lines
-# - No loops or changes of indentation!
+# - No loops or changes of indentation! (Use functions if you need to make a for loop)
 # - Finish with "#---END---\n"
 def user_guide_script():
+    #Shortcuts to the tested objects
+    exp = model.experiment.exp
+    inst = model.experiment.exp.inst
+
     ca(screenshot_frame, fm, 'frame_main')
-    # ---- Q-Space Tab ------
+    #make_animated_tab_click(fm)
+    warnings.warn("Hey! Turn the animated tab maker back on!")
+
+    # --------------------- Q-Space Tab --------------------
+    ca(fm.notebook.SetSelection, 0)
+    wait(100)
+    #Settings for the guide
+    #@type params StartupParameters
+    params = fm.tab_startup.params
+    params.d_min = 1.0
+    params.q_resolution = 0.1
+    params.wl_min = 0.5
+    params.wl_max = 4.0
+    wait(100)
+    ca(screenshot_of, fm.tab_startup.control, 'startup-traits', minheight=True, margin=10, gradient_edge=0)
+    ca(screenshot_of, fm.tab_startup.buttonApply, 'startup-apply', margin=5)
+
+    # ------------------------ Detectors tab ----------------------
     ca(fm.notebook.SetSelection, 1)
+    wait(50)
+    #@type td PanelDetectors
+    td = fm.tab_detectors
+    ca(screenshot_of, td.buttonLoadDetectors, 'detectors-buttonLoadDetectors', minheight=True, margin=6, gradient_edge=4)
+    ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
+    wait(1800)
+    assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
+    ca(screenshot_of, td.button_view_detectors, 'detectors-button_view_detectors', minheight=True, margin=6, gradient_edge=4)
+
+    #TODO: 3d shot of detectors
+#    ca(click, td.button_view_detectors)
+#    wait(1800)
+
+    # ------------------------ goniometer tab ----------------------
+    ca(fm.notebook.SetSelection, 2)
+    wait(50)
+    #@type td PanelGoniometer
+    td = fm.tab_goniometer
 
 
-    #
+    # ------------------------- Trial Positions tab -----------------------
     ca(fm.notebook.SetSelection, 4)
     wait(100)
     ca(screenshot_of, fm.tab_try, 'add_trial_position')
+
+    # ------------------------ Add Orientations tab ----------------------
     ca(fm.notebook.SetSelection, 5)
     #Call the click event
-    ca(call_event, fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
-    wait(1000)
-    assert len(model.experiment.exp.inst.positions)==1, "Length of positions calculated was to be 1, it was %d." % len(model.experiment.exp.inst.positions)
+#    ca(call_event, fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
+#    wait(1000)
+#    assert len(model.experiment.exp.inst.positions)==1, "Length of positions calculated was to be 1, it was %d." % len(model.experiment.exp.inst.positions)
 #    ca(fm.tab_add.controller.textAngles[0].SetValue, "arange(0,180,10)")
     ca(screenshot_of, [fm.tab_add.boxSizerAngles] , 'add_positions-text', margin=20)
     wait(100)
     ca(screenshot_of, [fm.tab_add.buttonCalculate, fm.tab_add.buttonCancel] , 'add_positions-start_button', margin=20)
     ca(call_event, fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
-    wait(400)
+    wait(200)
     ca(screenshot_of, [fm.tab_add.gaugeProgress, fm.tab_add.staticTextProgress] , 'add_positions-progress_bar', margin=10)
     ca(screenshot_of, [fm.tab_add.buttonCalculate, fm.tab_add.buttonCancel] , 'add_positions-cancel_button', margin=20)
-    wait(2000)
-    assert len(model.experiment.exp.inst.positions)==19, "Length of positions calculated was to be 19, it was %d." % len(model.experiment.exp.inst.positions)
+    wait(200)
+    #assert len(model.experiment.exp.inst.positions)==2, "Length of positions calculated was to be 19, it was %d." % len(model.experiment.exp.inst.positions)
 #---END---
 
     

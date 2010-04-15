@@ -41,9 +41,6 @@ class DetectorView3D:
         #Find the middle and put text there
         center = det.pixels[:, det.xpixels/2,  det.ypixels/2]
         text3d(center, det.name, font_size=15, color=col)
-        #Normal arrow?
-#        center = column(center)
-#        arrow(center, center+det.normal*100, color=col, tube_radius=rad)
 
     #---------------------------------------------------------------------------------------------
     def display(self):
@@ -97,9 +94,8 @@ class DetectorListController:
         self.update()
 
     #----------------------------------------------------------------------------------------
-    def load_detectors(self):
-        """Load detectors from a CSV file."""
-        print "load_detectors_starting."
+    def load_detectors_dialog(self):
+        """Open a dialog to load detectors from a CSV file."""
         filename = model.config.cfg.default_detector_filename
         (path, ignored) = os.path.split( os.path.abspath(filename) )
         filters = 'CSV files (*.csv)|*.csv|All files (*.*)|*.*|'
@@ -113,14 +109,18 @@ class DetectorListController:
             #'Nothing was selected.
             dialog.Destroy()
             return
-        
+        #Do load the file
+        self.load_detector_file(filename)
+
+    #----------------------------------------------------------------------------------------
+    def load_detector_file(self, filename):
+        """Load detectors from a CSV file."""
         #Load if it exists
         if not os.path.exists(filename):
             wx.MessageDialog(self, "File '%s' was not found!" % filename, 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
         else:
             old_detectors = model.instrument.inst.detectors
-            #try:
-            if True:
+            try:
                 model.instrument.inst.load_detectors_csv_file(filename)
                 #Save as the next default
                 model.config.cfg.default_detector_filename = filename
@@ -131,11 +131,12 @@ class DetectorListController:
                 gui_utils.do_recalculation_with_progress_bar(new_sample_U_matrix=None)
                 #Update displays
                 display_thread.handle_change_of_qspace()
-                
-#            except e:
-#                #Go back to the old list
-#                model.instrument.inst.detectors = old_detectors
-#                wx.MessageDialog(self, "There was an error while loading '%s'!\n\nError message: %s\n\nOriginal detector layout will be used instead." % (filename, e.message), 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
+
+            except:
+                #Go back to the old list
+                model.instrument.inst.detectors = old_detectors
+                #Re-raise the error
+                raise
 
 
     #----------------------------------------------------------------------------------------
@@ -446,14 +447,18 @@ class PanelDetectors(wx.Panel):
         event.Skip()
 
     def OnButtonLoadDetectors(self, event):
-        self.controller.load_detectors()
+        self.controller.load_detectors_dialog()
         event.Skip()
 
 
 #====================================================================================
 if __name__ == "__main__":
+
     model.instrument.inst = model.instrument.Instrument()
     model.goniometer.initialize_goniometers()
+    DetectorView3D().display()
+    sys.exit()
+
     import gui_utils
     (app, pnl) = gui_utils.test_my_gui(PanelDetectors)
     app.MainLoop()

@@ -42,10 +42,11 @@ MSG_SCRIPT_COMMAND = "MSG_SCRIPT_COMMAND"
 
 class FunctionCall:
     """Class holding a function and the arguments to it."""
-    def __init__(function, *args, **kwargs):
+    def __init__(self, function, *args, **kwargs):
         self.function = function
         self.args = args
         self.kwargs = kwargs
+        
 
 #----------------------------------------------------------------------
 def send_message(message_id, data=None):

@@ -55,13 +55,13 @@ class StartupTraitsHandler(Handler):
             self.frame.staticTextSpaceWarning.Hide()
         self.frame.GetSizer().Layout()
         #Disable the start button if too few points come up
-        self.frame.buttonStart.Enable( self.frame.params.points > 100 )
+        self.frame.buttonApply.Enable( self.frame.params.points > 100 )
 
     #----------------------------------------------------------------------
     def apply(self):
         """Apply changes now."""
         #This sets up the new size q-space
-        model.instrument.inst.change_qspace_size(self.get_params_dicitionary())
+        model.instrument.inst.change_qspace_size(self.get_params_dictionary())
 
         #Fix the hkl range if needed
         if  model.experiment.exp.range_automatic:
@@ -82,7 +82,7 @@ class StartupTraitsHandler(Handler):
         self.check_validity()
 
     #----------------------------------------------------------------------
-    def get_params_dicitionary(self):
+    def get_params_dictionary(self):
         """Returns a dictionary of the useful parameters saved."""
         params = {'instrument':self.instrument}
         #Merge with the ones from the StartupParameters object
@@ -161,7 +161,7 @@ class StartupParameters(HasTraits):
 # ===========================================================================================
 
 [wxID_DIALOGSTARTUP, wxID_DIALOGSTARTUPBUTTONQUIT, 
- wxID_DIALOGSTARTUPBUTTONSTART, wxID_DIALOGSTARTUPGAUGERECALC, 
+ wxID_DIALOGSTARTUPbuttonApply, wxID_DIALOGSTARTUPGAUGERECALC,
  wxID_DIALOGSTARTUPLISTINSTRUMENTS, wxID_DIALOGSTARTUPSTATICLINE1, 
  wxID_DIALOGSTARTUPSTATICLINE2, wxID_DIALOGSTARTUPSTATICTEXTHELP, 
  wxID_DIALOGSTARTUPSTATICTEXTRECALCULATIONPROGRESS, 
@@ -182,7 +182,7 @@ class PanelStartup(wx.Panel):
         # generated method, don't edit
 
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
-        parent.AddWindow(self.buttonStart, 0, border=0, flag=0)
+        parent.AddWindow(self.buttonApply, 0, border=0, flag=0)
         parent.AddWindow(self.staticTextSpacer1, 1, border=0, flag=0)
         parent.AddWindow(self.buttonQuit, 0, border=0, flag=0)
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
@@ -250,11 +250,11 @@ class PanelStartup(wx.Panel):
               name='staticLine1', parent=self, pos=wx.Point(0, 273),
               size=wx.Size(475, 2), style=0)
 
-        self.buttonStart = wx.Button(id=wxID_DIALOGSTARTUPBUTTONSTART,
-              label=u'Apply Changes', name=u'buttonStart', parent=self,
+        self.buttonApply = wx.Button(id=wxID_DIALOGSTARTUPbuttonApply,
+              label=u'Apply Changes', name=u'buttonApply', parent=self,
               pos=wx.Point(16, 563), size=wx.Size(150, 29), style=0)
-        self.buttonStart.Bind(wx.EVT_BUTTON, self.OnButtonStartButton,
-              id=wxID_DIALOGSTARTUPBUTTONSTART)
+        self.buttonApply.Bind(wx.EVT_BUTTON, self.OnbuttonApplyButton,
+              id=wxID_DIALOGSTARTUPbuttonApply)
 
         self.buttonQuit = wx.Button(id=wxID_DIALOGSTARTUPBUTTONQUIT,
               label=u'Revert', name=u'buttonQuit', parent=self, pos=wx.Point(309,
@@ -300,7 +300,7 @@ class PanelStartup(wx.Panel):
         self.GetSizer().Layout()
 
 
-    def OnButtonStartButton(self, event):
+    def OnbuttonApplyButton(self, event):
         self.handler.apply()
         event.Skip()
 

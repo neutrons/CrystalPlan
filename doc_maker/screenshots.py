@@ -2,7 +2,7 @@
 and run scripts/GUI unittests.
 General to wxPython applications.
 """
-import gui_utils
+
 import os.path
 import wx
 import numpy as np
@@ -86,7 +86,7 @@ def get_screen_rect(widget):
 
 
 #--------------------------------------------------------------------------------
-def screenshot_of(window, filename, margin=0, gradient_edge=4):
+def screenshot_of(window, filename, margin=0, gradient_edge=0, minheight=False):
     """Take a screenshot of any wx.Window object on screen.
 
     Parameters:
@@ -100,13 +100,14 @@ def screenshot_of(window, filename, margin=0, gradient_edge=4):
         gradient_edge: define a gradient to fade out the edges of the screenshot.
             - scalar: the # will be SUBTRACTED from the margins on all sides to find the gradient size.
                 this leaves this many pixels normal before fade commences
+        minheight: grab a screenshot of the minimum height the control can be. Only for a single window
 
     """
     #@type rect Rect
 
     #Find the rectangle
     if isinstance(window, wx.Rect):
-        rect = window
+        rect = wx.Rect(*window) #Make a copy
     else:
         #Windows
         if hasattr(window, "__iter__"):
@@ -117,8 +118,10 @@ def screenshot_of(window, filename, margin=0, gradient_edge=4):
                     #Adding rectangles calculates the smallest rect containing all. Yay!
                     rect += get_screen_rect(wnd)
         else:
-            #Single window
+            #Single window/sizer etc.
             rect = get_screen_rect(window)
+            if minheight:
+                rect.Height = window.GetMinHeight()
 
     #Make a 4-element list for margins
     if not hasattr(margin, "__iter__"):
@@ -143,19 +146,27 @@ def screenshot_of(window, filename, margin=0, gradient_edge=4):
     #@type img wx.Image
     img = bmp.ConvertToImage()
     img.InitAlpha()
-    print "hasalpha", img.HasAlpha()
+    
     # Buffer, 1st dimension = y axis, 2nd = x axis.
-    alpha_buffer = np.zeros( (rect.Height, rect.Width), dtype=np.byte ) + 255
+    alpha_buffer = np.zeros( (rect.Height, rect.Width), dtype=int ) + 255
     min = 0
     #Left gradient
-    alpha_buffer[:,0:gradient[0]] = np.linspace(min, 255, gradient[0])
+    if gradient[0]>0:
+        alpha_buffer[:,0:gradient[0]] = np.linspace(min, 255, gradient[0])
     #Right gradient
-    alpha_buffer[:,-gradient[1]:] = np.linspace(255, min, gradient[1])
+    if gradient[1]>0:
+        alpha_buffer[:,-gradient[1]:] = np.linspace(255, min, gradient[1])
     #Top gradient
-    alpha_buffer[0:gradient[2], :] = np.linspace(min, 255, gradient[2]).reshape(gradient[2],1)
+    if gradient[2]>0:
+        alpha_buffer[0:gradient[2], :] = alpha_buffer[0:gradient[2], :] - np.linspace(255, min, gradient[2]).reshape(gradient[2],1)
     #Bottom
-    alpha_buffer[-gradient[3]:, :] = np.linspace(255, min, gradient[3]).reshape(gradient[3],1)
+    if gradient[3]>0:
+        alpha_buffer[-gradient[3]:, :] = alpha_buffer[-gradient[3]:, :] - np.linspace(min, 255, gradient[3]).reshape(gradient[3],1)
 
+    #Convert to byte channel, clip to 0 alpha
+    alpha_buffer[alpha_buffer<0] = 0
+    alpha_buffer = alpha_buffer.astype(np.byte)
+    
     #Set the alpha channel
     img.SetAlphaData(alpha_buffer.data)
 

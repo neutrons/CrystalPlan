@@ -1,0 +1,146 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title></title>
+<meta name="generator" content="Bluefish 1.0.7"/>
+<meta name="author" content="Janik Zikovsky"/>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8"/>
+<meta http-equiv="content-style-type" content="text/css" />
+</head>
+
+<style type="text/css">
+	.break { page-break-before: always; }
+
+img {
+	vertical-align:middle;
+	}
+dt {
+	display: list-item;
+	font-weight:bold;
+	}
+h3 {
+	font-size:20pt;
+	border-top:medium solid #000000;
+	}
+</style>
+
+
+<body bgcolor="white">
+<!-- Crystal Plan User Guide -->
+
+<h1>CrystalPlan 1.0 User Guide</h1>
+by Janik Zikovsky (zikovskyjl@ornl.gov)<br/>
+written April 14th, 2010.
+
+<h3>Introduction</h3>
+
+<p>CrystalPlan is an experiment planning tool for crystallography; CrystalPlan...
+</p>
+<ul>
+<li>Lets you put in a list of sample orientation angles, and...</li>
+<li>...calculates the coverage of detectors in reciprocal space.</li>
+<li>When you give it your sample's lattice parameters and UB matrix, it...</li>
+<li>...predicts the positions of single-crystal peaks.</li>
+<li>You can then optimize your experiment by trying different orientations and seeing if your coverage statistics will still be adequate.</li>
+</ul>
+
+<!-- ========================================================= -->
+<!-- ========================================================= -->
+<!-- ========================================================= -->
+
+<h2>Step-by-Step Tutorial</h2>
+
+<p>This tutorial will show you how to use most of the features of CrystalPlan by going through a typical run, step-by-step.</p>
+
+
+<!-- ========================================================= -->
+
+<h3>1. Starting CrystalPlan</h3>
+
+<p>From the terminal command line, type:
+<div align="center"><font face="Courier">crystalplan.py</font></div>
+The GUI launches in two new windows. Select the main window:
+</p>
+<br/>
+<img src="screenshots/frame_main.png" width="400" border="0" alt="The main CrystalPlan GUI window."/><br/>
+<br/>
+Most of your workflow will occur by navigating between these notebook tabs:
+<br/><img src="screenshots/frame_main-tab_anim.png" border="0"/>
+
+<!-- ========================================================= -->
+
+<h3>2. Defining the Reciprocal Space of Interest and Wavelengths</h3>
+
+<p>Here you will set the general parameters of your experiment.</p>
+
+<ul>
+<li>Click the "Q-Space" tab, if it not already selected. It shows the following parameters:
+<br/><img src="screenshots/startup-traits.png" border="0" alt=""/>
+</li>
+<ul>
+	<dt>d_min</dt>
+	<dd>The smallest d-spacing allowed. Your simulated q-space will be limited to a maximum <span class="eq">$q = {2\pi}/d_{min}$</span></dd>
+	
+	<dt>q-resolution</dt>
+	<dd>The size of a voxel (smallest volume element) simulated, in <span class="eq">$\AA^{-1}$</span>. The # of points will be calculated and shown below; you will get a warning if you try to make very high-resolution calculations, because memory consumption, etc. will be very high.</dd>
+	
+	<dt>wavelength limits</dt>
+	<dd>Specify your experiment's wavelength limits, in Ansgtroms; this could be due to limits on your neutron source or your detectors.</dd>
+</ul>
+
+<li>When done, click the 
+<img src="screenshots/startup-apply.png" border="0" alt="Apply Changes"/>
+button. Changing these settings requires re-doing a lot of calculations, which may take some time if you have a lot of orientations saved, . 
+</li>
+</ul>
+
+
+<!-- ========================================================= -->
+
+<h3>3. Detectors</h3>
+
+<ul>
+<li>Click the "Detectors" tab.</li>
+
+<li>Load a detector geometry by clicking the
+<img src="screenshots/detectors-buttonLoadDetectors.png" border="0" alt=""/> button. In the File Loading dialog that opens, select the "TOPAZ_detectors_all.csv" file.
+</li>
+<li>After a few seconds, the detector geometry is loaded. To confirm that the detectors are in the correct positions, you can visualize them in direct space by clicking 
+<img src="screenshots/detectors-button_view_detectors.png" border="0" alt=""/>, 
+which displays them in a window like this one:
+<br/><img src="screenshots/detectors-3d_view.png" border="0" alt=""/>
+</li>
+<li>We will come back later to the other controls on this tab.</li>
+</ul>
+
+
+<!-- ========================================================= -->
+
+<h3>4. Goniometer</h3>
+
+<ul>
+<li>Click the "Goniometer" tab.</li>
+
+</ul>
+
+<!-- ========================================================= -->
+
+<h3>???. Adding Sample Orientations</h3>
+<ul>
+<li>
+Click the "Start" button to begin the calculation. 
+<br/><img src="screenshots/add_positions-start_button.png" border="0" alt=""/>
+</li>
+
+<li>The calculation progress will be shown in this progress bar: <br/>
+<img src="screenshots/add_positions-progress_bar.png" border="0" alt=""/> <br/></li>
+
+<li>If the calculation runs too long, you can cancel it before it completes. Sample orientations that have already been calculated will remain in the experiment plan.<br/>
+<img src="screenshots/add_positions-cancel_button.png" border="0" alt=""/></li>
+
+</ul>
+
+</body>
+</html>
