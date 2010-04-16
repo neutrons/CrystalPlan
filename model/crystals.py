@@ -139,9 +139,9 @@ class Crystal(HasTraits):
 
     #--------------------------------------------------------------------
     def read_ubmatrix_file(self, filename):
-        """Load a ub matrix text file into this crystal."""
+        """Load a ISAW-produced UB matrix text file into this crystal."""
         #Load the file
-        ret = ubmatrixreader.read_ubmatrix_file(filename, False)
+        ret = ubmatrixreader.read_ISAW_ubmatrix_file(filename, False)
         if not ret is None:
             #load went okay
             (lattice_lengths, lattice_angles_deg, ub_matrix) = ret
@@ -152,8 +152,7 @@ class Crystal(HasTraits):
             #Save here
             self.lattice_lengths = lattice_lengths
             self.lattice_angles_deg = lattice_angles_deg
-            #From ISAW, multiply by 2*pi the UB matrix. This will depend on input
-            self.ub_matrix = ub_matrix * 2 * np.pi 
+            self.ub_matrix = ub_matrix
             #print "Determinant of UB READ FROM FILE is ", np.linalg.det(ub_matrix)
             self.calculate_reciprocal()
 

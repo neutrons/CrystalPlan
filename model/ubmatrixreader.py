@@ -16,8 +16,8 @@ import crystal_calc
 
 
 #-----------------------------------------------------------------
-def read_ubmatrix_file(filename, verbose):
-    """Open and read a UB matrix file.
+def read_ISAW_ubmatrix_file(filename, verbose):
+    """Open and read a UB matrix file produced by ISAW.
 
     Parameters:
         filename: string, path to the file to load
@@ -72,9 +72,23 @@ def read_ubmatrix_file(filename, verbose):
         #Return params
         lattice_lengths = (a,b,c)
         lattice_angles = (alpha,beta,gamma)
+        #Transpose the matrix
         ub_matrix = UBtransposed.transpose()
+        #Convert from IPNS coordinate system to SNS:
 
-        return (lattice_lengths, lattice_angles, ub_matrix)
+        # The (ISAW UB) matrix is the Transpose of the UB Matrix. The UB matrix maps the column
+        # vector (h,k,l ) to the column vector (q'x,q'y,q'z).
+        # |Q'|=1/dspacing and its coordinates are a right-hand coordinate system where
+        #  x is the beam direction and z is vertically upward.(IPNS convention)
+
+        #First, we multiply by the missing 2 * pi
+        ub_out =  2 * np.pi * ub_matrix
+        #Now we swap axes around to change the coordinate system
+        ub_out[2] = ub_matrix[0] #x gets put in z
+        ub_out[1] = ub_matrix[2] #z gets put in y
+        ub_out[0] = ub_matrix[1] #y gets put in x
+
+        return (lattice_lengths, lattice_angles, ub_out)
     
     #Error checking here
     #except:
