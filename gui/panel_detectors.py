@@ -16,20 +16,34 @@ import numpy as np
 import display_thread
 import gui_utils
 try:
-    import enthought.mayavi.mlab as mlab
     from mlab_utils import *
+    from enthought.traits.api import HasTraits, Range, Instance, on_trait_change
+    from enthought.traits.ui.api import View, Item, HGroup
+    from enthought.tvtk.pyface.scene_editor import SceneEditor
+    from enthought.mayavi.tools.mlab_scene_model import MlabSceneModel
+    from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
 except ImportError, e:
     print "PanelDetectors: ERROR IMPORTING MAYAVI - 3D WILL NOT WORK!"
 
 #--- Model Imports ---
 import model
 
-#================================================================================================
-#================================================================================================
-#================================================================================================
-class DetectorView3D:
-    """Class to display all the detectors in a 3D view."""
 
+
+#================================================================================================
+#================================================================================================
+#================================================================================================
+class DetectorVisualization(HasTraits):
+    # Scene being displayed.
+    scene = Instance(MlabSceneModel, ())
+
+    # The layout of the panel created by Traits
+    view = View(Item('scene', editor=SceneEditor(), resizable=True,
+                    show_label=False), resizable=True)
+
+    def __init__(self):
+        # Do not forget to call the parent's __init__
+        HasTraits.__init__(self)
 
     #---------------------------------------------------------------------------------------------
     def detector_plot(self, det, color=(1,1,1)):
@@ -43,10 +57,11 @@ class DetectorView3D:
         text3d(center, det.name, font_size=15, color=col)
 
     #---------------------------------------------------------------------------------------------
-    def display(self):
+    def display(self, reset_view=True):
         """Plot all the detectors in real space."""
-        f = mlab.figure("Detectors", size=(600, 500))
-        f.scene.disable_render = True #Render without displaying, to speed it up.
+        #Map mlab to the scene in the control.
+        mlab = self.scene.mlab
+        self.scene.disable_render = True #Render without displaying, to speed it up.
         mlab.clf
         mlab.options.offscreen = False
         #Make a simple color map
@@ -71,11 +86,48 @@ class DetectorView3D:
         arrow( vector([0,0,0]),  vector([0,+length,0]), head_size=length/12, color=(0,0,0), tube_radius=length/150.)
         text3d(vector([0,+length*1.1,0]), "Up", font_size=16, color=(0,0,0))
         mlab.orientation_axes()
-        mlab.title("Detectors in real space", size=0.3, height=0.98 )
-        f.scene.disable_render = False
-        mlab.show()
+        if reset_view:
+            #Set the camera
+            mlab.view(56.372692217264493, 43.295412845543929, 2457.6030853527195)
+            mlab.roll(2.6)
+
+        self.scene.disable_render = False
 
 
+#================================================================================================
+#================================================================================================
+#================================================================================================
+class DetectorView3D(wx.Frame):
+    """Frame that will hold a 3D view of all the detectors."""
+                    
+    #---------------------------------------------------------------------------------------------
+    def __init__(self, parent, id):
+        wx.Frame.__init__(self, parent, id, 'Direct Space 3D View of Detectors', size=wx.Size(600, 500))
+        self.visualization = DetectorVisualization()
+        #Create a control in the frame
+        self.control = self.visualization.edit_traits(parent=self,
+                                kind='subpanel').control
+        self.Show()
+        self.update(reset_view=True)
+        #Close event
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+    #---------------------------------------------------------------------------------------------
+    def update(self, reset_view=False):
+        """Update the frame (and 3D view)"""
+        self.visualization.display(reset_view)
+
+    #---------------------------------------------------------------------------------------------
+    def OnClose(self, event):
+        print "Detectors 3D view was", self.visualization.scene.mlab.view(), "with a roll of", self.visualization.scene.mlab.roll()
+        #Clear the attribute from the parent
+        self.GetParent().frame3d = None
+        event.Skip()
+
+
+
+#================================================================================================
+#================================================================================================
 #================================================================================================
 class DetectorListController:
     """Displays the detectors as a checked list."""
@@ -131,6 +183,9 @@ class DetectorListController:
                 gui_utils.do_recalculation_with_progress_bar(new_sample_U_matrix=None)
                 #Update displays
                 display_thread.handle_change_of_qspace()
+                if not self.panel.frame3d is None:
+                    #The 3D view is open, update that
+                    self.panel.frame3d.update(reset_view=False)
 
             except:
                 #Go back to the old list
@@ -388,14 +443,23 @@ class PanelDetectors(wx.Panel):
         self._init_sizers()
 
     def __init__(self, parent):
+        #No 3D frame to start
+        self.frame3d = None
+
         self._init_ctrls(parent)
         #--- Additional code ---
         #Set up the View objects
         self.controller = DetectorListController(self)
 
     def OnButton_view_detectorsButton(self, event):
-        DetectorView3D().display()
-
+        if self.frame3d is None:
+            #Create the 3D frame
+            self.frame3d = DetectorView3D(self, wx.NewId())
+        else:
+            #Just update
+            self.frame3d.update(reset_view=False)
+        event.Skip()
+        
     def OnChklistDetectorsChecklistbox(self, event):
         self.controller.changed()
         event.Skip()
@@ -456,8 +520,9 @@ if __name__ == "__main__":
 
     model.instrument.inst = model.instrument.Instrument()
     model.goniometer.initialize_goniometers()
-    DetectorView3D().display()
-    sys.exit()
+#    frame3d = DetectorView3D(self, wx.NewId())
+#    frame3d.display()
+#    sys.exit()
 
     import gui_utils
     (app, pnl) = gui_utils.test_my_gui(PanelDetectors)
