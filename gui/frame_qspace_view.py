@@ -186,33 +186,6 @@ class QspaceViewController(HasTraits):
         #Look for the closest reflection to those coordinates
         return model.experiment.exp.get_reflection_closest_to_q( column(coordinates) )
 
-#        point_id = pp.point_id
-#        return model.experiment.exp.get_reflection_from_masked_id(point_id)
-    
-#        if verbose:
-#            actors = pp.actors
-#            print len(actors)
-#            for (i, act) in enumerate(actors):
-#                print "actor", id(act), " position", pp.picked_positions[i]
-#                if id(act) == id(self.mouse_cube.actor.actor):
-#                    print "... mousecube"
-#                if id(act) == id(self.outline.actor.actor):
-#                    print "... outline"
-#                if id(act) == id(self.points_module_surface.actor.actor):
-#                    print "... reflection pixels"
-                
-#        if self.pixel_view:
-#            #In pixel view, the point_id corresponds to the point in the reflections array (after masking)
-#            #This gets the reflection from that id
-#            return model.experiment.exp.get_reflection_from_masked_id(point_id)
-#
-#        else:
-#            #--- We are in sphere mode; pain ITA! --
-#            coordinates = pp.pick_position
-#            #This function will look for the closest one among all the points.
-#            return model.experiment.exp.get_reflection_closest_to_q( column(coordinates) )
-
-
 
     #-----------------------------------------------------------------------------------------------
     def on_button_press(self, obj, evt):

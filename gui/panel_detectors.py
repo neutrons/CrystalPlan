@@ -88,7 +88,7 @@ class DetectorVisualization(HasTraits):
         mlab.orientation_axes()
         if reset_view:
             #Set the camera
-            mlab.view(56.372692217264493, 43.295412845543929, 2457.6030853527195)
+            mlab.view(56.372692217264493, 43.295412845543929, 2457.6030853527195, focalpoint=np.zeros(3))
             mlab.roll(2.6)
 
         self.scene.disable_render = False

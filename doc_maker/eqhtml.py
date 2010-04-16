@@ -110,4 +110,4 @@ if __name__=="__main__":
 #    destfn = sys.argv[2]
     sourcefn = "../docs/user_guide.html"
     destfn = "../docs/user_guide_eq.html"
-    embed_latex(sourcefn, destfn)
+    embed_latex_in_html(sourcefn, destfn)

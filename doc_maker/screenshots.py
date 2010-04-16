@@ -121,7 +121,7 @@ def screenshot_of(window, filename, margin=0, gradient_edge=0, minheight=False):
             #Single window/sizer etc.
             rect = get_screen_rect(window)
             if minheight:
-                rect.Height = window.GetMinHeight()
+                rect.Height = window.GetMinSize()[1] #Minimum height
 
     #Make a 4-element list for margins
     if not hasattr(margin, "__iter__"):
@@ -174,6 +174,22 @@ def screenshot_of(window, filename, margin=0, gradient_edge=0, minheight=False):
     img.SaveFile(os.path.join(base_screenshot_path, os.path.splitext(filename)[0] + ".png"), wx.BITMAP_TYPE_PNG)
 
 
+#------------------------------------------------------------
+def animated_screenshot(scene, filename):
+    files = []
+    for (i, az) in enumerate(np.arange(0, 360, 10)):
+        print "azimuth", az
+        (azim, elev, dist, focalpoint) = scene.mlab.view()
+        scene.mlab.view(az, -45, dist, focalpoint)
+        fname = "/tmp/frame"+str(i)+".png"
+        files.append(fname)
+        scene.mlab.savefig(fname)
+        #screenshot_frame(frame, "frame" + str(i))
+    #Call program to assemble them
+    os.system("../doc_maker/apngasm " + filename + " " + " ".join(files) + " 1 20")
+    #Erase the temp files
+    for fname in files:
+        os.remove(fname)
 
 if __name__=="__main__":
     app = wx.PySimpleApp()

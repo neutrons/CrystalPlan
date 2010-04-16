@@ -7,6 +7,7 @@ Provides useful functions that extend the mlab (enthought.mayavi.mlab)
 # Version: $Id$
 
 #--- General Imports ---
+from vtk.util.colors import antique_white
 import numpy as np
 
 #--- GUI Imports ---
@@ -137,7 +138,8 @@ def draw_cartesian_axes(size=10, offset=np.array([0,0,0]), textwidth=0.006):
     mlab.text(size + offset[0], offset[1], z=offset[2], text='X', width=textwidth)
     mlab.text(offset[0], size + offset[1], z=offset[2], text='Y', width=textwidth)
     mlab.text(offset[0], offset[1], z=(size + offset[2]), text='Z', width=textwidth)
-    
+
+
 
 if __name__ == "__main__":
     f = mlab.figure("Detectors", size=(600, 500))

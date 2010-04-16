@@ -2,7 +2,6 @@
 CrystalPlan user guide.
 """
 
-from panel_goniometer import PanelGoniometer
 import wx
 import sys
 import os
@@ -41,6 +40,28 @@ def click(widget):
         call_event(widget, wx.EVT_BUTTON)
     else:
         raise NotImplementedError("Can't simulate click on " + widget.Name)
+
+#-------------------------------------------------------------------------------
+def select_name(widget, entry):
+    """Select an entry by name in a list-type widget (Choice, ListBox, etc.)."""
+
+    def send_event():
+        """To send the selection event to each type of widget"""
+        if isinstance(widget, wx.Choice):
+            call_event(widget, wx.EVT_CHOICE)
+        else:
+            raise NotImplementedError("Can't send_event on " + widget.Name)
+
+    if isinstance(widget, wx.ItemContainer):
+        for i in xrange(widget.GetCount()):
+            if widget.GetString(i) == entry:
+                widget.SetSelection(i)
+                send_event()
+                return
+        raise ValueError("The entry '%s' was not found in %s, and could not be selected." % (entry, widget.Name))
+    else:
+        raise NotImplementedError("Can't select_name on " + widget.Name)
+
 
 
 #========================================================================================================
@@ -112,8 +133,9 @@ def make_animated_tab_click(fm):
 
     files = ['../docs/screenshots/frame_main-tab'+str(i)+".png" for i in xrange(fm.notebook.GetPageCount())]
     #Assemble into animated png
-    ca(os.system, "../doc_maker/apngasm ../docs/screenshots/frame_main-tab_anim.png " + " ".join(files) + " 5 10")
-
+    os.system("../doc_maker/apngasm ../docs/screenshots/frame_main-tab_anim.png " + " ".join(files) + " 5 10")
+    for fname in files:
+        os.remove(fname)
 
 
 #The following function will be executed line-by-line by a separate thread.
@@ -126,8 +148,10 @@ def user_guide_script():
     inst = model.experiment.exp.inst
 
     ca(screenshot_frame, fm, 'frame_main')
-    #make_animated_tab_click(fm)
-    warnings.warn("Hey! Turn the animated tab maker back on!")
+    wait(50)
+#    make_animated_tab_click(fm)
+    #warnings.warn("Hey! Turn the animated tab maker back on!")
+    
 
     # --------------------- Q-Space Tab --------------------
     ca(fm.notebook.SetSelection, 0)
@@ -154,16 +178,39 @@ def user_guide_script():
     assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
     ca(screenshot_of, td.button_view_detectors, 'detectors-button_view_detectors', minheight=True, margin=6, gradient_edge=4)
 
-    #TODO: 3d shot of detectors
-#    ca(click, td.button_view_detectors)
-#    wait(1800)
+    #3d shot of detectors
+    ca(click, td.button_view_detectors)
+    wait(2000)
+    ca(screenshot_frame, td.frame3d, 'detectors-3d_view')
+
 
     # ------------------------ goniometer tab ----------------------
     ca(fm.notebook.SetSelection, 2)
     wait(50)
-    #@type td PanelGoniometer
-    td = fm.tab_goniometer
+    #@type tg PanelGoniometer
+    tg = fm.tab_goniometer
+    ca(screenshot_of, tg.boxSizerSelected, 'goniometer-selected', minheight=True, margin=[10, 10, 40, 10], gradient_edge=4)
+    wait(50)
+    ca(screenshot_of, tg.buttonSwitchGoniometer, 'goniometer-buttonSwitchGoniometer', margin=6, gradient_edge=0)
+    wait(50)
+    #Select the TopazInHouseGoniometer and switch to it
+    ca(select_name, tg.choiceGonio, model.goniometer.TopazInHouseGoniometer().name)
+    wait(50)
+    ca(screenshot_of, tg.choiceGonio, 'goniometer-choice', margin=6, gradient_edge=0)
+    wait(50)
+    ca(screenshot_of, [tg.staticTextDesc, tg.staticTextDescLabel], 'goniometer-desc', margin=6, gradient_edge=0)
+    ca(click, tg.buttonSwitchGoniometer)
+    wait(100)
+    assert isinstance(inst.goniometer, model.goniometer.TopazInHouseGoniometer), "we picked a TopazInHouseGoniometer"
 
+    # ------------------------- Sample tab -----------------------
+    ca(fm.notebook.SetSelection, 3)
+    wait(50)
+    #@type ts PanelSample
+    ts = fm.tab_sample
+    ca(screenshot_of, ts.crystal_control, 'sample-info', margin=10, gradient_edge=0)
+    ca(screenshot_of, ts.buttonEditCrystal, 'sample-buttonEditCrystal', margin=5)
+    
 
     # ------------------------- Trial Positions tab -----------------------
     ca(fm.notebook.SetSelection, 4)
@@ -176,18 +223,19 @@ def user_guide_script():
 #    ca(call_event, fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
 #    wait(1000)
 #    assert len(model.experiment.exp.inst.positions)==1, "Length of positions calculated was to be 1, it was %d." % len(model.experiment.exp.inst.positions)
-#    ca(fm.tab_add.controller.textAngles[0].SetValue, "arange(0,180,10)")
+    ca(fm.tab_add.controller.textAngles[0].SetValue, "arange(0,180,10)")
     ca(screenshot_of, [fm.tab_add.boxSizerAngles] , 'add_positions-text', margin=20)
     wait(100)
     ca(screenshot_of, [fm.tab_add.buttonCalculate, fm.tab_add.buttonCancel] , 'add_positions-start_button', margin=20)
     ca(call_event, fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
-    wait(200)
+    wait(500)
     ca(screenshot_of, [fm.tab_add.gaugeProgress, fm.tab_add.staticTextProgress] , 'add_positions-progress_bar', margin=10)
     ca(screenshot_of, [fm.tab_add.buttonCalculate, fm.tab_add.buttonCancel] , 'add_positions-cancel_button', margin=20)
-    wait(200)
+    wait(2000)
     #assert len(model.experiment.exp.inst.positions)==2, "Length of positions calculated was to be 19, it was %d." % len(model.experiment.exp.inst.positions)
-#---END---
 
+
+#---END---
     
 #    #Try position tab
 #    fm.notebook.SetSelection(4)

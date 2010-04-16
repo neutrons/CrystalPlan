@@ -16,13 +16,26 @@
 img {
 	vertical-align:middle;
 	}
+IMG.frameshot 
+	{
+	display: block;
+	margin-left: auto;
+   margin-right: auto;
+   padding-top: 15px;
+   padding-bottom: 15px;
+   }
 dt {
 	display: list-item;
 	font-weight:bold;
 	}
+h2 {
+	font-size:26pt;
+	border-top:medium solid #000000;
+	}
 h3 {
 	font-size:20pt;
-	border-top:medium solid #000000;
+	border-top:thin solid #000000;
+	padding-top:5px;
 	}
 </style>
 
@@ -64,7 +77,7 @@ written April 14th, 2010.
 The GUI launches in two new windows. Select the main window:
 </p>
 <br/>
-<img src="screenshots/frame_main.png" width="400" border="0" alt="The main CrystalPlan GUI window."/><br/>
+<img class="frameshot" src="screenshots/frame_main.png" width="400" border="0" alt="The main CrystalPlan GUI window."/><br/>
 <br/>
 Most of your workflow will occur by navigating between these notebook tabs:
 <br/><img src="screenshots/frame_main-tab_anim.png" border="0"/>
@@ -76,7 +89,7 @@ Most of your workflow will occur by navigating between these notebook tabs:
 <p>Here you will set the general parameters of your experiment.</p>
 
 <ul>
-<li>Click the "Q-Space" tab, if it not already selected. It shows the following parameters:
+<li>Click the "Q-Space" tab, if it not already selected. If necessary, change the parameters so that it matches those shown below:
 <br/><img src="screenshots/startup-traits.png" border="0" alt=""/>
 </li>
 <ul>
@@ -92,7 +105,7 @@ Most of your workflow will occur by navigating between these notebook tabs:
 
 <li>When done, click the 
 <img src="screenshots/startup-apply.png" border="0" alt="Apply Changes"/>
-button. Changing these settings requires re-doing a lot of calculations, which may take some time if you have a lot of orientations saved, . 
+button. Changing these settings requires re-doing a lot of calculations, which may take some time if you have a lot of orientations saved. 
 </li>
 </ul>
 
@@ -100,6 +113,8 @@ button. Changing these settings requires re-doing a lot of calculations, which m
 <!-- ========================================================= -->
 
 <h3>3. Detectors</h3>
+
+Here, you ensure that CrystalPlan has the correct detector geometry loaded.
 
 <ul>
 <li>Click the "Detectors" tab.</li>
@@ -110,7 +125,7 @@ button. Changing these settings requires re-doing a lot of calculations, which m
 <li>After a few seconds, the detector geometry is loaded. To confirm that the detectors are in the correct positions, you can visualize them in direct space by clicking 
 <img src="screenshots/detectors-button_view_detectors.png" border="0" alt=""/>, 
 which displays them in a window like this one:
-<br/><img src="screenshots/detectors-3d_view.png" border="0" alt=""/>
+<br/><img class="frameshot" src="screenshots/detectors-3d_view.png" border="0" alt=""/>
 </li>
 <li>We will come back later to the other controls on this tab.</li>
 </ul>
@@ -120,14 +135,41 @@ which displays them in a window like this one:
 
 <h3>4. Goniometer</h3>
 
-<ul>
-<li>Click the "Goniometer" tab.</li>
 
+Now, you want to make sure that CrystalPlan is aware of which goniometer is currently in
+use in your instrument.
+
+<ul>
+<li>Click the "Goniometer" tab. The goniometer that is currently selected is shown at the top:
+<img src="screenshots/goniometer-selected.png" border="0" alt=""/>
+</li>
+<li> Select the TOPAZ in-house goniometer:
+<br/><img src="screenshots/goniometer-choice.png" border="0" alt=""/>
+</li>
+<li>Some general information about the goniometer is shown:
+<br/><img src="screenshots/goniometer-desc.png" border="0" alt=""/>
+</li>
+<li>But your selection is not complete until you click 
+<img src="screenshots/goniometer-buttonSwitchGoniometer.png" border="0" alt=""/>
+</li>
+<li>The program will now be aware of the sample orientation angle limitations that your instrument has, and will give you warnings if you try to use an inaccessible sample orientation.</li>
 </ul>
 
 <!-- ========================================================= -->
 
-<h3>???. Adding Sample Orientations</h3>
+<h3>5. Sample Settings</h3>
+
+Where you enter or load in the parameters of your crystal (lattice, UB matrix, etc.)
+
+<ul>
+<li>Click the "Sample" tab. You are presented with an overview of the crystal parameters
+<br/><img src="screenshots/sample-info.png" border="0" alt=""/>
+</li>
+
+</ul>
+<!-- ========================================================= -->
+
+<h3>6. Adding Sample Orientations</h3>
 <ul>
 <li>
 Click the "Start" button to begin the calculation. 

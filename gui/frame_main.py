@@ -7,6 +7,8 @@
 #--- General Imports ---
 import wx.gizmos
 import sys
+import doc_maker
+import doc_maker.screenshots
 
 #--- GUI Imports ---
 import panel_experiment
@@ -149,6 +151,9 @@ class FrameMain(wx.Frame):
 
     def OnMenuGenerateUserGuide(self, event):
 #        gui_utils.find_parent_frame(self.tab_add.staticTextHelp)
+#        doc_maker.screenshots.animated_screenshot( self.tab_detectors.frame3d, self.tab_detectors.frame3d.visualization.scene)
+#        fq = frame_qspace_view.get_instance(self)
+#        doc_maker.screenshots.animated_screenshot( fq.controller.scene, "../docs/qspace_rotate.png" )
         #Make the user guide screenshots
         doc_maker.user_guide.generate_user_guide(self, frame_qspace_view.get_instance(self))
         event.Skip()
