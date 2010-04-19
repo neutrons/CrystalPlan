@@ -14,7 +14,7 @@ import numpy as np
 #--- Model Imports ---
 import crystal_calc
 import numpy_utils
-from numpy_utils import column
+from numpy_utils import column, vector_length
 import ubmatrixreader
 
 #--- Traits Imports ---
@@ -46,6 +46,9 @@ class Crystal(HasTraits):
 
     #Resulting or input UB matrix
     ub_matrix = Array( shape=(3,3), dtype=np.float)
+
+    #Sample mounting orientation matrix
+    u_matrix = Array( shape=(3,3), dtype=np.float)
 
     #Its reciprocal lattice vectors. Uses the physics definition, including the 2pi factor.
     recip_a = Array( shape=(3,), dtype=np.float)
@@ -127,39 +130,74 @@ class Crystal(HasTraits):
 
     #--------------------------------------------------------------------
     def make_ub_matrix(self):
-        """Generate the UB matrix using the settings saved here."""
+        """Generate the UB matrix using the settings in the object
+        (the sample mounting angles and lattice params)."""
         #Convert the angles
         phi = np.deg2rad(self.sample_mount_phi)
         chi = np.deg2rad(self.sample_mount_chi)
         omega = np.deg2rad(self.sample_mount_omega)
-        #Make UB matrix
+
+        #Make U matrix
+        self.u_matrix = numpy_utils.rotation_matrix(phi, chi, omega)
+
+        #Now the UB matrix
         self.ub_matrix = crystal_calc.make_UB_matrix(self.lattice_lengths, self.lattice_angles, phi, chi, omega)
-        #print "Determinant of UB is ", np.linalg.det(self.ub_matrix)
 
 
     #--------------------------------------------------------------------
-    def read_ubmatrix_file(self, filename):
-        """Load a ISAW-produced UB matrix text file into this crystal."""
+    def read_ISAW_ubmatrix_file(self, filename, angles):
+        """Load a ISAW-produced UB matrix text file into this crystal.
+
+        Parameters:
+            filename: text file to load
+            angles: list of 3 sample orientation angles, in radians, at
+                time data from UB matrix was taken.
+        """
+        #Check parameters
+        if len(angles) != 3:
+            raise ValueError("read_ISAW_ubmatrix_file angles parameter needs 3 angles provided!")
+
         #Load the file
         ret = ubmatrixreader.read_ISAW_ubmatrix_file(filename, False)
         if not ret is None:
             #load went okay
             (lattice_lengths, lattice_angles_deg, ub_matrix) = ret
+
+            #Save here
+            self.lattice_lengths = lattice_lengths
+            self.lattice_angles_deg = lattice_angles_deg
+            #Make the B matrix etc.
+            self.calculate_reciprocal()
+
+            #Okay, now we need to account for the ISAW ub matrix file
+            #   using IPNS conventions:
+            # its coordinates are a right-hand coordinate system where
+            #  x is the beam direction and z is vertically upward.(IPNS convention)
+
+            #First we find the U matrix
+            original_U = self.calculate_u_matrix(ub_matrix)
+
+            #Rotate U to account for goniometer angles.
+            (phi, chi, omega) = angles
+            #The transpose is the inverse of the rotation matrix
+            gon_rot = numpy_utils.rotation_matrix(phi, chi, omega).transpose()
+            #Multiplying the matrix like this (goniometer.T * old_U) takes out the goniometer effect to it.
+            self.u_matrix = np.dot(gon_rot, original_U)
+            
+            #Re-create a UB matrix that uses the SNS convention now
+            new_ub_matrix = np.dot(self.u_matrix, self.get_B_matrix())
+            self.ub_matrix = new_ub_matrix
+
             #Set to "not manual"
             self.generate_ub_matrix = False
             #For next time
             self.ub_matrix_last_filename = filename
-            #Save here
-            self.lattice_lengths = lattice_lengths
-            self.lattice_angles_deg = lattice_angles_deg
-            self.ub_matrix = ub_matrix
-            #print "Determinant of UB READ FROM FILE is ", np.linalg.det(ub_matrix)
-            self.calculate_reciprocal()
 
 
     #--------------------------------------------------------------------
     def calculate_reciprocal(self):
-        """Calculate the reciprocal lattice of this crystal."""
+        """Calculate the reciprocal lattice of this crystal, from the direct
+        lattice parameters."""
         (self.recip_a, self.recip_b, self.recip_c) = \
             crystal_calc.make_reciprocal_lattice(self.lattice_lengths, self.lattice_angles)
         #Also make the matrix
@@ -167,20 +205,50 @@ class Crystal(HasTraits):
 
     #--------------------------------------------------------------------
     def get_u_matrix(self):
-        """Get the sample's U-matrix: the matrix describing the sample mounting orientation.
-        It is calculated from the UB matrix (which may have been generated or read from file),
-        by calculating the B matrix from the lattice parameters.
+        """Return the previously-calculated U matrix."""
+        return self.u_matrix
+    
+
+    #--------------------------------------------------------------------
+    def calculate_u_matrix(self, ub_matrix):
+        """Calculate the sample's U-matrix: the matrix describing the sample mounting orientation.
         So U = UB * (B)^-1
+
+        Parameters:
+            ub_matrix: ISAW-style UB matrix, after transposing and 2*pi.
+                Coordinates will be transformed from IPNS convention to SNS convention
+
         """
         #The reciprocal_lattice lattice is the same as the B matrix
         B = self.reciprocal_lattice
         #Try to invert it
         try:
             invB = np.linalg.inv(B)
-            return np.dot(self.ub_matrix, invB)
+            U = np.dot(ub_matrix, invB)
+            #Test that U must be orthonormal.
+            U2 = np.dot(U, U.transpose())
+            assert np.allclose(U2, np.eye(3), atol=1e-5), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
+            #Okay, now let's permute the rows for IPNS->SNS convention
+            U_out = 1. * U
+            U_out[2] = U[0] #x gets put in z
+            U_out[1] = U[2] #z gets put in y
+            U_out[0] = U[1] #y gets put in x
+            U = U_out
+            #Do another test
+            U2 = np.dot(U, U.transpose())
+            assert np.allclose(U2, np.eye(3), atol=1e-5), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
+
+            return U
         except np.linalg.LinAlgError:
             raise Error("Invalid reciprocal lattice found; B matrix could not be inverted.")
 
+    #--------------------------------------------------------------------
+    def get_B_matrix(self):
+        """Returns the B matrix."""
+        return  self.reciprocal_lattice
+
+##        UB = self.ub_matrix
+##        g_star = UB * UB.transpose()
 
 
 #================================================================================
@@ -609,12 +677,9 @@ class TestCrystal(unittest.TestCase):
         c.lattice_lengths = (1,1,1)
         c.calculate_reciprocal()
         M = self.calc_ub(15,35,-80)
-#        print "M is", M
-#        print "UB is", c.ub_matrix
-#        print "B is", c.reciprocal_lattice
-#        print "U is", c.get_u_matrix()
-#        print "reUB is", np.dot(c.get_u_matrix(), c.reciprocal_lattice)
-        assert np.allclose(M, c.get_u_matrix()), "get_u_matrix for some angles 1."
+        U = c.get_u_matrix()
+        assert np.linalg.det(U) == 1, "get_u_matrix: det(U) == 1. Instead we got %s" % (np.linalg.det(U))
+        assert np.allclose(M, U), "get_u_matrix for some angles 1."
         M = self.calc_ub(10,-30,+345)
         assert np.allclose(M, c.get_u_matrix()), "get_u_matrix for some angles 2."
 
@@ -629,17 +694,40 @@ class TestCrystal(unittest.TestCase):
         assert np.allclose(c.lattice_angles, (np.pi/4,np.pi/3,np.pi/2)), "Lattice angles (rad) setter worked"
         assert np.allclose(c.lattice_angles_deg, (45.,60.,90.)), "Lattice angles (rad) setter worked"
 
-    def test_read_ubmatrix_file(self):
-        """Crystal.read_ubmatrix_file"""
+    def DONT_test_read_ubmatrix_file(self):
+        """Crystal.read_ISAW_ubmatrix_file
+        """
         c = self.c
-        c.read_ubmatrix_file("sampleubMatrix.txt")
+        c.read_ISAW_ubmatrix_file("data/sampleubMatrix.txt")
         #Here is the (transposed) UB matrix from that file.
         ub = np.fromstring(""" -0.017621 -0.035104 -0.037863
                              -0.018495 -0.032401  0.038647 
                              -0.133741  0.071505 -0.004055""", sep=" ")
         #2 pi factor is NOT included in the file given.
         ub = ub.reshape( 3,3 ).transpose() * 2*pi
-        assert np.allclose(c.ub_matrix, ub), "UB matrices match."
+        assert np.allclose(c.ub_matrix, ub), "UB matrices match. I read %s" % (ub)
+
+    def test_ub_matrix_and_recip_lattice(self):
+        #@type c Crystal
+        print "test_ub_matrix_and_recip_lattice"
+        c = self.c
+        c.read_ISAW_ubmatrix_file("data/natrolite_807_ub.txt", [0,0,0])
+        UB = c.ub_matrix
+        print "UB matrix loaded (including 2pi) is:\n", UB
+
+        print "reciprocal lattice (B) found using the direct lattice params:\n", c.reciprocal_lattice
+        g_star = np.dot(c.reciprocal_lattice.transpose(), c.reciprocal_lattice.transpose())
+        print "a*.a* is", vector_length(c.recip_a)**2
+        print "b*.b* is", vector_length(c.recip_b)**2
+        print "c*.c* is", vector_length(c.recip_c)**2
+        g_star3 = np.dot(UB.transpose(), UB)
+        print "G* found using the direct lattice params:\n", g_star
+        print "G* found using UB.transpose() * UB:\n", g_star3
+        
+        #Check the U matrix
+        U = c.get_u_matrix()
+        assert np.allclose(np.linalg.det(U), 1), "get_u_matrix: det(U) == 1. Instead we got %s" % (np.linalg.det(U))
+
 
     def test_read_is_lattice_valid(self):
         """Crystal.is_lattice_valid"""

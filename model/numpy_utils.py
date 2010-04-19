@@ -410,6 +410,12 @@ class TestNumpyUtils(unittest.TestCase):
         for x in xrange(3): r[x,x] = [-1, 1, -1][x]
         rot = rotation_matrix(np.pi,0,0)
         assert np.allclose(rot, r), "Phi = pi"
+        assert np.allclose(np.dot(rot, rot.transpose()), np.eye(3)), "Rotation matrix is orthonormal: M*M.transpose() == Identity."
+
+        rot = rotation_matrix(np.random.random(), np.random.random(), np.random.random())
+        assert np.allclose(np.dot(rot, rot.transpose()), np.eye(3)), "Rotation matrix is orthonormal: M*M.transpose() == Identity."
+        rot = rotation_matrix(np.random.random()*10, np.random.random()*10, np.random.random()*10)
+        assert np.allclose(np.dot(rot, rot.transpose()), np.eye(3)), "Rotation matrix is orthonormal: M*M.transpose() == Identity."
 
         vr = np.dot(rotation_matrix(np.pi/2,0,0),  column([1,0,0]) ).flatten()
         assert np.allclose(vr, [0,0,-1.] ), "Phi = +pi/2: +x points to -z now"

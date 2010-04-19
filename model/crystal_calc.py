@@ -173,7 +173,7 @@ def get_sample_rotation_matrix_to_get_beam(beam_wanted, hkl, ub_matrix, starting
 #    print "q_over_a", q_over_a.ravel()
 #    print "rotation_axis", rotation_axis
 #    print "angle", angle
-    print "get_sample_rotation_matrix_to_get_beam: angle was", np.rad2deg(angle)
+#    print "get_sample_rotation_matrix_to_get_beam: angle was", np.rad2deg(angle)
 
     return (R, wavelength)
 
@@ -243,6 +243,7 @@ def make_lattice_vectors(lattice_lengths, lattice_angles):
     c_vec = column( [c*cos(beta), -c*sin(beta)*cos_alpha_star, 1/c_star] )
 
     return (a_vec, b_vec, c_vec, V)
+
 
 
 #========================================================================================================
@@ -788,7 +789,7 @@ class TestCrystalCalc(unittest.TestCase):
         res = (vectors_to_matrix(a,b,c))
         M = np.array([ [0.2, 0, 0], [0, 0.1, 0], [0, 0, 0.05] ]) * 2 * pi
         assert np.allclose(M, res), "orthorombic reciprocal lattice"
-        assert self.check_matrix_lengths(res, lat_inverse), "orthorombic: reciprocal vectors are correct length."
+        assert self.check_matrix_lengths(res, lat_inverse), "orthorombic: reciprocal lattice matrix is correct."
         #Triclinic example
         angles = tuple( np.deg2rad( [30, 45, 60]))
         V = 335.219981051 #From calculation of the program

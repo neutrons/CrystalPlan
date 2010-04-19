@@ -26,6 +26,7 @@ import frame_qspace_view
 import display_thread
 import wx
 import model
+import CrystalPlan_version
    
 
 
@@ -133,7 +134,7 @@ class CrystalPlanApp(wx.App):
 #-------------------------------------------------------------------------
 #if __name__ == '__main__':
 def launch_gui():
-    print "-------------- CrystalPlan GUI is starting -----------------"
+    print "-------------- %s %s GUI is starting -----------------" % (CrystalPlan_version.package_name, CrystalPlan_version.version)
 
     #Create a StdOut wrapper
     global out_wrapper

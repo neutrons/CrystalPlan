@@ -8,17 +8,35 @@ GUI to set crystal parameters, as a dialog.
 import wx
 import os
 import copy
+import numpy as np
 
 #--- Traits imports ---
 from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array
 from enthought.traits.ui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor
 from enthought.traits.ui.editors import EnumEditor
+from enthought.traits.ui.menu import OKButton, CancelButton
 
 #--- GUI Imports ---
 
 #--- Model Imports ---
 import model
 from model.crystals import Crystal
+
+# ===========================================================================================
+class SampleOrientationWhenUBMatrixWasSaved(HasTraits):
+    """Small Traits class to prompt the user to enter the goniometer settings used
+    when data was acquired (for the purposes of loading an ISAW UB matrix."""
+
+    phi_degrees = Float(0.)
+    chi_degrees = Float(0.)
+    omega_degrees = Float(0.)
+    
+    view = View(
+        Item('phi_degrees', label='Phi (degrees)'),
+        Item('chi_degrees', label='Chi (degrees)'),
+        Item('omega_degrees', label='Omega (degrees)'),
+        buttons=[OKButton, CancelButton]
+        )
 
 # ===========================================================================================
 class CrystalEditorTraitsHandler(Handler):
@@ -50,6 +68,7 @@ class CrystalEditorTraitsHandler(Handler):
         if self.frame.crystal.generate_ub_matrix:
             self.frame.crystal.make_ub_matrix()
         #Make sure layout is okay. Might not be needed
+        self.frame.boxSizerParams.Layout()
         self.frame.GetSizer().Layout()
 
     #---------------------------------------------------------------------------
@@ -71,7 +90,7 @@ class DialogEditCrystal(wx.Dialog):
     def _init_coll_boxSizerButtons_Items(self, parent):
         # generated method, don't edit
 
-        parent.AddWindow(self.staticTextSpacer1, 1, border=0, flag=0)
+        parent.AddStretchSpacer(1)
         parent.AddWindow(self.buttonOK, 0, border=0, flag=0)
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
         parent.AddWindow(self.buttonCancel, 0, border=0, flag=0)
@@ -81,6 +100,8 @@ class DialogEditCrystal(wx.Dialog):
         # generated method, don't edit
         parent.AddSizer(self.boxSizerParams, 1, border=0, flag=wx.EXPAND)
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
+        parent.AddWindow(self.staticTextHelp1,0, border=0, flag=wx.CENTER)
+        parent.AddWindow(self.staticTextHelp2,0, border=0, flag=wx.CENTER)
         parent.AddWindow(self.buttonReadUB, 0, border=0, flag=wx.CENTER)
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
         parent.AddSizer(self.boxSizerButtons, 0, border=0, flag=wx.EXPAND)
@@ -101,7 +122,7 @@ class DialogEditCrystal(wx.Dialog):
               parent=prnt, pos=wx.Point(702, 235), size=wx.Size(475, 600),
               style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
               title=u'Edit Crystal Parameters')
-        self.SetClientSize(wx.Size(500, 750))
+        self.SetClientSize(wx.Size(500, 900))
 
         self.buttonReadUB = wx.Button(
               label=u'Read UB matrix from file...', name=u'buttonReadUB', parent=self,
@@ -118,8 +139,11 @@ class DialogEditCrystal(wx.Dialog):
               563), size=wx.Size(150, 29), style=0)
         self.buttonCancel.Bind(wx.EVT_BUTTON, self.OnbuttonCancelButton)
 
-        self.staticTextSpacer1 = wx.StaticText(label=u' ', name=u'staticTextSpacer1', parent=self,
-              pos=wx.Point(166, 563), size=wx.Size(320, 17), style=0)
+        self.staticTextHelp1 = wx.StaticText(label=u'Loading an ISAW UB matrix file:',
+            parent=self, pos=wx.Point(166, 563), style=wx.ALIGN_CENTER)
+        self.staticTextHelp1.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD, False, u'Sans'))
+        self.staticTextHelp2 = wx.StaticText(label=u'Before loading the file, please enter\n the goniometer settings at the time you acquired\nthe data from which this UB matrix was taken.',
+            name=u'staticTextHelp2', parent=self, pos=wx.Point(166, 563), style=wx.ALIGN_CENTER)
 
         self._init_sizers()
 
@@ -138,6 +162,13 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
                     )
 
         fmt = "%.3f"
+        self.generate_ub_group = Group(
+            angle_label,
+            Item("sample_mount_phi", label="Sample mounting angle phi\n (1st rotation, around Y)", format_str=fmt, enabled_when="generate_ub_matrix"),
+            Item("sample_mount_chi", label="Sample mounting angle chi\n (2nd rotation, around Z)", format_str=fmt, enabled_when="generate_ub_matrix"),
+            Item("sample_mount_omega", label="Sample mounting angle omega\n (3rd rotation, around Y)", format_str=fmt, enabled_when="generate_ub_matrix"),
+            label="Sample mounting", visible_when="generate_ub_matrix")
+
         view = View(
         Group(
             Item("name", label="Crystal Name"),
@@ -151,15 +182,9 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
             Item("point_group_name", label="Point Group:", editor=EnumEditor(name="point_group_name_list")),
             label="Lattice parameters" ),
             Spring(label=" ", emphasized=False, show_label=False),
-        Group(
-            angle_label,
-            Item("sample_mount_phi", label="Sample mounting angle phi\n (1st rotation, around Y)", format_str=fmt, enabled_when="generate_ub_matrix"),
-            Item("sample_mount_chi", label="Sample mounting angle chi\n (2nd rotation, around Z)", format_str=fmt, enabled_when="generate_ub_matrix"),
-            Item("sample_mount_omega", label="Sample mounting angle omega\n (3rd rotation, around Y)", format_str=fmt, enabled_when="generate_ub_matrix"),
-            label="Sample mounting"),
-
+            Item("generate_ub_matrix", label="Generate a UB matrix for testing?"),
+        self.generate_ub_group,
             Spring(label=" ", emphasized=False, show_label=False),
-            Item("generate_ub_matrix", label="Generate UB matrix using sample mount angles?\nSample mounting is ignored unless checked."),
         Group(
             Item("ub_matrix", label="Sample's UB Matrix", style='readonly', format_str="%9.5f"),
             ),
@@ -169,9 +194,14 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
         self.original_crystal = my_crystal
         self.crystal = copy.copy(my_crystal)
         self.handler = CrystalEditorTraitsHandler(self)
+
         #Make it into a control
         self.control = self.crystal.edit_traits(parent=self, view=view, kind='subpanel', handler=self.handler).control
-        self.boxSizerParams.AddWindow(self.control, 3, border=1, flag=wx.EXPAND)
+        self.boxSizerParams.AddWindow(self.control, 0, border=1, flag=wx.EXPAND)
+
+        self.ub_orientation = SampleOrientationWhenUBMatrixWasSaved()
+        self.control_load = self.ub_orientation.edit_traits(parent=self, kind='subpanel').control
+        self.boxSizerAll.InsertWindow(4, self.control_load, 0, border=1, flag=wx.EXPAND | wx.SHRINK)
         self.GetSizer().Layout()
 
 
@@ -207,7 +237,10 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
         if not os.path.exists(filename):
             wx.MessageDialog(self, "File '%s' was not found!" % filename, 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
         else:
-            self.crystal.read_ubmatrix_file(filename)
+            #Now load the file, using the sample orientation angles from before
+            angles = np.array([self.ub_orientation.phi_degrees, self.ub_orientation.chi_degrees, self.ub_orientation.omega_degrees])
+            angles = np.deg2rad(angles)
+            self.crystal.read_ISAW_ubmatrix_file(filename, angles)
 
         event.Skip()
 

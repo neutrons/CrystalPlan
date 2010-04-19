@@ -21,7 +21,7 @@ def read_ISAW_ubmatrix_file(filename, verbose):
 
     Parameters:
         filename: string, path to the file to load
-        verbose: True for console output
+        verbose: more output
 
     Returns:
         lattice_lengths: tuple of 3 lattice dimensions in angstroms.
@@ -82,11 +82,14 @@ def read_ISAW_ubmatrix_file(filename, verbose):
         #  x is the beam direction and z is vertically upward.(IPNS convention)
 
         #First, we multiply by the missing 2 * pi
-        ub_out =  2 * np.pi * ub_matrix
-        #Now we swap axes around to change the coordinate system
-        ub_out[2] = ub_matrix[0] #x gets put in z
-        ub_out[1] = ub_matrix[2] #z gets put in y
-        ub_out[0] = ub_matrix[1] #y gets put in x
+        ub_matrix =  2 * np.pi * ub_matrix
+
+        #Make a copy
+        ub_out = 1. * ub_matrix
+        #Now we permute COLUMNS around to change the coordinate system
+#        ub_out[:,2] = ub_matrix[:,0] #x gets put in z
+#        ub_out[:,1] = ub_matrix[:,2] #z gets put in y
+#        ub_out[:,0] = ub_matrix[:,1] #y gets put in x
 
         return (lattice_lengths, lattice_angles, ub_out)
     
@@ -115,7 +118,7 @@ if __name__ == "__main__":
 
     #Arguments were sufficient.
     filename = args[0]
-    (lattice_lengths, lattice_angles, ub_matrix) = read_ubmatrix_file(filename, options.verbose)
+    (lattice_lengths, lattice_angles, ub_matrix) = read_ISAW_ubmatrix_file(filename, options.verbose)
 
     #Perhaps format ouptput differently.
     print "Resulting ub_matrix Matrix is:\n", ub_matrix
