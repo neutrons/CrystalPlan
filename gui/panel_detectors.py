@@ -208,7 +208,7 @@ class DetectorListController:
         #Add each item to the list
         for i in range( len(model.instrument.inst.detectors) ):
             det = model.instrument.inst.detectors[i]
-            s = "%2d: %7s" % (i, det.name)
+            s = "%7s" % (det.name)
             if use_coverage: s = s + (" : %6.2f%%" % self.detector_coverage[i])
             items.append(s)
             

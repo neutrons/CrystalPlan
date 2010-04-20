@@ -208,13 +208,14 @@ class PanelReflectionMeasurement(wx.Panel):
             hkl_str = "%d,%d,%d" % self.refl.hkl
             self.staticTextAngles.SetLabel(meas.make_sample_orientation_string() + " as HKL %s" % hkl_str )
 
-            det_name = ""
+            det_name = "None"
             try:
-                det_name = "("+model.instrument.inst.detectors[meas.detector_num].name + ")"
+                det_name = model.instrument.inst.detectors[meas.detector_num].name
             except:
                 pass
 
-            self.staticTextDetector.SetLabel("  %d %s" % (meas.detector_num, det_name))
+            #self.staticTextDetector.SetLabel("  %d %s" % (meas.detector_num, det_name))
+            self.staticTextDetector.SetLabel(" %s" % (det_name))
             self.staticTextWL.SetLabel((fmt % meas.wavelength) + u" \u212B") #Angstrom symbol
             self.staticTextX.SetLabel((fmt % meas.horizontal) + " mm")
             self.staticTextY.SetLabel((fmt % meas.vertical) + " mm")
