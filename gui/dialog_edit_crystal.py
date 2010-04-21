@@ -64,11 +64,7 @@ class CrystalEditorTraitsHandler(Handler):
             self.frame.crystal.valid_parameters_yesno = "No! Check the angles/lengths."
         #Make sure the reciprocal is calculated
         self.frame.crystal.calculate_reciprocal()
-        #Do we change the ub matrix?
-        if self.frame.crystal.generate_ub_matrix:
-            self.frame.crystal.make_ub_matrix()
         #Make sure layout is okay. Might not be needed
-        self.frame.boxSizerParams.Layout()
         self.frame.GetSizer().Layout()
 
     #---------------------------------------------------------------------------
@@ -88,8 +84,6 @@ class DialogEditCrystal(wx.Dialog):
     """Dialog to edit a crystal's parameters."""
 
     def _init_coll_boxSizerButtons_Items(self, parent):
-        # generated method, don't edit
-
         parent.AddStretchSpacer(1)
         parent.AddWindow(self.buttonOK, 0, border=0, flag=0)
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
@@ -97,24 +91,30 @@ class DialogEditCrystal(wx.Dialog):
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
 
     def _init_coll_boxSizerAll_Items(self, parent):
-        # generated method, don't edit
-        parent.AddSizer(self.boxSizerParams, 1, border=0, flag=wx.EXPAND)
-        parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
-        parent.AddWindow(self.staticTextHelp1,0, border=0, flag=wx.CENTER)
-        parent.AddWindow(self.staticTextHelp2,0, border=0, flag=wx.CENTER)
-        parent.AddWindow(self.buttonReadUB, 0, border=0, flag=wx.CENTER)
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
         parent.AddSizer(self.boxSizerButtons, 0, border=0, flag=wx.EXPAND)
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
 
-    def _init_sizers(self):
-        self.boxSizerAll = wx.BoxSizer(orient=wx.VERTICAL)
-        self.boxSizerParams = wx.BoxSizer(orient=wx.VERTICAL)
-        self.boxSizerButtons = wx.BoxSizer(orient=wx.HORIZONTAL)
-        self._init_coll_boxSizerAll_Items(self.boxSizerAll)
-        self._init_coll_boxSizerButtons_Items(self.boxSizerButtons)
+    def _init_coll_boxSizerIsaw_Items(self, parent):
+        parent.AddSpacer(wx.Size(4, 4), border=0, flag=0)
+        parent.AddWindow(self.staticTextHelp1,0, border=0, flag=wx.CENTER)
+        parent.AddSpacer(wx.Size(4, 4), border=0, flag=0)
+        parent.AddWindow(self.staticTextHelp3,0, border=0, flag=wx.LEFT)
+        parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
+        parent.AddWindow(self.staticTextHelp2,0, border=0, flag=wx.CENTER)
+        parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
+        parent.AddWindow(self.control_load,0, border=0, flag=wx.CENTER)
+        parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
+        parent.AddWindow(self.buttonReadUB, 0, border=0, flag=wx.CENTER)
+        parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
+        self.panelIsaw.SetSizer(self.boxSizerIsaw)
 
+    def _init_sizers(self):
+        self._init_coll_boxSizerAll_Items(self.boxSizerAll)
+        self._init_coll_boxSizerIsaw_Items(self.boxSizerIsaw)
+        self._init_coll_boxSizerButtons_Items(self.boxSizerButtons)
         self.SetSizer(self.boxSizerAll)
+
 
     def _init_ctrls(self, prnt):
         # generated method, don't edit
@@ -122,12 +122,7 @@ class DialogEditCrystal(wx.Dialog):
               parent=prnt, pos=wx.Point(702, 235), size=wx.Size(475, 600),
               style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
               title=u'Edit Crystal Parameters')
-        self.SetClientSize(wx.Size(500, 900))
-
-        self.buttonReadUB = wx.Button(
-              label=u'Read UB matrix from file...', name=u'buttonReadUB', parent=self,
-              pos=wx.Point(16, 563), size=wx.Size(250, 29), style=0)
-        self.buttonReadUB.Bind(wx.EVT_BUTTON, self.OnButtonReadUB)
+        self.SetClientSize(wx.Size(500, 800))
 
         self.buttonOK = wx.Button(
               label=u'Ok', name=u'buttonOK', parent=self,
@@ -139,21 +134,77 @@ class DialogEditCrystal(wx.Dialog):
               563), size=wx.Size(150, 29), style=0)
         self.buttonCancel.Bind(wx.EVT_BUTTON, self.OnbuttonCancelButton)
 
-        self.staticTextHelp1 = wx.StaticText(label=u'Loading an ISAW UB matrix file:',
-            parent=self, pos=wx.Point(166, 563), style=wx.ALIGN_CENTER)
-        self.staticTextHelp1.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD, False, u'Sans'))
-        self.staticTextHelp2 = wx.StaticText(label=u'Before loading the file, please enter\n the goniometer settings at the time you acquired\nthe data from which this UB matrix was taken.',
-            name=u'staticTextHelp2', parent=self, pos=wx.Point(166, 563), style=wx.ALIGN_CENTER)
+        self.notebook = wx.Notebook(name=u'notebook', parent=self, pos=wx.Point(100, 100), size=wx.Size(200,200), style=wx.TAB_TRAVERSAL)
+        self.notebook.SetMinSize(wx.Size(-1, -1))
+        self.notebook.Show()
 
-        self._init_sizers()
+        #--- ISAW load panel ----
+        self.panelIsaw = wx.Panel(id=wx.NewId(), name="panelIsaw", parent=self.notebook, style=wx.TAB_TRAVERSAL)
+
+        self.staticTextHelp1 = wx.StaticText(label=u'Loading an ISAW UB matrix file:',
+            parent=self.panelIsaw, pos=wx.Point(166, 563), style=wx.ALIGN_CENTER)
+        self.staticTextHelp1.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD, False, u'Sans'))
+        self.staticTextHelp2 = wx.StaticText(label=u'Before loading the file, enter the goniometer settings at the time you acquired the data from which this UB matrix was taken.',
+            name=u'staticTextHelp2', parent=self.panelIsaw, pos=wx.Point(166, 563), style=wx.ALIGN_LEFT)
+        self.staticTextHelp3 = wx.StaticText(label=u"Use ISAW's Initial Peaks Wizard or ISAWev's Find Peaks/Index Peaks functions to find the UB matrix and save it to a text file.",
+            name=u'staticTextHelp2', parent=self.panelIsaw, pos=wx.Point(166, 563), style=wx.ALIGN_CENTER)
+        #Wrap the text
+        w = self.GetSize()[0]-60
+        self.staticTextHelp2.Wrap(w)
+        self.staticTextHelp3.Wrap(w)
+
+        self.buttonReadUB = wx.Button(label=u'Read UB matrix from file...', name=u'buttonReadUB', parent=self.panelIsaw,
+              pos=wx.Point(16, 563), size=wx.Size(250, 29), style=0)
+        self.buttonReadUB.Bind(wx.EVT_BUTTON, self.OnButtonReadUB)
+
+        #--- Manual panel ----
+        self.panelManual = wx.Panel(id=wx.NewId(), name="panelManual", parent=self.notebook, style=wx.TAB_TRAVERSAL)
+        self.buttonGenerateUB = wx.Button(label=u'Generate UB matrix', name=u'buttonGenerateUB', parent=self.panelManual,
+              pos=wx.Point(16, 563), size=wx.Size(250, 29), style=0)
+        self.buttonGenerateUB.Bind(wx.EVT_BUTTON, self.OnButtonGenerateUB)
+
+        self.notebook.AddPage(self.panelIsaw, "Load from ISAW", select=True)
+
 
     #---------------------------------------------------------------------------
     def __init__(self, parent, my_crystal):
         self._init_ctrls(parent)
+        
+        #Make all the sizers
+        self.boxSizerAll = wx.BoxSizer(orient=wx.VERTICAL)
+        self.boxSizerIsaw = wx.BoxSizer(orient=wx.VERTICAL)
+        self.boxSizerManual = wx.BoxSizer(orient=wx.VERTICAL)
+        self.boxSizerButtons = wx.BoxSizer(orient=wx.HORIZONTAL)
+
+        #Setup the parameter editor traits ui panel
+        self.original_crystal = my_crystal
+        self.crystal = copy.copy(my_crystal)
+        self.handler = CrystalEditorTraitsHandler(self)
+
 
         #Make the TRAITS view
+
+        #At the top is a general view
+        self.view_top =  View( Group(
+            Item("name", label="Crystal Name"),
+            Item("description", label="Description:", editor=TextEditor(multi_line=True)),
+            Item("lattice_lengths_arr", label="Lattice sizes (Angstroms)", format_str="%.3f", style='readonly'),
+            Item("lattice_angles_deg_arr", label="Lattice angles (degrees)", format_str="%.3f", style='readonly'),
+            Item("point_group_name", label="Point Group:", editor=EnumEditor(name="point_group_name_list")),
+            Item("ub_matrix", label="Sample's UB Matrix", style='readonly', format_str="%9.5f"),
+            Item("ub_matrix_is_from", label="UB matrix obtained from", style='readonly'),
+            label="" ),
+            )
+        #Make the control and add it
+        self.control_top = self.crystal.edit_traits(parent=self, view=self.view_top, kind='subpanel', handler=self.handler).control
+        self.boxSizerAll.AddWindow(self.control_top, 0, border=0, flag=wx.EXPAND)
+
+        # Now add the notebook, make it expand
+        self.boxSizerAll.AddWindow(self.notebook, 1, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP)
+            
+        #Now a view to manually create the parameters
         angle_label = Group(
-                    Label(label="""If all the sample mounting angles are zero, the sample's crystal 
+                    Label(label="""If all the sample mounting angles are zero, the sample's crystal
 lattice coordinate system is aligned with the instrument coordinates.
 The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
 'c' goes towards +z.
@@ -162,48 +213,35 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
                     )
 
         fmt = "%.3f"
-        self.generate_ub_group = Group(
-            angle_label,
-            Item("sample_mount_phi", label="Sample mounting angle phi\n (1st rotation, around Y)", format_str=fmt, enabled_when="generate_ub_matrix"),
-            Item("sample_mount_chi", label="Sample mounting angle chi\n (2nd rotation, around Z)", format_str=fmt, enabled_when="generate_ub_matrix"),
-            Item("sample_mount_omega", label="Sample mounting angle omega\n (3rd rotation, around Y)", format_str=fmt, enabled_when="generate_ub_matrix"),
-            label="Sample mounting", visible_when="generate_ub_matrix")
-
-        view = View(
-        Group(
-            Item("name", label="Crystal Name"),
-            Item("description", label="Description:", editor=TextEditor(multi_line=True)),
-            label="Crystal info" ),
-            Spring(label=" ", emphasized=False, show_label=False),
+        self.view_manual = View(
         Group(
             Item("lattice_lengths_arr", label="Lattice dimensions\n(a,b,c - in Angstroms)", format_str=fmt),
             Item("lattice_angles_deg_arr", label="Lattice angles\n(alpha,beta,gamma - in degrees)", format_str=fmt),
             Item("valid_parameters_yesno", label="Lattice is valid?", style='readonly'),
-            Item("point_group_name", label="Point Group:", editor=EnumEditor(name="point_group_name_list")),
             label="Lattice parameters" ),
             Spring(label=" ", emphasized=False, show_label=False),
-            Item("generate_ub_matrix", label="Generate a UB matrix for testing?"),
-        self.generate_ub_group,
-            Spring(label=" ", emphasized=False, show_label=False),
         Group(
-            Item("ub_matrix", label="Sample's UB Matrix", style='readonly', format_str="%9.5f"),
-            ),
+            angle_label,
+            Item("sample_mount_phi", label="Sample mounting angle phi\n (1st rotation, around Y)", format_str=fmt, enabled_when="generate_ub_matrix"),
+            Item("sample_mount_chi", label="Sample mounting angle chi\n (2nd rotation, around Z)", format_str=fmt, enabled_when="generate_ub_matrix"),
+            Item("sample_mount_omega", label="Sample mounting angle omega\n (3rd rotation, around Y)", format_str=fmt, enabled_when="generate_ub_matrix"),
+            label="Sample mounting", visible_when="generate_ub_matrix"),
             resizable=True
             )
-        #Setup the parameter editor traits ui panel
-        self.original_crystal = my_crystal
-        self.crystal = copy.copy(my_crystal)
-        self.handler = CrystalEditorTraitsHandler(self)
-
-        #Make it into a control
-        self.control = self.crystal.edit_traits(parent=self, view=view, kind='subpanel', handler=self.handler).control
-        self.boxSizerParams.AddWindow(self.control, 0, border=1, flag=wx.EXPAND)
+            
+        #Make it into a control, put it in the notebook
+        self.control_manual = self.crystal.edit_traits(parent=self.panelManual, view=self.view_manual, kind='subpanel', handler=self.handler).control
+        self.notebook.AddPage(self.panelManual, "Manually Enter Lattice")
+        self.boxSizerManual.AddWindow(self.control_manual, 0, border=0, flag=wx.EXPAND)
+        self.boxSizerManual.AddSpacer(wx.Size(8,8))
+        self.boxSizerManual.AddWindow(self.buttonGenerateUB, 0, border=0, flag=wx.CENTER)
+        self.panelManual.SetSizer(self.boxSizerManual)
 
         self.ub_orientation = SampleOrientationWhenUBMatrixWasSaved()
-        self.control_load = self.ub_orientation.edit_traits(parent=self, kind='subpanel').control
-        self.boxSizerAll.InsertWindow(4, self.control_load, 0, border=1, flag=wx.EXPAND | wx.SHRINK)
-        self.GetSizer().Layout()
+        self.control_load = self.ub_orientation.edit_traits(parent=self.panelIsaw, kind='subpanel').control
 
+
+        self._init_sizers()
 
     #---------------------------------------------------------------------------
     def OnbuttonOKButton(self, event):
@@ -215,8 +253,14 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
             self.handler.close(True)
         event.Skip()
 
+    #---------------------------------------------------------------------------
     def OnbuttonCancelButton(self, event):
         self.handler.close(False)
+        event.Skip()
+
+    #---------------------------------------------------------------------------
+    def OnButtonGenerateUB(self, event):
+        self.crystal.make_ub_matrix()
         event.Skip()
 
     #---------------------------------------------------------------------------
