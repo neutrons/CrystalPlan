@@ -110,6 +110,7 @@ class QspaceViewController(HasTraits):
 
         #And more initialization
         self.warning_text_visible = False
+        self.form_is_closing = False
         self.init_view_objects()
 
         #Subscribe to messages
@@ -136,7 +137,8 @@ class QspaceViewController(HasTraits):
     #-----------------------------------------------------------------------------------------------
     def cleanup(self):
         """Clean-up routine for closing the view."""
-        print "QspaceViewController.cleanup"
+        #Marker to avoid a bug
+        self.form_is_closing = True
         model.messages.unsubscribe(self.update_stats_panel)
         model.messages.unsubscribe(self.update_data_volume)
         model.messages.unsubscribe(self.update_data_points)
@@ -669,6 +671,10 @@ class QspaceViewController(HasTraits):
     #-----------------------------------------------------------------------------------------------
     def view_mode_changed(self):
         """Called when the view mode switches from volume to points, or vice-versa."""
+        #Can be called while the form is closing, throwing errors.
+        if self.form_is_closing:
+            return
+
         if self.in_volume_mode():
             #Volume view
             self.iso.visible = True
@@ -856,6 +862,7 @@ class FrameQspaceView(wx.Frame):
     def init_plot(self):
         pass #TODO
 
+    #--------------------------------------------------------------------------------------
     def OnFrameQspaceViewClose(self, event):
         #So that the singleton gets re-created if the window is re-opened
         global _instance
@@ -865,17 +872,19 @@ class FrameQspaceView(wx.Frame):
         self.controller.cleanup()
         event.Skip()
 
+    #--------------------------------------------------------------------------------------
     def OnButtonAdvancedViewButton(self, event):
-#        self.controller.iso.default_traits_view()
         self.controller.show_pipeline()
         event.Skip()
 
+    #--------------------------------------------------------------------------------------
     def onNotebookPageChanged(self, event):
         #Call an update to redraw whatever is needed.
         if hasattr(self, 'controller'):
             wx.CallAfter(self.controller.view_mode_changed)
         event.Skip()
 
+    #--------------------------------------------------------------------------------------
     def onPanel3DSize(self, event):
         #The 3d view is resized
         if not self.controller.in_volume_mode():
