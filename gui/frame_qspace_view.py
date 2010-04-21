@@ -69,9 +69,6 @@ def get_instance(parent):
     if _instance is None:
         return create(parent)
     else:
-        #TODO: Bring to front.
-##        coverage.application.SetTopWindow(_instance)
-##        _instance.
         return _instance
 
     

@@ -20,7 +20,7 @@ main_frame = None
 #-------------------------------------------------------------------------------
 def wait(ms):
     """Wait a given # of milliseconds."""
-    print "Waiting for", ms, "ms"
+#    print "Waiting for", ms, "ms"
     time.sleep(ms/1000.)
 
 #-------------------------------------------------------------------------------
@@ -42,6 +42,13 @@ def click(widget):
         call_event(widget, wx.EVT_BUTTON)
     else:
         raise NotImplementedError("Can't simulate click on " + widget.Name)
+
+#-------------------------------------------------------------------------------
+def check(checkbox, value):
+    """Simulate checking a wx.CheckBox. Sends the proper event to it."""
+    #@type checkbox wx.CheckBox
+    checkbox.SetValue(value)
+    call_event(checkbox, wx.EVT_CHECKBOX)
 
 #-------------------------------------------------------------------------------
 def select_name(widget, entry):
@@ -96,6 +103,11 @@ class UserGuideThread(Thread):
         fm = self.fm
         fv = self.fv
 
+        #Do the latex conversion
+        import eqhtml
+        eqhtml.embed_latex_in_html("../docs/user_guide_source.html", "../docs/user_guide.html")
+
+        #Now run the script
         for line in self.code:
             print "-> SCRIPT: " + line
             #Don't process comment lines
@@ -107,9 +119,6 @@ class UserGuideThread(Thread):
 
         #Ok we are done.
         print "-> Script Complete!"
-        #Do the latex conversion
-        import eqhtml
-        #eqhtml.embed_latex_in_html("../docs/user_guide.html", "../docs/user_guide_eq.html")
         #Close the main frame to exit the program
         fm.Destroy()
 
@@ -135,9 +144,34 @@ def make_animated_tab_click(fm):
 
     files = ['../docs/screenshots/frame_main-tab'+str(i)+".png" for i in xrange(fm.notebook.GetPageCount())]
     #Assemble into animated png
-    os.system("../doc_maker/apngasm ../docs/screenshots/frame_main-tab_anim.png " + " ".join(files) + " 5 10")
+    os.system("../doc_maker/apngasm ../docs/animations/frame_main-tab_anim.png " + " ".join(files) + " 5 10")
     for fname in files:
         os.remove(fname)
+
+
+def make_animated_phi_rotation(slid, fv, filename):
+    """Animate a rotation of phi"""
+    files = []
+    for (i, angle) in enumerate(np.arange(-180, 181, 5)):
+        ca(slid.SetValue, angle)
+        wait(20)
+        ca(slid.SendScrollEndEvent)
+        wait(1800)
+        fname = '3d-phi_rotation_anim'+str(i)
+        files.append("../docs/screenshots/" + fname + ".png")
+        #Grab the 3d view
+        ca(screenshot_of, fv.control, fname, margin=[10, 10, 10, 10], gradient_edge=5)
+        wait(100)
+        
+    #Assemble into animated png
+    command = "../doc_maker/apngasm ../docs/animations/" + filename + " " + " ".join(files) + " 1 15"
+    print command
+    os.system(command)
+#    for fname in files:
+#        os.remove(fname)
+
+
+        
 
 
 #The following function will be executed line-by-line by a separate thread.
@@ -146,8 +180,13 @@ def make_animated_tab_click(fm):
 # - Finish with "#---END---\n"
 def user_guide_script():
     #Shortcuts to the tested objects
+
+    #@type fm FrameMain
+    #@type fv FrameQspaceView
     exp = model.experiment.exp
     inst = model.experiment.exp.inst
+
+    original_size = fm.GetSize()
 
     ca(screenshot_frame, fm, 'frame_main')
     wait(50)
@@ -155,55 +194,55 @@ def user_guide_script():
     #warnings.warn("Hey! Turn the animated tab maker back on!")
     
 
-#    # --------------------- Q-Space Tab --------------------
-#    ca(fm.notebook.SetSelection, 0)
-#    wait(100)
-#    #Settings for the guide
-#    #@type params StartupParameters
-#    params = fm.tab_startup.params
-#    params.d_min = 1.0
-#    params.q_resolution = 0.1
-#    params.wl_min = 0.5
-#    params.wl_max = 4.0
-#    wait(100)
-#    ca(screenshot_of, fm.tab_startup.control, 'startup-traits', minheight=True, margin=10, gradient_edge=0)
-#    ca(screenshot_of, fm.tab_startup.buttonApply, 'startup-apply', margin=5)
-#
-#    # ------------------------ Detectors tab ----------------------
-#    ca(fm.notebook.SetSelection, 1)
-#    wait(50)
-#    #@type td PanelDetectors
-#    td = fm.tab_detectors
-#    ca(screenshot_of, td.buttonLoadDetectors, 'detectors-buttonLoadDetectors', minheight=True, margin=6, gradient_edge=4)
-#    ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
-#    wait(1800)
-#    assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
-#    ca(screenshot_of, td.button_view_detectors, 'detectors-button_view_detectors', minheight=True, margin=6, gradient_edge=4)
-#
-#    #3d shot of detectors
-#    ca(click, td.button_view_detectors)
-#    wait(2000)
-#    ca(screenshot_frame, td.frame3d, 'detectors-3d_view')
-#
-#
-#    # ------------------------ goniometer tab ----------------------
-#    ca(fm.notebook.SetSelection, 2)
-#    wait(50)
-#    #@type tg PanelGoniometer
-#    tg = fm.tab_goniometer
-#    ca(screenshot_of, tg.boxSizerSelected, 'goniometer-selected', minheight=True, margin=[10, 10, 40, 10], gradient_edge=4)
-#    wait(50)
-#    ca(screenshot_of, tg.buttonSwitchGoniometer, 'goniometer-buttonSwitchGoniometer', margin=6, gradient_edge=0)
-#    wait(50)
-#    #Select the TopazInHouseGoniometer and switch to it
-#    ca(select_name, tg.choiceGonio, model.goniometer.TopazInHouseGoniometer().name)
-#    wait(50)
-#    ca(screenshot_of, tg.choiceGonio, 'goniometer-choice', margin=6, gradient_edge=0)
-#    wait(50)
-#    ca(screenshot_of, [tg.staticTextDesc, tg.staticTextDescLabel], 'goniometer-desc', margin=6, gradient_edge=0)
-#    ca(click, tg.buttonSwitchGoniometer)
-#    wait(100)
-#    assert isinstance(inst.goniometer, model.goniometer.TopazInHouseGoniometer), "we picked a TopazInHouseGoniometer"
+    # --------------------- Q-Space Tab --------------------
+    ca(fm.notebook.SetSelection, 0)
+    wait(100)
+    #Settings for the guide
+    #@type params StartupParameters
+    params = fm.tab_startup.params
+    params.d_min = 1.0
+    params.q_resolution = 0.1
+    params.wl_min = 0.5
+    params.wl_max = 4.0
+    wait(100)
+    ca(screenshot_of, fm.tab_startup.control, 'startup-traits', minheight=True, margin=10, gradient_edge=0)
+    ca(screenshot_of, fm.tab_startup.buttonApply, 'startup-apply', margin=5)
+
+    # ------------------------ Detectors tab ----------------------
+    ca(fm.notebook.SetSelection, 1)
+    wait(50)
+    #@type td PanelDetectors
+    td = fm.tab_detectors
+    ca(screenshot_of, td.buttonLoadDetectors, 'detectors-buttonLoadDetectors', minheight=True, margin=6, gradient_edge=4)
+    ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
+    wait(2000)
+    assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
+    ca(screenshot_of, td.button_view_detectors, 'detectors-button_view_detectors', minheight=True, margin=6, gradient_edge=4)
+
+    ##3d shot of detectors
+    #ca(click, td.button_view_detectors)
+    #wait(2000)
+    #ca(screenshot_frame, td.frame3d, 'detectors-3d_view')
+
+
+    # ------------------------ goniometer tab ----------------------
+    ca(fm.notebook.SetSelection, 2)
+    wait(50)
+    #@type tg PanelGoniometer
+    tg = fm.tab_goniometer
+    ca(screenshot_of, tg.boxSizerSelected, 'goniometer-selected', minheight=True, margin=[10, 10, 40, 10], gradient_edge=4)
+    wait(50)
+    ca(screenshot_of, tg.buttonSwitchGoniometer, 'goniometer-buttonSwitchGoniometer', margin=6, gradient_edge=0)
+    wait(50)
+    #Select the TopazInHouseGoniometer and switch to it
+    ca(select_name, tg.choiceGonio, model.goniometer.TopazInHouseGoniometer().name)
+    wait(50)
+    ca(screenshot_of, tg.choiceGonio, 'goniometer-choice', margin=6, gradient_edge=0)
+    wait(50)
+    ca(screenshot_of, [tg.staticTextDesc, tg.staticTextDescLabel], 'goniometer-desc', margin=6, gradient_edge=0)
+    ca(click, tg.buttonSwitchGoniometer)
+    wait(100)
+    assert isinstance(inst.goniometer, model.goniometer.TopazInHouseGoniometer), "we picked a TopazInHouseGoniometer"
 
     # ------------------------- Sample tab -----------------------
     ca(fm.notebook.SetSelection, 3)
@@ -233,14 +272,15 @@ def user_guide_script():
     ca(screenshot_of, dlg.buttonOK, 'dialog_edit_crystal-buttonOK', margin=6)
     ca(screenshot_of, dlg.buttonCancel, 'dialog_edit_crystal-buttonCancel', margin=6)
     wait(50)
-    (phi, chi, omega) = (30, 15, 60)
+    angles = np.array([30, 15, 60])
+    (phi, chi, omega) = angles
     dlg.ub_orientation.phi_degrees = phi
     dlg.ub_orientation.chi_degrees = chi
     dlg.ub_orientation.omega_degrees = omega
     wait(50)
     ca(screenshot_of, dlg.control_load_angles, 'dialog_edit_crystal-control_load_angles', margin=6)
     wait(50)
-    ca(dlg.crystal.read_ISAW_ubmatrix_file, "../model/data/quartzub.txt", [phi, chi, omega])
+    ca(dlg.crystal.read_ISAW_ubmatrix_file, "../model/data/quartzub.txt", np.deg2rad(angles))
     wait(200)
     ca(screenshot_of, dlg.control_top, 'dialog_edit_crystal-control_top', margin=6)
     wait(50)
@@ -250,12 +290,52 @@ def user_guide_script():
     ca(screenshot_of, ts.range_control, 'sample-range_control', margin=10, gradient_edge=0)
     wait(50)
     ca(screenshot_of, ts.buttonApplyRange, 'sample-buttonApplyRange', margin=10, gradient_edge=0)
-#---END---
 
     # ------------------------- Trial Positions tab -----------------------
     ca(fm.notebook.SetSelection, 4)
+    wait(40)
+    #Make the main window narrower
+    ca(fm.SetSize, wx.Size(500, original_size[1]))
+    wait(150)
+    #@type tt PanelTryPosition
+    tt = fm.tab_try
+    ca(screenshot_of, tt.boxSizerAll, 'try', minheight=True, margin=[10, 10, 40, 10], gradient_edge=5)
+    #Check the box
+    ca(check, tt.checkAdd, True)
     wait(100)
-    ca(screenshot_of, fm.tab_try, 'add_trial_position')
+    ca(screenshot_of, tt.checkAdd, 'try-checkAdd', margin=6, gradient_edge=2)
+    wait(40)
+
+    #@type slid ValueSlider
+    slid = tt.sliders[0]
+    ca(slid.SetValue, -30)
+    wait(50)
+    ca(slid.SendScrollEndEvent)
+    wait(500)
+    ca(screenshot_of, slid, 'try-phi-30', margin=6, gradient_edge=2)
+
+    #Restore the window width
+    ca(fm.SetSize, original_size)
+    wait(150)
+
+    # ------------------------ 3D Viewer! ----------------------
+    #The whole frame
+    ca(fv.Raise) #Bring it to front first!
+    wait(150)
+    
+    ca(screenshot_frame, fv, 'frame_qspace')
+    wait(50)
+    ca(screenshot_of, fv.panelStats, '3d-panelStats', margin=10)
+    
+    #Animate a phi rotation
+    wait(100)
+    #make_animated_phi_rotation(slid, fv, "3d-phi_rotation_anim.png")
+    #make_animated_phi_rotation(tt.sliders[1], fv, "3d-chi_rotation_anim.png")
+
+
+#    blarg_i_want_to_crash
+
+#---END---
 
     # ------------------------ Add Orientations tab ----------------------
     ca(fm.notebook.SetSelection, 5)

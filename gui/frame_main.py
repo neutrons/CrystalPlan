@@ -119,6 +119,8 @@ class FrameMain(wx.Frame):
     def OnMenuView3D(self, event):
         "Show the 3D view"
         frame_qspace_view.get_instance(self).Show()
+        #Bring it to front
+        frame_qspace_view.get_instance(self).Raise()
         event.Skip()
 
     def OnMenuQuit(self, event):
@@ -156,6 +158,7 @@ class FrameMain(wx.Frame):
 #        doc_maker.screenshots.animated_screenshot( self.tab_detectors.frame3d, self.tab_detectors.frame3d.visualization.scene)
 #        fq = frame_qspace_view.get_instance(self)
 #        doc_maker.screenshots.animated_screenshot( fq.controller.scene, "../docs/qspace_rotate.png" )
+
         #Make the user guide screenshots
         doc_maker.user_guide.generate_user_guide(self, frame_qspace_view.get_instance(self))
         event.Skip()

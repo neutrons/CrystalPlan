@@ -70,9 +70,10 @@ def embed_latex_in_html(sourcefn, destfn):
             f.write("\\[\n%s \n\\] \n \\newpage \n" % eq.text)
         # delete LaTeX code from the document tree, and replace
         # them by image urls.
+        latex_code = eq.text
         del eq.text
         imgname = "%seq%s%i.png" % (imgpath,sourcefn_base, counter)
-        et.SubElement(eq,'img',src=imgname, alt='')
+        et.SubElement(eq,'img',src=imgname, alt=latex_code, title=latex_code)
         counter += 1
     # end LaTeX document
     f.write('\end{document}')

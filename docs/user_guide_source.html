@@ -1,11 +1,13 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-<title />
-<meta content="Bluefish 1.0.7" name="generator" />
-<meta content="Janik Zikovsky" name="author" />
-<meta content="text/html; charset=UTF-8" http-equiv="content-type" />
-<meta content="application/xhtml+xml; charset=UTF-8" http-equiv="content-type" />
-<meta content="text/css" http-equiv="content-style-type" />
+<title></title>
+<meta name="generator" content="Bluefish 1.0.7"/>
+<meta name="author" content="Janik Zikovsky"/>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8"/>
+<meta http-equiv="content-style-type" content="text/css" />
 </head>
 
 <style type="text/css">
@@ -59,8 +61,58 @@ ul {
 
 
 
-<script language="JavaScript" type="text/JavaScript">
- 
+<script 
+  type="text/JavaScript" 
+  language="JavaScript">
+ <!-- 
+// format date as dd-mmm-yy; example: 12-Jan-99
+function date_ddmmmyy(date)
+{
+  var d = date.getDate();
+  var m = date.getMonth() + 1;
+  var y = date.getYear();
+
+  // handle different year values returned by IE and NS in the year 2000.
+  if(y >= 1900)
+  {    y -= 1900;   }
+  y += 1900;
+
+  // could use splitString() here 
+  // but the following method is 
+  // more compatible
+  var mmm = 
+    ( 1==m)?'January':( 2==m)?'February':(3==m)?'March':
+    ( 4==m)?'April':( 5==m)?'May':(6==m)?'June':
+    ( 7==m)?'July':( 8==m)?'August':(9==m)?'September':
+    (10==m)?'October':(11==m)?'November':'December';
+
+  return "" + mmm + " " + (d<10?"0"+d:d) + ", " + y;
+}
+
+
+// get last modified date of the 
+// current document.
+function date_lastmodified()
+{
+  var lmd = document.lastModified;
+  var s   = "Unknown";
+  var d1;
+
+  // check if we have a valid date
+  // before proceeding
+  if(0 != (d1=Date.parse(lmd)))
+  {
+    s = "" + date_ddmmmyy(new Date(d1));
+  }
+
+  return s;
+}
+
+//
+// finally display the last modified date
+// as DD-MMM-YY
+//
+-->
 </script>
 
 
@@ -69,16 +121,16 @@ ul {
 
 <body bgcolor="white">
 
-<img align="right" alt="CrystalPlan Icon" border="0" height="256" src="../gui/icons/CrystalPlan_icon.png" width="256" />
+<img src="../gui/icons/CrystalPlan_icon.png" width="256" height="256" border="0" alt="CrystalPlan Icon" align="right" />
 
 <h1>CrystalPlan 1.0 User Guide</h1>
-by Janik Zikovsky (zikovskyjl@ornl.gov)<br />
-<br />
+by Janik Zikovsky (zikovskyjl@ornl.gov)<br/>
+<br/>
 Document started April 14, 2010; 
-<script language="JavaScript" type="text/JavaScript">
+<script type="text/JavaScript" language="JavaScript">
 document.write( "last updated on " + date_lastmodified() + "." );
 </script>
-<br />
+<br/>
   
 <h3>Introduction</h3>
 
@@ -92,16 +144,16 @@ document.write( "last updated on " + date_lastmodified() + "." );
 <li>You can then optimize your experiment by trying different orientations and seeing if your coverage statistics will still be adequate.</li>
 </ul>
 
-
-
-
+<!-- ========================================================= -->
+<!-- ========================================================= -->
+<!-- ========================================================= -->
 
 <h2>Step-by-Step Tutorial</h2>
 
 <p>This tutorial will show you how to use most of the features of CrystalPlan by going through a typical run, step-by-step.</p>
 
 
-
+<!-- ========================================================= -->
 
 <h3>1. Starting CrystalPlan</h3>
 
@@ -109,13 +161,13 @@ document.write( "last updated on " + date_lastmodified() + "." );
 <div align="center"><font face="Courier">crystalplan.py</font></div>
 The GUI launches in two new windows. Select the main window:
 </p>
-<br />
-<img alt="The main CrystalPlan GUI window." border="0" class="frameshot" src="screenshots/frame_main.png" width="400" /><br />
-<br />
+<br/>
+<img class="frameshot" src="screenshots/frame_main.png" width="400" border="0" alt="The main CrystalPlan GUI window."/><br/>
+<br/>
 Most of your workflow will occur by navigating between these notebook tabs:
-<br /><img border="0" src="animations/frame_main-tab_anim.png" />
+<br/><img src="animations/frame_main-tab_anim.png" border="0"/>
 
-
+<!-- ========================================================= -->
 
 <h3>2. Defining the Reciprocal Space of Interest and Wavelengths</h3>
 
@@ -123,27 +175,27 @@ Most of your workflow will occur by navigating between these notebook tabs:
 
 <ul>
 <li>Click the "Q-Space" tab, if it not already selected. If necessary, change the parameters so that it matches those shown below:
-<br /><img alt="" border="0" src="screenshots/startup-traits.png" />
+<br/><img src="screenshots/startup-traits.png" border="0" alt=""/>
 </li>
 <ul>
 	<dt>d_min</dt>
-	<dd>The smallest d-spacing allowed. Your simulated q-space will be limited to a maximum <span class="eq"><img alt="$q = {2\pi}/d_{min}$" src="equser_guide_source1.png" title="$q = {2\pi}/d_{min}$" /></span></dd>
+	<dd>The smallest d-spacing allowed. Your simulated q-space will be limited to a maximum <span class="eq">$q = {2\pi}/d_{min}$</span></dd>
 	
 	<dt>q-resolution</dt>
-	<dd>The size of a voxel (smallest volume element) simulated, in <span class="eq"><img alt="$\AA^{-1}$" src="equser_guide_source2.png" title="$\AA^{-1}$" /></span>. The # of points will be calculated and shown below; you will get a warning if you try to make very high-resolution calculations, because memory consumption, etc. will be very high.</dd>
+	<dd>The size of a voxel (smallest volume element) simulated, in <span class="eq">$\AA^{-1}$</span>. The # of points will be calculated and shown below; you will get a warning if you try to make very high-resolution calculations, because memory consumption, etc. will be very high.</dd>
 	
 	<dt>wavelength limits</dt>
 	<dd>Specify your experiment's wavelength limits, in Ansgtroms; this could be due to limits on your neutron source or your detectors.</dd>
 </ul>
 
 <li>When done, click the 
-<img alt="Apply Changes" border="0" src="screenshots/startup-apply.png" />
+<img src="screenshots/startup-apply.png" border="0" alt="Apply Changes"/>
 button. Changing these settings requires re-doing a lot of calculations, which may take some time if you have a lot of orientations saved. 
 </li>
 </ul>
 
 
-
+<!-- ========================================================= -->
 
 <h3>3. Detectors</h3>
 
@@ -153,18 +205,18 @@ Here, you ensure that CrystalPlan has the correct detector geometry loaded.
 <li>Click the "Detectors" tab.</li>
 
 <li>Load a detector geometry by clicking the
-<img alt="" border="0" src="screenshots/detectors-buttonLoadDetectors.png" /> button. In the File Loading dialog that opens, select the "TOPAZ_detectors_all.csv" file.
+<img src="screenshots/detectors-buttonLoadDetectors.png" border="0" alt=""/> button. In the File Loading dialog that opens, select the "TOPAZ_detectors_all.csv" file.
 </li>
 <li>After a few seconds, the detector geometry is loaded. To confirm that the detectors are in the correct positions, you can visualize them in direct space by clicking 
-<img alt="" border="0" src="screenshots/detectors-button_view_detectors.png" />, 
+<img src="screenshots/detectors-button_view_detectors.png" border="0" alt=""/>, 
 which displays them in a window like this one:
-<br /><img alt="" border="0" class="frameshot" src="screenshots/detectors-3d_view.png" />
+<br/><img class="frameshot" src="screenshots/detectors-3d_view.png" border="0" alt=""/>
 </li>
 <li>We will come back later to the other controls on this tab.</li>
 </ul>
 
 
-
+<!-- ========================================================= -->
 
 <h3>4. Goniometer</h3>
 
@@ -174,21 +226,21 @@ use in your instrument.
 
 <ul>
 <li>Click the "Goniometer" tab. The goniometer that is currently selected is shown at the top:
-<img alt="" border="0" src="screenshots/goniometer-selected.png" />
+<img src="screenshots/goniometer-selected.png" border="0" alt=""/>
 </li>
 <li> Select the TOPAZ in-house goniometer:
-<br /><img alt="" border="0" src="screenshots/goniometer-choice.png" />
+<br/><img src="screenshots/goniometer-choice.png" border="0" alt=""/>
 </li>
 <li>Some general information about the goniometer is shown:
-<br /><img alt="" border="0" src="screenshots/goniometer-desc.png" />
+<br/><img src="screenshots/goniometer-desc.png" border="0" alt=""/>
 </li>
 <li>But your selection is not complete until you click 
-<img alt="" border="0" src="screenshots/goniometer-buttonSwitchGoniometer.png" />
+<img src="screenshots/goniometer-buttonSwitchGoniometer.png" border="0" alt=""/>
 </li>
 <li>The program will now be aware of the sample orientation angle limitations that your instrument has, and will give you warnings if you try to use an inaccessible sample orientation.</li>
 </ul>
 
-
+<!-- ========================================================= -->
 
 <h3>5. Sample Settings</h3>
 
@@ -196,31 +248,31 @@ Now, you will want to enter or load in information about your sample: crystal la
 
 <ul>
 <li>Click the "Sample" tab. You are presented with an overview of the crystal parameters
-<br /><img alt="" border="0" src="screenshots/sample-info.png" />
+<br/><img src="screenshots/sample-info.png" border="0" alt=""/>
 </li>
 
 <h4>5.1. Edit Crystal Parameters dialog</h4>
 
 <li>Click
-<img alt="" border="0" src="screenshots/sample-buttonEditCrystal.png" />. 
+<img src="screenshots/sample-buttonEditCrystal.png" border="0" alt=""/>. 
 </li>
 <ul>
 <li>This brings up the "Edit Crystal Parameters" dialog box. You may edit the name and description:
-<br /><img alt="" border="0" class="frameshot" src="screenshots/dialog_edit_crystal.png" /></li>
+<br/><img class="frameshot" src="screenshots/dialog_edit_crystal.png" border="0" alt=""/></li>
 <li>The top of the dialog shows you the current crystal parameters.</li>
-<br />
+<br/>
 <li>The <a href="screenshots/dialog_edit_crystal-notebook1.png">"Manually Enter Lattice" tab</a>
 allows you to try out the program by typing in
 your lattice parameters and the sample mounting. 
 Clicking the 
-<img alt="" border="0" src="screenshots/dialog_edit_crystal-buttonGenerateUB.png" /> button would create a UB matrix that you can use to test features of the program; however we will not be doing that in this tutorial.
+<img src="screenshots/dialog_edit_crystal-buttonGenerateUB.png" border="0" alt=""/> button would create a UB matrix that you can use to test features of the program; however we will not be doing that in this tutorial.
 </li>
 
 
 
-<br />
+<br/>
 <li>Instead, go to the "Load from ISAW" tab:
-<br /><img alt="" border="0" src="screenshots/dialog_edit_crystal-notebook0.png" /> 
+<br/><img src="screenshots/dialog_edit_crystal-notebook0.png" border="0" alt=""/> 
 </li>
 <li>If this were a real experiment, at this point you would have had acquired an adequate set of data at a starting sample orienation, and saved the run.</li>
 <li>You would then load that data into ISAW in order to find the sample orientation.</li>
@@ -238,21 +290,21 @@ Clicking the
 <li>This requires you to enter the goniometer angles corresponding to the sample orientation in the UB matrix file to load - the goniometer settings at the time that data was acquired.
 </li>
 <li>Enter these angles, in degrees, here:
-<img src="screenshots/dialog_edit_crystal-control_load_angles.png" />
+<img src="screenshots/dialog_edit_crystal-control_load_angles.png"/>
 </li>
 </ul>
 <li>A sample UB matrix file can be found in the "model/data/quartzub.txt" file. Click the 
-<img src="screenshots/dialog_edit_crystal-buttonReadUB.png" />
+<img src="screenshots/dialog_edit_crystal-buttonReadUB.png"/>
 button and select this file in the dialog.
 </li>
 <li>The top of the dialog shows you the loaded lattice parameters and UB matrix.
-<br /><img src="screenshots/dialog_edit_crystal-control_top.png" />
+<br/><img src="screenshots/dialog_edit_crystal-control_top.png"/>
 </li>
 <li>From here, you can set the crystal's point group symmetry; however, we will leave it as "-1 (Triclinic)", as shown.</li>
 <li>Click
-<img src="screenshots/dialog_edit_crystal-buttonOK.png" /> 
+<img src="screenshots/dialog_edit_crystal-buttonOK.png"/> 
 to apply the changes; clicking 
-<img src="screenshots/dialog_edit_crystal-buttonCancel.png" />
+<img src="screenshots/dialog_edit_crystal-buttonCancel.png"/>
 would revert all the changed made in the dialog. 
 </li>
 <li>Some recalculations will occur when changing the crystal lattice parameters or orientation.</li>
@@ -261,7 +313,7 @@ would revert all the changed made in the dialog.
 <h4>5.2. Choosing H,K,L ranges</h4>
 
 <li>Still in the Sample tab, the following GUI allows you to pick which HKL to display:
-<br /><img src="screenshots/sample-range_control.png" />
+<br/><img src="screenshots/sample-range_control.png"/>
 </li>
 <li>These H,K,L ranges limit which peak indices that CrystalPlan will calculate and display.
 </li>
@@ -269,22 +321,22 @@ would revert all the changed made in the dialog.
 <ul>
 <li>They use the <i>d_min</i> parameter you set earlier in the "Q-Space" tab. </li>
 <li>The first checkbox tells CrystalPlan to calculate the H,K,L ranges that fill a box of side in q-space corresponding to 
-<span class="eq"><img alt="$d_{min}$" src="equser_guide_source3.png" title="$d_{min}$" /></span>. </li>
+<span class="eq">$d_{min}$</span>. </li>
 <ul>
 <li>But, the resulting peaks will form a cube only if all the lattice angles are 90 degrees.</li>
 </ul>
 <li>By checking the second box, any peaks with a d-spacing smaller that <i>d_min</i> will be rejected, leaving a sphere of reflections in q-space.</li>
 </ul>
-<li>Click the <img src="screenshots/sample-buttonApplyRange.png" /> button to apply 
+<li>Click the <img src="screenshots/sample-buttonApplyRange.png"/> button to apply 
 any changes you have made. All reflections are re-calculated.
 </li>
 <li>Be aware that for large cells, the number of reflections within a given 
-<span class="eq"><img alt="$d_{min}$" src="equser_guide_source4.png" title="$d_{min}$" /></span>
+<span class="eq">$d_{min}$</span>
  may be very large, slowing down calculations and requiring a lot of memory.</li>
 
 
 </ul>
-
+<!-- ========================================================= -->
 
 <h3>6. Trying Sample Orientations</h3>
 
@@ -293,21 +345,21 @@ any changes you have made. All reflections are re-calculated.
 
 <ul>
 <li>Click on the "Try an Orientation" tab. 
-<br /><img alt="" border="0" src="screenshots/try.png" />
+<br/><img src="screenshots/try.png" border="0" alt=""/>
 </li>
-<li>Check the <img src="screenshots/try-checkAdd.png" /> box.
+<li>Check the <img src="screenshots/try-checkAdd.png"/> box.
 </li>
 <li>Now, you simulate a sample orientation.</li>
 <ul>
 <li>As you change the values, the coverage calculation is re-done and updated in the 3D viewer (which we will look at next). </li>
 <li>Use the slider or type in (and press Enter) to set a Phi angle of 30 degrees, while keeping the other two angles at 0 degrees.
-<br /><img src="screenshots/try-phi-30.png" />
+<br/><img src="screenshots/try-phi-30.png"/>
 </li>
 </ul>
 </ul>
 
 
-
+<!-- ========================================================= -->
 
 <h3>7. The Reciprocal Space 3D Viewer</h3>
 
@@ -316,7 +368,7 @@ our simulated detector coverage.</p>
 
 <ul>
 <li>Switch window to the Reciprocal Space 3D Viewer (this window opens with CrystalPlan, so it should already be open - otherwise, you can open it from the "View" menu).
-<img class="frameshot" src="screenshots/frame_qspace.png" />
+<img class="frameshot" src="screenshots/frame_qspace.png"  />
 </li>
 
 <li>The main part of the window is a 3D view of reciprocal space.</li>
@@ -324,7 +376,7 @@ our simulated detector coverage.</p>
 <li>The white cube outline represents the extent of q-space that is simulated.</li>
 <li>The center of the cube is q = [0,0,0], which corresponds of course to h,k,l = [0,0,0]</li>
 <li>The cube is sized so as to <i>just</i> hold a sphere of radius 
-<span class="eq"><img alt="$q = \frac{2\pi}{d_{min}}$" src="equser_guide_source5.png" title="$q = \frac{2\pi}{d_{min}}$" /></span>
+<span class="eq">$q = \frac{2\pi}{d_{min}}$</span>
 </li>
 </ul>
  <li>Right now, we are in "volume coverage" mode, which means that the shapes shown in cyan correspond to the <i>volume</i> in reciprocal space that has been measured by a detector.  
@@ -360,10 +412,10 @@ our simulated detector coverage.</p>
 <li>We will return to this window to explain the elements in more detail.</li>
 <li>For now, you can change the Phi angle in the "Try An Orientation" tab and visualize how that 
 affects the reciprocal space coverage in this window. This animation shows the effect of changing the phi of the sample from -180 to +180 degrees:
-<br /><img border="0" class="centered" src="animations/3d-phi_rotation_anim.png" />
+<br/><img class="centered" src="animations/3d-phi_rotation_anim.png" border="0"/>
 </li>
 <li>And this animation shows a chi (tilt) rotation from -180 to +180 degrees, with phi kept constant:
-<br /><img border="0" class="centered" src="animations/3d-chi_rotation_anim.png" />
+<br/><img class="centered" src="animations/3d-chi_rotation_anim.png" border="0"/>
 </li>
 
 </ul>
@@ -371,7 +423,7 @@ affects the reciprocal space coverage in this window. This animation shows the e
 
 
 
-
+<!-- ========================================================= -->
 
 <h3>BLABLABLA. Adding Sample Orientations</h3>
 
@@ -379,14 +431,14 @@ affects the reciprocal space coverage in this window. This animation shows the e
 <ul>
 <li>
 Click the "Start" button to begin the calculation. 
-<br /><img alt="" border="0" src="screenshots/add_positions-start_button.png" />
+<br/><img src="screenshots/add_positions-start_button.png" border="0" alt=""/>
 </li>
 
-<li>The calculation progress will be shown in this progress bar: <br />
-<img alt="" border="0" src="screenshots/add_positions-progress_bar.png" /> <br /></li>
+<li>The calculation progress will be shown in this progress bar: <br/>
+<img src="screenshots/add_positions-progress_bar.png" border="0" alt=""/> <br/></li>
 
-<li>If the calculation runs too long, you can cancel it before it completes. Sample orientations that have already been calculated will remain in the experiment plan.<br />
-<img alt="" border="0" src="screenshots/add_positions-cancel_button.png" /></li>
+<li>If the calculation runs too long, you can cancel it before it completes. Sample orientations that have already been calculated will remain in the experiment plan.<br/>
+<img src="screenshots/add_positions-cancel_button.png" border="0" alt=""/></li>
 
 </ul>
 
@@ -394,14 +446,14 @@ Click the "Start" button to begin the calculation.
 <h4>YYYY.1. Coverage Statistics</h4>
 
 <li>On the bottom right, you can see the coverage statistics panel:
-<br /><img src="screenshots/3d-panelStats.png" />
+<br/><img src="screenshots/3d-panelStats.png"/>
 </li>
 <ul>
 <li>The first bar indicates what percentage of reciprocal space volume was measured (at least once).</li>
 <li>The second bar shows the redundant measurements - the proportion of q-space that was measured at least twice.</li>
 </ul>
 <li>Next is a coverage "slice" plot:
-<br /><img src="screenshots/3d-panelStats.png" />
+<br/><img src="screenshots/3d-panelStats.png"/>
 </li>
 
 

@@ -200,7 +200,7 @@ class PanelTryPosition(wx.Panel):
         parent.AddWindow(self.staticTextHelp, 0, border=0, flag=wx.EXPAND|wx.SHRINK)
         parent.AddWindow(self.staticLineTop, 0, border=0, flag=wx.EXPAND)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.checkAdd, 0, border=0, flag=wx.EXPAND)
+        parent.AddWindow(self.checkAdd, 0, border=0, flag=0)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=wx.EXPAND)
         parent.AddSizer(self.boxSizerSliders, border=0, flag=wx.EXPAND)
         parent.AddWindow(self.staticTextWarning, 0, border=4,
