@@ -194,7 +194,7 @@ def launch_gui():
 
 
     #Exit the program and do all necessary clean-up.
-    print "Exiting CrystalPlan. Have a nice day!"
+    print "Exiting %s %s. Have a nice day!" % (CrystalPlan_version.package_name, CrystalPlan_version.version)
     background_display.abort()
 
 

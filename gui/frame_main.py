@@ -244,7 +244,7 @@ class FrameMain(wx.Frame):
     #---------------- other event handlers ------------------------------
     #--------------------------------------------------------------------
     def OnClose(self, event):
-        res = wx.MessageDialog(self, "Are you sure you want to quit the program?", "Quit Progam?", wx.YES_NO | wx.YES_DEFAULT).ShowModal()
+        res = wx.MessageDialog(self, "Are you sure you want to quit %s?" % CrystalPlan_version.package_name, "Quit %s?" % CrystalPlan_version.package_name, wx.YES_NO | wx.YES_DEFAULT).ShowModal()
         if res == wx.ID_YES:
             self.Destroy()
         else:

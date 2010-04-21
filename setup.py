@@ -16,7 +16,7 @@ package_dir = {'CrystalPlan': '.',  'CrystalPlan.model':'model', 'CrystalPlan.gu
 #data_files = [ ('instruments', './instruments/*.csv'), ('instruments', './instruments/*.xls') ]
 data_files = []
 package_data = {'CrystalPlan':['instruments/*.xls', 'instruments/*.csv'],
-    'CrystalPlan.model':['sampleubMatrix.txt']
+    'CrystalPlan.model.data':['*.*']
 }
 scripts = ['crystalplan.py']
 

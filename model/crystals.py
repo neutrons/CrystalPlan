@@ -35,7 +35,6 @@ class Crystal(HasTraits):
     valid_parameters_yesno = Str("Yes")
 
     #For manual UB matrix
-    generate_ub_matrix = Bool(True)
     #Sample mounting angles in DEGREES!
     sample_mount_phi = Float( 0.)
     sample_mount_chi = Float( 0.)
@@ -46,6 +45,9 @@ class Crystal(HasTraits):
 
     #Resulting or input UB matrix
     ub_matrix = Array( shape=(3,3), dtype=np.float)
+
+    #To show the source of the ub matrix
+    ub_matrix_is_from = String("manually generated")
 
     #Sample mounting orientation matrix
     u_matrix = Array( shape=(3,3), dtype=np.float)
@@ -142,6 +144,7 @@ class Crystal(HasTraits):
 
         #Now the UB matrix
         self.ub_matrix = crystal_calc.make_UB_matrix(self.lattice_lengths, self.lattice_angles, phi, chi, omega)
+        self.ub_matrix_is_from = "\nManually generated.\n"
 
 
     #--------------------------------------------------------------------
@@ -188,10 +191,10 @@ class Crystal(HasTraits):
             new_ub_matrix = np.dot(self.u_matrix, self.get_B_matrix())
             self.ub_matrix = new_ub_matrix
 
-            #Set to "not manual"
-            self.generate_ub_matrix = False
             #For next time
             self.ub_matrix_last_filename = filename
+            angles_deg = np.rad2deg(angles)
+            self.ub_matrix_is_from = "ISAW UB matrix file at\n " + filename + "\nmodified by phi, chi, omega of %.1f, %.1f, %.1f" % (angles_deg[0],angles_deg[1],angles_deg[2])
 
 
     #--------------------------------------------------------------------
