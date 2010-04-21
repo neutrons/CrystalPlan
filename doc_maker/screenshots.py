@@ -57,15 +57,25 @@ def take_screenshot(rect):
 
 
 #--------------------------------------------------------------------------------
-def screenshot_frame(frame, filename):
-    """Take a screenshot of an entire wx.Frame object on screen."""
+def screenshot_frame(frame, filename, top_only=0):
+    """Take a screenshot of an entire wx.Frame object on screen.
+
+    Parameters
+        top_only: take only the first (top_only) pixels; if 0, take everything.
+    """
     rect = frame.GetScreenRect()
     rect.width += frame_width
+    if top_only > 0:
+        rect.height = top_only / 2
+        margin = [0, 0, 0, top_only/2]
+    else:
+        margin = 0
     rect.height += title_bar_height + frame_height
-    bmp = take_screenshot(rect)
-
-    #Save to PNG file
-    bmp.SaveFile(os.path.join(base_screenshot_path, os.path.splitext(filename)[0] + ".png"), wx.BITMAP_TYPE_PNG)
+    screenshot_of(rect, filename, margin=margin, gradient_edge=0)
+#    bmp = take_screenshot(rect)
+#
+#    #Save to PNG file
+#    bmp.SaveFile(os.path.join(base_screenshot_path, os.path.splitext(filename)[0] + ".png"), wx.BITMAP_TYPE_PNG)
 
 
 #--------------------------------------------------------------------------------

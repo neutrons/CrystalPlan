@@ -78,7 +78,7 @@ class FrameMain(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnMenuGenerateUserGuide, id=id)
 
         id = wx.NewId()
-        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'About...')
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'About %s...' % CrystalPlan_version.package_name)
         self.Bind(wx.EVT_MENU, self.OnMenuAbout, id=id)
 
 
@@ -135,7 +135,8 @@ class FrameMain(wx.Frame):
         description = CrystalPlan_version.description
         licence = CrystalPlan_version.license
         info = wx.AboutDialogInfo()
-#        info.SetIcon(wx.Icon('icons/hunter.png', wx.BITMAP_TYPE_PNG))
+        #Icon is taken automagically from main window.
+        info.SetIcon(wx.Icon(CrystalPlan_version.icon_file, wx.BITMAP_TYPE_PNG))
         info.SetName(CrystalPlan_version.package_name)
         info.SetVersion(CrystalPlan_version.version)
         info.SetDescription(description)
@@ -144,6 +145,7 @@ class FrameMain(wx.Frame):
         info.SetLicence(licence)
         info.AddDeveloper(CrystalPlan_version.author + " (" + CrystalPlan_version.author_email + ")")
         info.AddDocWriter(CrystalPlan_version.author + " (" + CrystalPlan_version.author_email + ")")
+        info.AddArtist("Icons taken from the Crystal Project,\nat http://www.everaldo.com/crystal/, \ndistributed under the LGPL; \nmodified and assembled by Janik Zikovsky")
 
         wx.AboutBox(info)
 
@@ -214,6 +216,9 @@ class FrameMain(wx.Frame):
         
         self.count = 0
 
+        #Set the icon
+        self.SetIcon( wx.Icon(CrystalPlan_version.icon_file, wx.BITMAP_TYPE_PNG) )
+        
     #--------------------------------------------------------------------
     def LoadNotebook(self):
         """Add the notebook tabs. """

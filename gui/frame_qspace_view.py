@@ -19,6 +19,7 @@ import display_thread
 #--- Model Imports ---
 import model
 from model.numpy_utils import column, vector_length
+import CrystalPlan_version
 
 #--- Mayavi Imports ---
 try:
@@ -815,6 +816,8 @@ class FrameQspaceView(wx.Frame):
 
     def __init__(self, parent):
         self._init_ctrls(parent)
+        #Set the icon
+        self.SetIcon( wx.Icon(CrystalPlan_version.icon_file_3d, wx.BITMAP_TYPE_PNG) )
 
         #Create the qspace options panel
         self.tabVolume = panel_qspace_options.QspaceOptionsPanel(parent=self.notebookView, id=wx.NewId(),

@@ -11,7 +11,9 @@ from screenshots import *
 import time
 from time import sleep
 from threading import Thread
+
 import model
+import dialog_edit_crystal
 
 main_frame = None
 
@@ -153,55 +155,55 @@ def user_guide_script():
     #warnings.warn("Hey! Turn the animated tab maker back on!")
     
 
-    # --------------------- Q-Space Tab --------------------
-    ca(fm.notebook.SetSelection, 0)
-    wait(100)
-    #Settings for the guide
-    #@type params StartupParameters
-    params = fm.tab_startup.params
-    params.d_min = 1.0
-    params.q_resolution = 0.1
-    params.wl_min = 0.5
-    params.wl_max = 4.0
-    wait(100)
-    ca(screenshot_of, fm.tab_startup.control, 'startup-traits', minheight=True, margin=10, gradient_edge=0)
-    ca(screenshot_of, fm.tab_startup.buttonApply, 'startup-apply', margin=5)
-
-    # ------------------------ Detectors tab ----------------------
-    ca(fm.notebook.SetSelection, 1)
-    wait(50)
-    #@type td PanelDetectors
-    td = fm.tab_detectors
-    ca(screenshot_of, td.buttonLoadDetectors, 'detectors-buttonLoadDetectors', minheight=True, margin=6, gradient_edge=4)
-    ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
-    wait(1800)
-    assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
-    ca(screenshot_of, td.button_view_detectors, 'detectors-button_view_detectors', minheight=True, margin=6, gradient_edge=4)
-
-    #3d shot of detectors
-    ca(click, td.button_view_detectors)
-    wait(2000)
-    ca(screenshot_frame, td.frame3d, 'detectors-3d_view')
-
-
-    # ------------------------ goniometer tab ----------------------
-    ca(fm.notebook.SetSelection, 2)
-    wait(50)
-    #@type tg PanelGoniometer
-    tg = fm.tab_goniometer
-    ca(screenshot_of, tg.boxSizerSelected, 'goniometer-selected', minheight=True, margin=[10, 10, 40, 10], gradient_edge=4)
-    wait(50)
-    ca(screenshot_of, tg.buttonSwitchGoniometer, 'goniometer-buttonSwitchGoniometer', margin=6, gradient_edge=0)
-    wait(50)
-    #Select the TopazInHouseGoniometer and switch to it
-    ca(select_name, tg.choiceGonio, model.goniometer.TopazInHouseGoniometer().name)
-    wait(50)
-    ca(screenshot_of, tg.choiceGonio, 'goniometer-choice', margin=6, gradient_edge=0)
-    wait(50)
-    ca(screenshot_of, [tg.staticTextDesc, tg.staticTextDescLabel], 'goniometer-desc', margin=6, gradient_edge=0)
-    ca(click, tg.buttonSwitchGoniometer)
-    wait(100)
-    assert isinstance(inst.goniometer, model.goniometer.TopazInHouseGoniometer), "we picked a TopazInHouseGoniometer"
+#    # --------------------- Q-Space Tab --------------------
+#    ca(fm.notebook.SetSelection, 0)
+#    wait(100)
+#    #Settings for the guide
+#    #@type params StartupParameters
+#    params = fm.tab_startup.params
+#    params.d_min = 1.0
+#    params.q_resolution = 0.1
+#    params.wl_min = 0.5
+#    params.wl_max = 4.0
+#    wait(100)
+#    ca(screenshot_of, fm.tab_startup.control, 'startup-traits', minheight=True, margin=10, gradient_edge=0)
+#    ca(screenshot_of, fm.tab_startup.buttonApply, 'startup-apply', margin=5)
+#
+#    # ------------------------ Detectors tab ----------------------
+#    ca(fm.notebook.SetSelection, 1)
+#    wait(50)
+#    #@type td PanelDetectors
+#    td = fm.tab_detectors
+#    ca(screenshot_of, td.buttonLoadDetectors, 'detectors-buttonLoadDetectors', minheight=True, margin=6, gradient_edge=4)
+#    ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
+#    wait(1800)
+#    assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
+#    ca(screenshot_of, td.button_view_detectors, 'detectors-button_view_detectors', minheight=True, margin=6, gradient_edge=4)
+#
+#    #3d shot of detectors
+#    ca(click, td.button_view_detectors)
+#    wait(2000)
+#    ca(screenshot_frame, td.frame3d, 'detectors-3d_view')
+#
+#
+#    # ------------------------ goniometer tab ----------------------
+#    ca(fm.notebook.SetSelection, 2)
+#    wait(50)
+#    #@type tg PanelGoniometer
+#    tg = fm.tab_goniometer
+#    ca(screenshot_of, tg.boxSizerSelected, 'goniometer-selected', minheight=True, margin=[10, 10, 40, 10], gradient_edge=4)
+#    wait(50)
+#    ca(screenshot_of, tg.buttonSwitchGoniometer, 'goniometer-buttonSwitchGoniometer', margin=6, gradient_edge=0)
+#    wait(50)
+#    #Select the TopazInHouseGoniometer and switch to it
+#    ca(select_name, tg.choiceGonio, model.goniometer.TopazInHouseGoniometer().name)
+#    wait(50)
+#    ca(screenshot_of, tg.choiceGonio, 'goniometer-choice', margin=6, gradient_edge=0)
+#    wait(50)
+#    ca(screenshot_of, [tg.staticTextDesc, tg.staticTextDescLabel], 'goniometer-desc', margin=6, gradient_edge=0)
+#    ca(click, tg.buttonSwitchGoniometer)
+#    wait(100)
+#    assert isinstance(inst.goniometer, model.goniometer.TopazInHouseGoniometer), "we picked a TopazInHouseGoniometer"
 
     # ------------------------- Sample tab -----------------------
     ca(fm.notebook.SetSelection, 3)
@@ -210,7 +212,45 @@ def user_guide_script():
     ts = fm.tab_sample
     ca(screenshot_of, ts.crystal_control, 'sample-info', margin=10, gradient_edge=0)
     ca(screenshot_of, ts.buttonEditCrystal, 'sample-buttonEditCrystal', margin=5)
-    
+    ca(click, ts.buttonEditCrystal)
+    wait(500)
+    #@type dlg DialogEditCrystal
+    dlg = dialog_edit_crystal.last_dialog
+    dlg.crystal.name = "Quartz Crystal"
+    dlg.crystal.description = "Tutorial sample of quartz."
+    wait(50)
+    ca(screenshot_frame, dlg, 'dialog_edit_crystal', top_only=80)
+    wait(50)
+    ca(dlg.notebook.SetSelection, 1)
+    wait(50)
+    ca(screenshot_of, dlg.notebook, 'dialog_edit_crystal-notebook1', margin=10)
+    ca(screenshot_of, dlg.buttonGenerateUB, 'dialog_edit_crystal-buttonGenerateUB', margin=6)
+    wait(50)
+    ca(dlg.notebook.SetSelection, 0)
+    wait(50)
+    ca(screenshot_of, dlg.boxSizerIsaw, 'dialog_edit_crystal-notebook0', margin=[16, 16, 46, 16], gradient_edge=6, minheight=True)
+    ca(screenshot_of, dlg.buttonReadUB, 'dialog_edit_crystal-buttonReadUB', margin=6)
+    ca(screenshot_of, dlg.buttonOK, 'dialog_edit_crystal-buttonOK', margin=6)
+    ca(screenshot_of, dlg.buttonCancel, 'dialog_edit_crystal-buttonCancel', margin=6)
+    wait(50)
+    (phi, chi, omega) = (30, 15, 60)
+    dlg.ub_orientation.phi_degrees = phi
+    dlg.ub_orientation.chi_degrees = chi
+    dlg.ub_orientation.omega_degrees = omega
+    wait(50)
+    ca(screenshot_of, dlg.control_load_angles, 'dialog_edit_crystal-control_load_angles', margin=6)
+    wait(50)
+    ca(dlg.crystal.read_ISAW_ubmatrix_file, "../model/data/quartzub.txt", [phi, chi, omega])
+    wait(200)
+    ca(screenshot_of, dlg.control_top, 'dialog_edit_crystal-control_top', margin=6)
+    wait(50)
+    ca(click, dlg.buttonOK)
+    wait(500)
+
+    ca(screenshot_of, ts.range_control, 'sample-range_control', margin=10, gradient_edge=0)
+    wait(50)
+    ca(screenshot_of, ts.buttonApplyRange, 'sample-buttonApplyRange', margin=10, gradient_edge=0)
+#---END---
 
     # ------------------------- Trial Positions tab -----------------------
     ca(fm.notebook.SetSelection, 4)

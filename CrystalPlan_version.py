@@ -25,6 +25,9 @@ author_email = "zikovskyjl@ornl.gov"
 url = 'http://neutronsr.us'
 copyright = '(C) 2010'
 
+#Path to icons, relative to gui scripts
+icon_file = "icons/CrystalPlan_icon.png"
+icon_file_3d = "icons/CrystalPlan_icon_3d.png"
 
 if __name__ == "__main__":
     print package_name, version

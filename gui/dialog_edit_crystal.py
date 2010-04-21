@@ -103,7 +103,7 @@ class DialogEditCrystal(wx.Dialog):
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
         parent.AddWindow(self.staticTextHelp2,0, border=0, flag=wx.CENTER)
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
-        parent.AddWindow(self.control_load,0, border=0, flag=wx.CENTER)
+        parent.AddWindow(self.control_load_angles,0, border=0, flag=wx.CENTER)
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
         parent.AddWindow(self.buttonReadUB, 0, border=0, flag=wx.CENTER)
         parent.AddSpacer(wx.Size(16, 8), border=0, flag=0)
@@ -222,10 +222,10 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
             Spring(label=" ", emphasized=False, show_label=False),
         Group(
             angle_label,
-            Item("sample_mount_phi", label="Sample mounting angle phi\n (1st rotation, around Y)", format_str=fmt, enabled_when="generate_ub_matrix"),
-            Item("sample_mount_chi", label="Sample mounting angle chi\n (2nd rotation, around Z)", format_str=fmt, enabled_when="generate_ub_matrix"),
-            Item("sample_mount_omega", label="Sample mounting angle omega\n (3rd rotation, around Y)", format_str=fmt, enabled_when="generate_ub_matrix"),
-            label="Sample mounting", visible_when="generate_ub_matrix"),
+            Item("sample_mount_phi", label="Sample mounting angle phi\n (1st rotation, around Y)", format_str=fmt),
+            Item("sample_mount_chi", label="Sample mounting angle chi\n (2nd rotation, around Z)", format_str=fmt),
+            Item("sample_mount_omega", label="Sample mounting angle omega\n (3rd rotation, around Y)", format_str=fmt),
+            label="Sample mounting"),
             resizable=True
             )
             
@@ -238,7 +238,7 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
         self.panelManual.SetSizer(self.boxSizerManual)
 
         self.ub_orientation = SampleOrientationWhenUBMatrixWasSaved()
-        self.control_load = self.ub_orientation.edit_traits(parent=self.panelIsaw, kind='subpanel').control
+        self.control_load_angles = self.ub_orientation.edit_traits(parent=self.panelIsaw, kind='subpanel').control
 
 
         self._init_sizers()
@@ -291,6 +291,9 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
 
 
 #----------------------------------------------------------------------
+#The last dialog to be shown
+last_dialog = None
+
 def show_dialog(parent, crystal):
     """Open the dialog to edit crystal settings.
 
@@ -302,6 +305,10 @@ def show_dialog(parent, crystal):
         True if the user clicked OK.
     """
     dlg = DialogEditCrystal(parent, crystal)
+    #Save it as a global variable (mostly for use by scripting)
+    global last_dialog
+    last_dialog = dlg
+    #Show it
     dlg.ShowModal()
     okay = dlg.handler.user_clicked_okay
     dlg.Destroy()
