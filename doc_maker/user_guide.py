@@ -314,10 +314,6 @@ def user_guide_script():
     wait(500)
     ca(screenshot_of, slid, 'try-phi-30', margin=6, gradient_edge=2)
 
-    #Restore the window width
-    ca(fm.SetSize, original_size)
-    wait(150)
-
     # ------------------------ 3D Viewer! ----------------------
     #The whole frame
     ca(fv.Raise) #Bring it to front first!
@@ -332,46 +328,70 @@ def user_guide_script():
     #make_animated_phi_rotation(slid, fv, "3d-phi_rotation_anim.png")
     #make_animated_phi_rotation(tt.sliders[1], fv, "3d-chi_rotation_anim.png")
 
+    # ------------------------ Try Positions, bad goniometer ----------------------
+    ca(fm.Raise)
 
-#    blarg_i_want_to_crash
+    #Set a chi of +45 deg
+    slid = tt.sliders[1]
+    ca(slid.SetValue, +45)
+    ca(slid.SendScrollEvent) #Trigger the showing the warning
+    wait(50)
+    ca(screenshot_of, slid, 'try-chi-45', margin=6, gradient_edge=2)
+    wait(200)
+    ca(screenshot_of, [tt.staticTextWarning, tt.staticTextWarningReason], 'try-staticTextWarning', margin=6)
+    ca(screenshot_of, tt.buttonSave, 'try-buttonSave', margin=6)
+    wait(50)
 
-#---END---
 
     # ------------------------ Add Orientations tab ----------------------
     ca(fm.notebook.SetSelection, 5)
-    #Call the click event
-#    ca(call_event, fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
-#    wait(1000)
-#    assert len(model.experiment.exp.inst.positions)==1, "Length of positions calculated was to be 1, it was %d." % len(model.experiment.exp.inst.positions)
-    ca(fm.tab_add.controller.textAngles[0].SetValue, "arange(0,180,10)")
-    ca(screenshot_of, [fm.tab_add.boxSizerAngles] , 'add_positions-text', margin=20)
-    wait(100)
-    ca(screenshot_of, [fm.tab_add.buttonCalculate, fm.tab_add.buttonCancel] , 'add_positions-start_button', margin=20)
-    ca(call_event, fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
+
+    #@type ta PanelAddPositions
+    ta = fm.tab_add
+    
+    ca(ta.controller.textAngles[0].SetValue, "0, 10, 35.5")
+    ca(ta.controller.textAngles[1].SetValue, "arange(0, 50, 12.5)")
+    ca(ta.controller.textAngles[2].SetValue, "linspace(0, 360, 6)")
+    wait(300)
+    ca(screenshot_of, [ta.boxSizerAngles] , 'add-lists', margin=12)
+    ca(ta.controller.textAngles[0].SetValue, "0")
+    ca(ta.controller.textAngles[1].SetValue, "arange(-20, 20, 5)")
+    ca(ta.controller.textAngles[2].SetValue, "0")
+    wait(300)
+    ca(screenshot_of, [ta.staticTextWarnings, ta.textWarnings], 'add-textWarnings', margin=12)
+    ca(screenshot_of, ta.boxSizerAngles , 'add-lists2', margin=12)
+    ca(ta.controller.textAngles[0].SetValue, "0, 30, 60, 90")
+    ca(ta.controller.textAngles[1].SetValue, "0")
+    ca(ta.controller.textAngles[2].SetValue, "0")
+    wait(300)
+    ca(screenshot_of, ta.boxSizerAngles , 'add-lists3', margin=12)
+    wait(50)
+    ca(screenshot_of, [ta.buttonCalculate, ta.buttonCancel] , 'add-start_button', margin=20)
+    ca(click, ta.buttonCalculate)
     wait(500)
-    ca(screenshot_of, [fm.tab_add.gaugeProgress, fm.tab_add.staticTextProgress] , 'add_positions-progress_bar', margin=10)
-    ca(screenshot_of, [fm.tab_add.buttonCalculate, fm.tab_add.buttonCancel] , 'add_positions-cancel_button', margin=20)
+    ca(screenshot_of, [ta.gaugeProgress, ta.staticTextProgress] , 'add-progress_bar', margin=10)
+    ca(screenshot_of, [ta.buttonCalculate, ta.buttonCancel] , 'add-cancel_button', margin=20)
     wait(2000)
     #assert len(model.experiment.exp.inst.positions)==2, "Length of positions calculated was to be 19, it was %d." % len(model.experiment.exp.inst.positions)
 
+    # ------------------------ Experiment Plan tab ----------------------
+    ca(fm.notebook.SetSelection, 6)
 
+    #Restore the window width
+    ca(fm.SetSize, original_size)
+    wait(150)
+
+    #@type te PanelExperiment
+    te = fm.tab_experiment
+
+    ca(te.gridExp.SelectBlock, 1,0,1,100)
+    wait(50)
+    ca(screenshot_of, te.gridExp, 'exp-grid', margin=12)
+
+    
+    blarg_crash
 #---END---
     
-#    #Try position tab
-#    fm.notebook.SetSelection(4)
-#    #The "add positions" tab
-#    fm.notebook.SetSelection(5)
-#    wait(100)
-#    call_event(fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
-#    wait(1000)
-#    assert len(model.experiment.exp.inst.positions)==1, "Length of positions calculated."
-#    fm.tab_add.controller.textAngles[0].SetValue("arange(0,180,10)")
-#    wait(100)
-#    call_event(fm.tab_add.buttonCalculate, wx.EVT_BUTTON)
-#    wait(1000)
-#    assert len(model.experiment.exp.inst.positions)==19, "Length of positions calculated was to be 19, it was %d." % len(model.experiment.exp.inst.positions)
-    
-
 
 
 #========================================================================================================

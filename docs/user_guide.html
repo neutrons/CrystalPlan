@@ -35,8 +35,12 @@ dt {
 	font-weight:bold;
 	padding-bottom: 3px;
 	}
+h1 {
+	font-size:28pt;
+	padding-left:10px;
+	}
 h2 {
-	font-size:26pt;
+	font-size:24pt;
 	border-top:medium solid #000000;
 	}
 h3 {
@@ -55,6 +59,14 @@ li {
 ul {
 	padding-bottom: 5px;
 	}
+hr {
+border: 0;
+color: #9E9E9E;
+background-color: #9E9E9E;
+height: 1px;
+width: 100%;
+text-align: left;
+}
 </style>
 
 
@@ -80,7 +92,7 @@ document.write( "last updated on " + date_lastmodified() + "." );
 </script>
 <br />
   
-<h3>Introduction</h3>
+<h2>Introduction</h2>
 
 <p>CrystalPlan is an experiment planning tool for crystallography; CrystalPlan...
 </p>
@@ -371,24 +383,105 @@ affects the reciprocal space coverage in this window. This animation shows the e
 
 
 
-
-
-<h3>BLABLABLA. Adding Sample Orientations</h3>
-
+<h3>9. Goniometer Limits</h3>
 
 <ul>
-<li>
-Click the "Start" button to begin the calculation. 
-<br /><img alt="" border="0" src="screenshots/add_positions-start_button.png" />
+<li>Back in the Main Window's "Try Position" tab, try to set a Chi angle of +45 degrees:
+<br /><img src="screenshots/try-chi-45.png" />
 </li>
+
+<li>... and you will see the following warning message: 
+<br /><img src="screenshots/try-staticTextWarning.png" />
+<br />informing you that you have tried a sample orientation that is not achievable by 
+the selected goniometer.
+</li>
+<ul>
+<li>Not all goniometers have such limitations; for instance, if you select the "Simple Goniometer", there are no limits to the angles you can reach.</li>
+<li>However, the currently selected "TOPAZ In-House Goniometer" is limited in Chi tilt because of its design (a 3-legged "tripod" design). It can only tilt by a few degrees above or below zero.</li>
+<li>CrystalPlan calculated which angles are possible and warns you if they are not. A string describing the <i>reason</i> why this angle is not possible is displayed, if available. </li>
+</ul>
+<li>You can still simulate this sample orientation, but be aware that you will not be able to achieve it experimentally.</li>
+</ul>
+
+
+
+
+
+<h3>10. Adding Several Sample Orientations</h3>
+
+
+<p>Now, we will start building up an experiment plan by adding sample orientations.</p>
+
+<ul>
+<li>First, uncheck the <img src="screenshots/try-checkAdd.png" /> box; this will remove the "trial" position from the coverage calculation.
+</li>
+<li>Switch to the "Add Orientations" tab.</li>
+
+<h4>10.1. Entering Lists of Angles</h4>
+
+<li>Near the top of the window, you will see 3 text boxes where you can enter lists of angles to simulate:
+<br /><img src="screenshots/add-lists.png" />
+</li>
+<li>You can enter lists in 3 ways, based on Python script:</li>
+<ul>
+<li>A simple list separated by commas: "<strong>10, 22.5, -180</strong>". You do not need to include square brackets.</li>
+<li>An evenly divided linear range: "<strong>linspace(start, stop, steps)</strong>" will give you <i>steps</i> points, evenly divided from <i>start</i> to <i>stop</i> (inclusive).</li>
+<li>A range of values in fixed steps: "<strong>arange(start, stop, step_size)</strong>" will step starting at <i>start</i>, go up in steps of <i>step_size</i>, until you reach <i>stop</i> - but does <u>not</u> include <i>stop</i>.</li>
+</ul>
+<li>Angles are stepped through for each list: for example, if you put lists containing 5 phi angles, 4 chi angles, and 2 omega angles, your resulting list of sample orientations will have 40 phi, chi, omega combinations.</li>
+
+
+<h4>10.2. Checking Validity of Orientations</h4>
+
+<li>Enter the following values in the angle lists: 
+<br /><img src="screenshots/add-lists2.png" />
+</li>
+<ul>
+<li>You should see the following text below the angles:
+<br /><img src="screenshots/add-textWarnings.png" />
+</li>
+<ul><li>This box tells you that some of the angles you supplied were not achievable with the goniometer, and why. These angles will not be calculated.</li>
+<li>The remaining sample orientations will be calculated.</li>
+</ul>
+</ul>
+
+
+<h4>10.3. Adding Sample Orientations To Plan</h4>
+
+<li>Enter the following values in the angle lists: 
+<br /><img src="screenshots/add-lists3.png" />
+<br />All of these sample orientations are possible.
+</li>
+<ul>
+<li>
+When you have entered your lists of angles, click the "Start" button to begin the calculation. 
+<br /><img src="screenshots/add_positions-start_button.png" />
+</li>
+
+<li>The program now calculates the coverage at each sample orientation, and saves it in the
+experiment plan (which we will see in the next section).</li>
 
 <li>The calculation progress will be shown in this progress bar: <br />
 <img alt="" border="0" src="screenshots/add_positions-progress_bar.png" /> <br /></li>
 
 <li>If the calculation runs too long, you can cancel it before it completes. Sample orientations that have already been calculated will remain in the experiment plan.<br />
 <img alt="" border="0" src="screenshots/add_positions-cancel_button.png" /></li>
-
 </ul>
+
+<br />
+<li>Another way to add sample orientations is to click the
+ <br /><img src="screenshots/try-buttonSave.png" /> button,
+ <br />  in the "Try an Orientation" tab. This adds to the experiment plan whatever sample orientation angles you tried by setting those sliders. 
+</li>
+</ul>
+
+
+
+<h3>11. The Experiment Plan</h3>
+
+<li>Switch to the "Experiment Plan" tab. Here, you see a grid with a list of all the sample orientations that have been calculated up to now:
+<br /><img src="screenshots/exp-grid.png" /> 
+</li>
 
 
 <h4>YYYY.1. Coverage Statistics</h4>
