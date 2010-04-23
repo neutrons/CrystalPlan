@@ -89,7 +89,7 @@ class AngleInfo:
     type = "angle"
     #Units used internally
     units = "rad"
-    #Friendly units
+    #Friendly units, to be displayed to users
     friendly_units = "deg"
     #Conversion factor from internal units to friendly units (multiply the internal by THIS to get friendly)
     conversion = np.deg2rad(1)
@@ -98,6 +98,11 @@ class AngleInfo:
     #Randomization range: when generating an angle at random (in a genetic algorithm, for example,
     # us this range.
     random_range = [-180, 180]
+
+    #Units required by the DAS group to be used in the output CSV file
+    das_units = "deg"
+    #Conversion factor from internal units to DAS units (multiply the internal by THIS to get DAS units)
+    das_conversion = np.deg2rad(1)
 
     def __init__(self, name, type="angle", units="rad", friendly_units="deg", conversion=np.deg2rad(1), friendly_range=[-180, 180], random_range=[-180, 180]):
         """Constructor."""
@@ -116,6 +121,10 @@ class AngleInfo:
     def internal_to_friendly(self, value):
         """Convert an internal angle value to a friendly unit one."""
         return value / self.conversion
+
+    def internal_to_das(self, value):
+        """Convert an internal angle value to a DAS group-required unit one."""
+        return value / self.das_conversion
 
     def pretty_print(self, value, add_unit=False):
         """Return a string with a pretty printed value.
@@ -323,16 +332,20 @@ class Goniometer:
         """
         fileobj.write(csv_line( ["#Title:", title] ) )
         fileobj.write(csv_line( ["#Comment:", comment] ) )
+        fileobj.write('#\n')
+        fileobj.write('#"Goniometer used: %s"\n' % self.name)
+        fileobj.write('#\n')
         fileobj.write('#"The first columns are the sample orientations:"\n' )
         for anginfo in self.angles:
-            fileobj.write('#"     %s, %s; unit is [%s]."\n' % (anginfo.name, anginfo.type, anginfo.units))
+            fileobj.write('#"     %s, %s; unit is [%s]."\n' % (anginfo.name, anginfo.type, anginfo.das_units))
         fileobj.write('#"Next are 2 columns for the stopping criterion parameters."\n' )
+        fileobj.write('#\n')
         #Line of header info
         fileobj.write(csv_line( [x.name for x in self.angles] + ['CountFor', 'CountValue',  'Comment'] ) )
 
 
     #===============================================================================================
-    def csv_add_position(self, fileobj, angles, count_for, count_value, comment):
+    def csv_add_position(self, fileobj, angle_values, count_for, count_value, comment):
         """Add a line to an existing CSV file containing the motor positions, etc. for
         that part of the experiment.
 
@@ -341,14 +354,16 @@ class Goniometer:
             count_for, count_value: stopping criterion
         """
         #Calculate if its allowed
-        (allowed, reason) = self.are_angles_allowed(angles)
+        (allowed, reason) = self.are_angles_allowed(angle_values)
+        #Convert from internal to DAS units.
+        das_angles = [self.angles[i].internal_to_das(angle_values[i]) for i in xrange(len(self.angles))]
         if not allowed:
             #Can't reach this position
             fileobj.write("#"" ----- ERROR! This sample orientation could not be achieved with the goniometer, because of '%s'. THE FOLLOWING LINE HAS BEEN COMMENTED OUT ------ ""\n" % reason )
-            fileobj.write('#' + csv_line( list(angles) + [count_for, count_value, comment] ) )
+            fileobj.write('#' + csv_line( das_angles + [count_for, count_value, comment] ) )
         else:
             #They are okay
-            fileobj.write(csv_line( list(angles) + [count_for, count_value, comment] ) )
+            fileobj.write(csv_line( das_angles + [count_for, count_value, comment] ) )
 
 
 
