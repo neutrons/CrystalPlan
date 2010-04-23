@@ -1,4 +1,4 @@
-#Boa:FramePanel:QspaceOptionsPanel
+#Boa:FramePanel:PanelQspaceOptions
 """Panel showing options on how to display reciprocal-space
 volume coverage."""
 
@@ -21,21 +21,21 @@ import model
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-[wxID_QSPACEOPTIONSPANEL, wxID_QSPACEOPTIONSPANELCHECKHEMISPHERE, 
- wxID_QSPACEOPTIONSPANELCHECKINVERT, 
- wxID_QSPACEOPTIONSPANELCHECKREALTIMESLICE, 
- wxID_QSPACEOPTIONSPANELCHECKSHOWREDUNDANCY, 
- wxID_QSPACEOPTIONSPANELCHECKSHOWSLICE, 
- wxID_QSPACEOPTIONSPANELPANEL_TO_HOLD_SLICE_CONTROL, 
+[wxID_PanelQspaceOptions, wxID_PanelQspaceOptionsCHECKHEMISPHERE,
+ wxID_PanelQspaceOptionsCHECKINVERT,
+ wxID_PanelQspaceOptionsCHECKREALTIMESLICE,
+ wxID_PanelQspaceOptionsCHECKSHOWREDUNDANCY,
+ wxID_PanelQspaceOptionsCHECKSHOWSLICE,
+ wxID_PanelQspaceOptionsPANEL_TO_HOLD_SLICE_CONTROL,
 ] = [wx.NewId() for _init_ctrls in range(7)]
 
 class QspaceOptionsController:
-    """This class is the view/controller for the QspaceOptionsPanel."""
+    """This class is the view/controller for the PanelQspaceOptions."""
     panel = None
     
-    def __init__(self, QspaceOptionsPanel):
+    def __init__(self, PanelQspaceOptions):
         """Constructor."""
-        self.panel = QspaceOptionsPanel
+        self.panel = PanelQspaceOptions
         #Subscribe to messages
         model.messages.subscribe(self.update_data, model.messages.MSG_EXPERIMENT_QSPACE_CHANGED)
 
@@ -82,7 +82,7 @@ class QspaceOptionsController:
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-class QspaceOptionsPanel(wx.Panel):
+class PanelQspaceOptions(wx.Panel):
     """The slice panel is a custom control that allows the user to pick
     a slice through q-space to display.
     It also shows the coverage % through q-radius."""
@@ -131,27 +131,27 @@ class QspaceOptionsPanel(wx.Panel):
 
     def _init_ctrls(self, prnt):
         # generated method, don't edit
-        wx.Panel.__init__(self, id=wxID_QSPACEOPTIONSPANEL,
-              name=u'QspaceOptionsPanel', parent=prnt, pos=wx.Point(676, 622),
+        wx.Panel.__init__(self, id=wxID_PanelQspaceOptions,
+              name=u'PanelQspaceOptions', parent=prnt, pos=wx.Point(676, 622),
               size=wx.Size(726, 208), style=wx.TAB_TRAVERSAL)
         self.SetClientSize(wx.Size(726, 208))
         self.SetAutoLayout(True)
 
-        self.panel_to_hold_slice_control = wx.Panel(id=wxID_QSPACEOPTIONSPANELPANEL_TO_HOLD_SLICE_CONTROL,
+        self.panel_to_hold_slice_control = wx.Panel(id=wxID_PanelQspaceOptionsPANEL_TO_HOLD_SLICE_CONTROL,
               name=u'panel_to_hold_slice_control', parent=self, pos=wx.Point(4,
               53), size=wx.Size(718, 151),
               style=wx.RAISED_BORDER | wx.THICK_FRAME | wx.TAB_TRAVERSAL)
         self.panel_to_hold_slice_control.SetBackgroundColour(wx.Colour(229, 246,
               245))
 
-        self.checkShowSlice = wx.CheckBox(id=wxID_QSPACEOPTIONSPANELCHECKSHOWSLICE,
+        self.checkShowSlice = wx.CheckBox(id=wxID_PanelQspaceOptionsCHECKSHOWSLICE,
               label=u'Show a Slice', name=u'checkShowSlice', parent=self,
               pos=wx.Point(4, 27), size=wx.Size(112, 22), style=0)
         self.checkShowSlice.SetValue(False)
         self.checkShowSlice.Bind(wx.EVT_CHECKBOX, self.OnCheckShowSliceCheckbox,
-              id=wxID_QSPACEOPTIONSPANELCHECKSHOWSLICE)
+              id=wxID_PanelQspaceOptionsCHECKSHOWSLICE)
 
-        self.checkRealtimeSlice = wx.CheckBox(id=wxID_QSPACEOPTIONSPANELCHECKREALTIMESLICE,
+        self.checkRealtimeSlice = wx.CheckBox(id=wxID_PanelQspaceOptionsCHECKREALTIMESLICE,
               label=u'Real-time Update', name=u'checkRealtimeSlice',
               parent=self, pos=wx.Point(124, 27), size=wx.Size(138, 22),
               style=0)
@@ -159,33 +159,33 @@ class QspaceOptionsPanel(wx.Panel):
         self.checkRealtimeSlice.SetMinSize(wx.Size(-1, -1))
         self.checkRealtimeSlice.Bind(wx.EVT_CHECKBOX,
               self.OnCheckRealtimeCheckbox,
-              id=wxID_QSPACEOPTIONSPANELCHECKREALTIMESLICE)
+              id=wxID_PanelQspaceOptionsCHECKREALTIMESLICE)
 
-        self.checkInvert = wx.CheckBox(id=wxID_QSPACEOPTIONSPANELCHECKINVERT,
+        self.checkInvert = wx.CheckBox(id=wxID_PanelQspaceOptionsCHECKINVERT,
               label=u'Invert (to show areas NOT covered)', name=u'checkInvert',
               parent=self, pos=wx.Point(270, 27), size=wx.Size(272, 22),
               style=0)
         self.checkInvert.SetValue(False)
         self.checkInvert.Bind(wx.EVT_CHECKBOX, self.OnCheckInvertCheckbox,
-              id=wxID_QSPACEOPTIONSPANELCHECKINVERT)
+              id=wxID_PanelQspaceOptionsCHECKINVERT)
 
-        self.checkHemisphere = wx.CheckBox(id=wxID_QSPACEOPTIONSPANELCHECKHEMISPHERE,
+        self.checkHemisphere = wx.CheckBox(id=wxID_PanelQspaceOptionsCHECKHEMISPHERE,
               label=u'Find and show the optimal hemisphere',
               name=u'checkHemisphere', parent=self, pos=wx.Point(4, 0),
               size=wx.Size(296, 22), style=0)
         self.checkHemisphere.SetValue(False)
         self.checkHemisphere.Bind(wx.EVT_CHECKBOX,
               self.OnCheckHemisphereCheckbox,
-              id=wxID_QSPACEOPTIONSPANELCHECKHEMISPHERE)
+              id=wxID_PanelQspaceOptionsCHECKHEMISPHERE)
 
-        self.checkShowRedundancy = wx.CheckBox(id=wxID_QSPACEOPTIONSPANELCHECKSHOWREDUNDANCY,
+        self.checkShowRedundancy = wx.CheckBox(id=wxID_PanelQspaceOptionsCHECKSHOWREDUNDANCY,
               label=u'Show Redundancy', name=u'checkShowRedundancy',
               parent=self, pos=wx.Point(312, 0), size=wx.Size(160, 22),
               style=0)
         self.checkShowRedundancy.SetValue(False)
         self.checkShowRedundancy.Bind(wx.EVT_CHECKBOX,
               self.OnCheckShowRedundancyCheckbox,
-              id=wxID_QSPACEOPTIONSPANELCHECKSHOWREDUNDANCY)
+              id=wxID_PanelQspaceOptionsCHECKSHOWREDUNDANCY)
 
         self._init_sizers()
 

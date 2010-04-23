@@ -150,14 +150,14 @@ def make_animated_tab_click(fm):
 
 
 def make_animated_phi_rotation(slid, fv, filename):
-    """Animate a rotation of phi"""
+    """Animate a rotation of phi or chi"""
     files = []
     for (i, angle) in enumerate(np.arange(-180, 181, 5)):
         ca(slid.SetValue, angle)
         wait(20)
         ca(slid.SendScrollEndEvent)
         wait(1800)
-        fname = '3d-phi_rotation_anim'+str(i)
+        fname = '3d-rotation_anim'+str(i)
         files.append("../docs/screenshots/" + fname + ".png")
         #Grab the 3d view
         ca(screenshot_of, fv.control, fname, margin=[10, 10, 10, 10], gradient_edge=5)
@@ -170,6 +170,13 @@ def make_animated_phi_rotation(slid, fv, filename):
 #    for fname in files:
 #        os.remove(fname)
 
+def pick_a_reflection():
+    """Randomly pick a reflection"""
+    #@type refl Reflection
+    refl = model.experiment.exp.reflections[np.random.random_integers(0, len(model.experiment.exp.reflections))]
+    while (refl.times_measured(add_equivalent_ones=True) < 4) or (not refl.is_primary):
+        refl = model.experiment.exp.reflections[np.random.random_integers(0, len(model.experiment.exp.reflections))]
+    print "I picked", refl
 
         
 
@@ -190,6 +197,13 @@ def user_guide_script():
 
     ca(screenshot_frame, fm, 'frame_main')
     wait(50)
+
+    #Set the view in the 3D view
+    (azimuth, elevation, distance, focalpoint) = fv.controller.scene.mlab.view()
+    ca(fv.controller.scene.mlab.view, distance=distance/1.35)
+    #Parallel projection off
+    ca(fv.controller.scene.__setattr__, 'parallel_projection', False)
+
 #    make_animated_tab_click(fm)
     #warnings.warn("Hey! Turn the animated tab maker back on!")
     
@@ -291,56 +305,57 @@ def user_guide_script():
     wait(50)
     ca(screenshot_of, ts.buttonApplyRange, 'sample-buttonApplyRange', margin=10, gradient_edge=0)
 
-    # ------------------------- Trial Positions tab -----------------------
-    ca(fm.notebook.SetSelection, 4)
-    wait(40)
-    #Make the main window narrower
-    ca(fm.SetSize, wx.Size(500, original_size[1]))
-    wait(150)
-    #@type tt PanelTryPosition
-    tt = fm.tab_try
-    ca(screenshot_of, tt.boxSizerAll, 'try', minheight=True, margin=[10, 10, 40, 10], gradient_edge=5)
-    #Check the box
-    ca(check, tt.checkAdd, True)
-    wait(100)
-    ca(screenshot_of, tt.checkAdd, 'try-checkAdd', margin=6, gradient_edge=2)
-    wait(40)
-
-    #@type slid ValueSlider
-    slid = tt.sliders[0]
-    ca(slid.SetValue, -30)
-    wait(50)
-    ca(slid.SendScrollEndEvent)
-    wait(500)
-    ca(screenshot_of, slid, 'try-phi-30', margin=6, gradient_edge=2)
-
-    # ------------------------ 3D Viewer! ----------------------
-    #The whole frame
-    ca(fv.Raise) #Bring it to front first!
-    wait(150)
-    
-    ca(screenshot_frame, fv, 'frame_qspace')
-    wait(50)
-    ca(screenshot_of, fv.panelStats, '3d-panelStats', margin=10)
-    
-    #Animate a phi rotation
-    wait(100)
-    #make_animated_phi_rotation(slid, fv, "3d-phi_rotation_anim.png")
-    #make_animated_phi_rotation(tt.sliders[1], fv, "3d-chi_rotation_anim.png")
-
-    # ------------------------ Try Positions, bad goniometer ----------------------
-    ca(fm.Raise)
-
-    #Set a chi of +45 deg
-    slid = tt.sliders[1]
-    ca(slid.SetValue, +45)
-    ca(slid.SendScrollEvent) #Trigger the showing the warning
-    wait(50)
-    ca(screenshot_of, slid, 'try-chi-45', margin=6, gradient_edge=2)
-    wait(200)
-    ca(screenshot_of, [tt.staticTextWarning, tt.staticTextWarningReason], 'try-staticTextWarning', margin=6)
-    ca(screenshot_of, tt.buttonSave, 'try-buttonSave', margin=6)
-    wait(50)
+#    # ------------------------- Trial Positions tab -----------------------
+#    ca(fm.notebook.SetSelection, 4)
+#    wait(40)
+#    #Make the main window narrower
+#    ca(fm.SetSize, wx.Size(500, original_size[1]))
+#    wait(150)
+#    #@type tt PanelTryPosition
+#    tt = fm.tab_try
+#    ca(screenshot_of, tt.boxSizerAll, 'try', minheight=True, margin=[10, 10, 40, 10], gradient_edge=5)
+#    #Check the box
+#    ca(check, tt.checkAdd, True)
+#    wait(100)
+#    ca(screenshot_of, tt.checkAdd, 'try-checkAdd', margin=6, gradient_edge=2)
+#    wait(40)
+#
+#    #@type slid ValueSlider
+#    slid = tt.sliders[0]
+#    ca(slid.SetValue, -30)
+#    wait(50)
+#    ca(slid.SendScrollEndEvent)
+#    wait(500)
+#    ca(screenshot_of, slid, 'try-phi-30', margin=6, gradient_edge=2)
+#
+#    # ------------------------ 3D Viewer! ----------------------
+#    #The whole frame
+#    ca(fv.Raise) #Bring it to front first!
+#    wait(150)
+#
+#    ca(screenshot_frame, fv, 'frame_qspace')
+#    wait(50)
+#
+#    #Animate a phi rotation
+#    wait(100)
+#    #make_animated_phi_rotation(slid, fv, "3d-phi_rotation_anim.png")
+#    #make_animated_phi_rotation(tt.sliders[1], fv, "3d-chi_rotation_anim.png")
+#
+#    # ------------------------ Try Positions, bad goniometer ----------------------
+#    ca(fm.Raise)
+#
+#    #Set a chi of +45 deg
+#    slid = tt.sliders[1]
+#    ca(slid.SetValue, +45)
+#    ca(slid.SendScrollEvent) #Trigger the showing the warning
+#    wait(50)
+#    ca(screenshot_of, slid, 'try-chi-45', margin=6, gradient_edge=2)
+#    wait(200)
+#    ca(screenshot_of, [tt.staticTextWarning, tt.staticTextWarningReason], 'try-staticTextWarning', margin=6)
+#    ca(screenshot_of, tt.buttonSave, 'try-buttonSave', margin=6)
+#    wait(50)
+#    #un-check the box
+#    ca(check, tt.checkAdd, False)
 
 
     # ------------------------ Add Orientations tab ----------------------
@@ -349,15 +364,15 @@ def user_guide_script():
     #@type ta PanelAddPositions
     ta = fm.tab_add
     
-    ca(ta.controller.textAngles[0].SetValue, "0, 10, 35.5")
-    ca(ta.controller.textAngles[1].SetValue, "arange(0, 50, 12.5)")
-    ca(ta.controller.textAngles[2].SetValue, "linspace(0, 360, 6)")
-    wait(300)
-    ca(screenshot_of, [ta.boxSizerAngles] , 'add-lists', margin=12)
-    ca(ta.controller.textAngles[0].SetValue, "0")
-    ca(ta.controller.textAngles[1].SetValue, "arange(-20, 20, 5)")
-    ca(ta.controller.textAngles[2].SetValue, "0")
-    wait(300)
+#    ca(ta.controller.textAngles[0].SetValue, "0, 10, 35.5")
+#    ca(ta.controller.textAngles[1].SetValue, "arange(0, 50, 12.5)")
+#    ca(ta.controller.textAngles[2].SetValue, "linspace(0, 360, 6)")
+#    wait(300)
+#    ca(screenshot_of, [ta.boxSizerAngles] , 'add-lists', margin=12)
+#    ca(ta.controller.textAngles[0].SetValue, "0")
+#    ca(ta.controller.textAngles[1].SetValue, "arange(-20, 20, 5)")
+#    ca(ta.controller.textAngles[2].SetValue, "0")
+#    wait(300)
     ca(screenshot_of, [ta.staticTextWarnings, ta.textWarnings], 'add-textWarnings', margin=12)
     ca(screenshot_of, ta.boxSizerAngles , 'add-lists2', margin=12)
     ca(ta.controller.textAngles[0].SetValue, "0, 30, 60, 90")
@@ -374,25 +389,130 @@ def user_guide_script():
     wait(2000)
     #assert len(model.experiment.exp.inst.positions)==2, "Length of positions calculated was to be 19, it was %d." % len(model.experiment.exp.inst.positions)
 
-    # ------------------------ Experiment Plan tab ----------------------
-    ca(fm.notebook.SetSelection, 6)
+#    # ------------------------ Experiment Plan tab ----------------------
+#    ca(fm.notebook.SetSelection, 6)
+#
+#    #Restore the window width
+#    ca(fm.SetSize, original_size)
+#    wait(150)
+#
+#    #@type te PanelExperiment
+#    te = fm.tab_experiment
+#
+#    ca(te.gridExp.SelectBlock, 1,0,1,100)
+#    wait(50)
+#    ca(screenshot_of, te.gridExp, 'exp-grid', margin=12)
+#    ca(screenshot_of, te.boxSizerDelete, 'exp-delete_buttons', margin=8)
+#    ca(screenshot_of, [te.checkUseAll, te.buttonDontUseHighlighted], 'exp-select_buttons', margin=8)
+#    wait(50)
+#    ca(screenshot_of, te.buttonSaveToCSV, 'exp-buttonSaveToCSV', margin=6)
+#    ca(screenshot_of, te.staticTextEstimatedTime, 'exp-estimated_time', margin=6)
+#    wait(50)
 
-    #Restore the window width
-    ca(fm.SetSize, original_size)
-    wait(150)
+    # ------------------------ Back to 3D view----------------------
+    #The q-space options panel
+    #@type tv PanelQspaceOptions
+    tv = fv.tabVolume
 
-    #@type te PanelExperiment
-    te = fm.tab_experiment
-
-    ca(te.gridExp.SelectBlock, 1,0,1,100)
+    ca(fv.Raise)
     wait(50)
-    ca(screenshot_of, te.gridExp, 'exp-grid', margin=12)
 
+    control_margins = [-180, -180, -30, -10]
+    control_gradient_edge = 100
+    check_margin = 4
+
+#    ca(screenshot_frame, fv, '3d-4orientations')
+#    ca(screenshot_of, fv.panelStats, '3d-panelStats', margin=10)
+#    ca(screenshot_of, tv.sliceControl, '3d-sliceControl', margin=10)
+#    wait(50)
+#
+#
+#    ca(screenshot_of, tv.checkHemisphere, 'volume_options-checkHemisphere', margin=check_margin)
+#    ca(check, tv.checkHemisphere, True)
+#    wait(600)
+#    ca(screenshot_of, fv.control, '3d-hemisphere', margin=control_margins, gradient_edge=control_gradient_edge)
+#    ca(screenshot_of, fv.panelStats, '3d-panelStats-hemisphere', margin=10)
+#
+#    ca(screenshot_of, tv.checkInvert, 'volume_options-checkInvert', margin=check_margin)
+#    ca(check, tv.checkInvert, True)
+#    wait(600)
+#    ca(screenshot_of, fv.control, '3d-inverted', margin=control_margins, gradient_edge=control_gradient_edge)
+#    ca(check, tv.checkInvert, False)
+#    ca(check, tv.checkHemisphere, False)
+#    ca(check, tv.checkShowRedundancy, True)
+#    wait(1200)
+#
+#    ca(screenshot_of, tv.checkShowRedundancy, 'volume_options-checkShowRedundancy', margin=check_margin)
+#    ca(screenshot_of, fv.control, '3d-redundancy', margin=control_margins, gradient_edge=control_gradient_edge)
+#
+#    ca(screenshot_of, tv.checkShowSlice, 'volume_options-checkShowSlice', margin=check_margin)
+#    tv.sliceControl.slice_min = 3
+#    tv.sliceControl.slice_max = 3.5
+#    wait(30)
+#    ca(check, tv.checkShowRedundancy, False)
+#    ca(check, tv.checkShowSlice, True)
+#    wait(600)
+#    ca(screenshot_of, tv.sliceControl, '3d-sliceControl-on', margin=10)
+#    ca(screenshot_of, fv.control, '3d-slice', margin=control_margins, gradient_edge=control_gradient_edge)
+#    wait(50)
+#    ca(check, tv.checkShowRedundancy, True)
+#    wait(900)
+#    ca(screenshot_of, fv.control, '3d-slice-redundancy', margin=control_margins, gradient_edge=control_gradient_edge)
+
+
+    # ------------------------ Reflections View ---------------------
+    #@type tr PanelReflectionsViewOptions
+    tr = fv.tabReflections
+
+    #Select it
+    ca(fv.notebookView.SetSelection, 1)
+    wait(300)
+    ca(screenshot_frame, fv, '3d-reflections')
+    ca(screenshot_of, fv.panelStats, '3drefs-panelStats-normal', margin=10)
+
+    #Only the measured peaks
+    ca(tr.choiceView.SetSelection, 1)
+    ca(call_event, tr.choiceView, wx.EVT_CHOICE)
+    wait(400)
+    ca(screenshot_of, fv.control, '3drefs-measured', margin=control_margins, gradient_edge=control_gradient_edge)
+
+    ca(screenshot_of, tr.boxSizerDisplay, '3drefs-display', margin=10, gradient_edge=4)
+    ca(screenshot_of, [tr.staticTextViewOption, tr.choiceView], '3drefs-view_option', margin=check_margin, gradient_edge=2)
+    ca(screenshot_of, tr.checkUseSymmetry, '3drefs-checkUseSymmetry', margin=check_margin)
+
+    #Use symmetry
+    ca(check, tr.checkUseSymmetry, True)
+    ca(tr.choiceView.SetSelection, 0)
+    ca(call_event, tr.choiceView, wx.EVT_CHOICE)
+    wait(400)
+    ca(screenshot_of, fv.control, '3drefs-measured-symmetry', margin=control_margins, gradient_edge=control_gradient_edge)
+    ca(screenshot_of, fv.panelStats, '3drefs-panelStats-symmetry', margin=10)
+
+    ca(fv.controller.scene.__setattr__, 'parallel_projection', True)
+    wait(400)
+    ca(screenshot_of, fv.control, '3drefs-parallel', margin=control_margins, gradient_edge=control_gradient_edge)
+    ca(fv.controller.scene.__setattr__, 'parallel_projection', False)
+    wait(400)
     
+    #--- Find a reflection to display ---
+    #Simulate a left-click
+    ca(fv.controller.on_button_press, FakeClickObject(50,50), None)
+#    refl = pick_a_reflection()
+#    #Select it
+#    ca(fv.controller.select_reflection, refl)
+    wait(250)
+    ca(screenshot_of, fv.control, '3drefs-reflection_selected', margin=control_margins, gradient_edge=control_gradient_edge)
+
     blarg_crash
 #---END---
     
 
+class FakeClickObject:
+    """Class for faking clicks sent to the VTK (mayavi) window"""
+    def __init__(self, x, y):
+        (self.x, self.y) = (x,y)
+    def GetEventPosition(self):
+        return (self.x, self.y)
 
 #========================================================================================================
 def generate_user_guide(fm, fv):

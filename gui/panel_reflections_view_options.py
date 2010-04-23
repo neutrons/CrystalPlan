@@ -51,9 +51,9 @@ class ReflectionsViewOptionsController:
     _inside_show_settings = False
 
     #-------------------------------------------------------------------------------
-    def __init__(self, QspaceOptionsPanel):
+    def __init__(self, panel):
         """Constructor."""
-        self.panel = QspaceOptionsPanel
+        self.panel = panel
         #Subscribe to messages
         model.messages.subscribe(self.update_data, model.messages.MSG_EXPERIMENT_QSPACE_CHANGED)
 

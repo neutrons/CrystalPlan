@@ -52,6 +52,7 @@ h4 {
 	font-size:16pt;
 	border-top:thin dashed #000000;
 	padding-top:5px;
+	padding-left:10px;
 	}
 li {
 	padding-top:3px;
@@ -139,10 +140,11 @@ Most of your workflow will occur by navigating between these notebook tabs:
 </li>
 <ul>
 	<dt>d_min</dt>
-	<dd>The smallest d-spacing allowed. Your simulated q-space will be limited to a maximum <span class="eq"><img alt="$q = {2\pi}/d_{min}$" src="equser_guide_source1.png" title="$q = {2\pi}/d_{min}$" /></span></dd>
+	<dd>The smallest d-spacing allowed. Your simulated q-space will be limited to a maximum 
+	<span class="eq"><img alt="$q_{max} = {2\pi}/d_{min}$" src="eq/equser_guide_source1.png" title="$q_{max} = {2\pi}/d_{min}$" /></span></dd>
 	
 	<dt>q-resolution</dt>
-	<dd>The size of a voxel (smallest volume element) simulated, in <span class="eq"><img alt="$\AA^{-1}$" src="equser_guide_source2.png" title="$\AA^{-1}$" /></span>. The # of points will be calculated and shown below; you will get a warning if you try to make very high-resolution calculations, because memory consumption, etc. will be very high.</dd>
+	<dd>The size of a voxel (smallest volume element) simulated, in <span class="eq"><img alt="$\AA^{-1}$" src="eq/equser_guide_source2.png" title="$\AA^{-1}$" /></span>. The # of points will be calculated and shown below; you will get a warning if you try to make very high-resolution calculations, because memory consumption, etc. will be very high.</dd>
 	
 	<dt>wavelength limits</dt>
 	<dd>Specify your experiment's wavelength limits, in Ansgtroms; this could be due to limits on your neutron source or your detectors.</dd>
@@ -281,7 +283,7 @@ would revert all the changed made in the dialog.
 <ul>
 <li>They use the <i>d_min</i> parameter you set earlier in the "Q-Space" tab. </li>
 <li>The first checkbox tells CrystalPlan to calculate the H,K,L ranges that fill a box of side in q-space corresponding to 
-<span class="eq"><img alt="$d_{min}$" src="equser_guide_source3.png" title="$d_{min}$" /></span>. </li>
+<span class="eq"><img alt="$d_{min}$" src="eq/equser_guide_source3.png" title="$d_{min}$" /></span>. </li>
 <ul>
 <li>But, the resulting peaks will form a cube only if all the lattice angles are 90 degrees.</li>
 </ul>
@@ -291,7 +293,7 @@ would revert all the changed made in the dialog.
 any changes you have made. All reflections are re-calculated.
 </li>
 <li>Be aware that for large cells, the number of reflections within a given 
-<span class="eq"><img alt="$d_{min}$" src="equser_guide_source4.png" title="$d_{min}$" /></span>
+<span class="eq"><img alt="$d_{min}$" src="eq/equser_guide_source4.png" title="$d_{min}$" /></span>
  may be very large, slowing down calculations and requiring a lot of memory.</li>
 
 
@@ -336,7 +338,7 @@ our simulated detector coverage.</p>
 <li>The white cube outline represents the extent of q-space that is simulated.</li>
 <li>The center of the cube is q = [0,0,0], which corresponds of course to h,k,l = [0,0,0]</li>
 <li>The cube is sized so as to <i>just</i> hold a sphere of radius 
-<span class="eq"><img alt="$q = \frac{2\pi}{d_{min}}$" src="equser_guide_source5.png" title="$q = \frac{2\pi}{d_{min}}$" /></span>
+<span class="eq"><img alt="$q = \frac{2\pi}{d_{min}}$" src="eq/equser_guide_source5.png" title="$q = \frac{2\pi}{d_{min}}$" /></span>
 </li>
 </ul>
  <li>Right now, we are in "volume coverage" mode, which means that the shapes shown in cyan correspond to the <i>volume</i> in reciprocal space that has been measured by a detector.  
@@ -416,10 +418,11 @@ the selected goniometer.
 <li>First, uncheck the <img src="screenshots/try-checkAdd.png" /> box; this will remove the "trial" position from the coverage calculation.
 </li>
 <li>Switch to the "Add Orientations" tab.</li>
+</ul>
 
 <h4>10.1. Entering Lists of Angles</h4>
 
-<li>Near the top of the window, you will see 3 text boxes where you can enter lists of angles to simulate:
+<ul><li>Near the top of the window, you will see 3 text boxes where you can enter lists of angles to simulate:
 <br /><img src="screenshots/add-lists.png" />
 </li>
 <li>You can enter lists in 3 ways, based on Python script:</li>
@@ -429,11 +432,12 @@ the selected goniometer.
 <li>A range of values in fixed steps: "<strong>arange(start, stop, step_size)</strong>" will step starting at <i>start</i>, go up in steps of <i>step_size</i>, until you reach <i>stop</i> - but does <u>not</u> include <i>stop</i>.</li>
 </ul>
 <li>Angles are stepped through for each list: for example, if you put lists containing 5 phi angles, 4 chi angles, and 2 omega angles, your resulting list of sample orientations will have 40 phi, chi, omega combinations.</li>
+<li>You don't <em>have</em> to put in lists - you can also put in a single value for each angle, giving a single sample orientation.</li></ul>
 
 
 <h4>10.2. Checking Validity of Orientations</h4>
 
-<li>Enter the following values in the angle lists: 
+<ul><li>Enter the following values in the angle lists: 
 <br /><img src="screenshots/add-lists2.png" />
 </li>
 <ul>
@@ -443,11 +447,11 @@ the selected goniometer.
 <ul><li>This box tells you that some of the angles you supplied were not achievable with the goniometer, and why. These angles will not be calculated.</li>
 <li>The remaining sample orientations will be calculated.</li>
 </ul>
-</ul>
+</ul></ul>
 
 
 <h4>10.3. Adding Sample Orientations To Plan</h4>
-
+<ul>
 <li>Enter the following values in the angle lists: 
 <br /><img src="screenshots/add-lists3.png" />
 <br />All of these sample orientations are possible.
@@ -482,21 +486,217 @@ experiment plan (which we will see in the next section).</li>
 <li>Switch to the "Experiment Plan" tab. Here, you see a grid with a list of all the sample orientations that have been calculated up to now:
 <br /><img src="screenshots/exp-grid.png" /> 
 </li>
+<ul>
+<li>Each row lists the sample orientation angles you will use (typically 3 angles, phi, chi, omega).</li>
+<li>The first column has a checkbox (X) if you are going to use this sample orientation in the experiment. Double-click to uncheck or recheck the box.</li>
+<ul>
+<li>When you do so, the coverage corresponding to this sample orientation is removed from the total.</li>
+</ul>
+<li>The <strong>Stopping Criterion</strong> and  <strong>Criterion Value</strong> columns allows you to specify <i>how long</i> to do the measurement for that particular sample orientation. You get a drop-down list of a few options (the exact list and function is determined by the DAS group):</li>
+<ul>
+<dt>runtime</dt>
+<dd>The time to acquire data, in seconds.</dd>
+<dt>proton charge (or pcharge)</dt>
+<dd>The accelerator proton charge total, in picoCoulombs. This criterion has the advantage of giving consistent counts, even if the accelerator goes down for some time during your run.</dd>
+<dt>counts</dt>
+<dd>The total neutron count (over all detectors).</dd>
+<dt>monitor counts</dt>
+<dd>The neutron count at the monitor.</dd>
+<dt>roi counts</dt>
+<dd>The neutron count only in the region-of-interest (roi) on a detector. The roi will be defined on the DAS computers.</dd>
+</ul>
+<li>As you change the runtime criteria, the following text box gives you an estimate of the total experiment time:
+<br /><img src="screenshots/exp-estimated_time.png" />
+<br />Some of the criteria, such as the counts, do not allow a time to be estimated, since the counts/second cannot be known ahead of time.
+</li>
+<br />
 
-
-<h4>YYYY.1. Coverage Statistics</h4>
-
-<li>On the bottom right, you can see the coverage statistics panel:
-<br /><img src="screenshots/3d-panelStats.png" />
+<li>You can manipulate the entries in the following ways:
 </li>
 <ul>
-<li>The first bar indicates what percentage of reciprocal space volume was measured (at least once).</li>
-<li>The second bar shows the redundant measurements - the proportion of q-space that was measured at least twice.</li>
+<li>You can highlight one or more rows (try Ctrl-clicking on the row numbers, or select a block with the mouse).</li>
+<li>These buttons allow you to select orientations to use in the experiment:
+<br /><img src="screenshots/exp-select_buttons.png" /> 
+</li>
+<li>These buttons allow you to delete orientations from the experiment:
+<br /><img src="screenshots/exp-delete_buttons.png" /> 
+</li>
 </ul>
-<li>Next is a coverage "slice" plot:
-<br /><img src="screenshots/3d-panelStats.png" />
+<li>When you are happy with your experiment plan, click the
+<img src="screenshots/exp-buttonSaveToCSV.png" />
+button to make a CSV (comma-separated values) file containing the list of sample orientation and runtime criteria. This file can then be loaded on the DAS computers (using PyDas, for example) to run the experiment. 
+</li>
+</ul>
+
+
+
+
+
+
+<h3>12. More Reciprocal Space 3D Viewer Options</h3>
+
+<p>Now that we have more sample orientations in our plan, we return to the 3D viewer and explore some of its options. Here is what the 3D view looks like with the 4 orientations we have calculated:</p>
+
+<br /><img alt="" border="0" class="frameshot" src="screenshots/3d-4orientations.png" />
+
+	
+
+<h4>12.1. Coverage Statistics</h4> 
+<table>
+<tr>
+	<td>
+	<ul>
+<li>On the bottom right, you can see the coverage statistics panel:
+<br />
+</li>
+<ul>
+	<li>The first bar indicates what percentage of reciprocal space volume was measured (at least once).</li>
+	<li>The second bar shows the redundant measurements - the proportion of q-space that was measured at least twice.</li>
+	</ul>
+	</ul>
+	</td>
+	
+		<td><div align="right"><img src="screenshots/3d-panelStats.png" /></div></td>
+	</tr>
+</table>
+
+
+
+
+
+<h4>12.2. Slice Plot</h4> 
+<ul>
+
+<li>On the bottom left is the slice statistics plot:
+<br /><img src="screenshots/3d-sliceControl.png" />
+</li>
+<ul>
+<li>This plot calculates the % coverage of a thin shell centered on a q starting at 0 and ending at 
+<span class="eq"><img alt="$q_{max} = {2\pi}/d_{min}$" src="eq/equser_guide_source6.png" title="$q_{max} = {2\pi}/d_{min}$" /></span>.
+</li>
+<li>The light blue plot is the percentage measured at least ones; in green is the percentage measured twice, yellow for measured 3 times, and orange for 4 times or more.</li>
+<li>This plot can use d-spacing for its horizontal axis. This is set in the Preferences, under the Main Window's "File" menu. Minimize and restore the window after changing the setting in order to
+refresh the display. </li>
+</ul>
+</ul>
+
+<h4>12.3. Hemisphere View</h4> 
+<ul>
+<li>Since all crystals have at least inversion symmetry (-1 point group) in scattering, that means that measuring a hemisphere of reciprocal space is enough to fully characterize your sample.</li>
+<ul>
+<li>Check the
+<img src="screenshots/volume_options-checkHemisphere.png" />
+box to find and display only the "optimal" hemisphere. The program will find the side of reciprocal space with the most coverage, and ignore the rest, not displaying it at all: 
+<br />
+<div align="center"><img src="screenshots/3d-hemisphere.png" /> <img src="screenshots/3d-panelStats-hemisphere.png" /></div>
+<li>The coverage stats also reflect this choice - the coverage is compared to the volume of the optimal hemisphere, not the whole sphere; therefore your % covered will typically be higher, as seen above.
+</li>
+</li>
+</ul></ul>
+
+<h4>12.4. Inverted View</h4> 
+<ul><li>You can also check the 
+<img src="screenshots/volume_options-checkInvert.png" />
+box to <i>invert</i> the coverage map, and show the volumes <i>not</i> measured.
+The next image shows the inverted coverage with the hemisphere box still checked - showing the volumes not covered but only in the hemisphere of interest.
+<div align="center"><img src="screenshots/3d-inverted.png" /></div>
+</li>
+<li>This can make it a lot easier to see spots you have missed, especially if they are hidden by covered volume.</li>
+</ul>
+
+<h4>12.5. Redundancy View</h4> 
+<ul><li>If you check the <img src="screenshots/volume_options-checkShowRedundancy.png" /> box,
+you will get a view of the redundancy of the measurement - how many times each voxel was measured. Semi-transparent isosurfaces are color-coded to show a single measurement, then 2, then 3, and finally 4 or more measurement.
+<div align="center"><img src="screenshots/3d-redundancy.png" /></div>
+</li>
+</ul>
+
+<h4>12.6. Slice View</h4> 
+<ul>
+<li>Check the 
+<img src="screenshots/volume_options-checkShowSlice.png" /> box
+to view only a slice, (or shell) at a given q radius and given thickness. 
+</li>
+<li>The Slice Plot now shows a hatched bar that you can move with the mouse to change the shell position and thickness.
+<br /><div align="center"><img src="screenshots/3d-sliceControl-on.png" /></div>
+</li>
+<ul>
+<li>Click and drag the center of the area to change the q-radius</li>
+<li>Click and drag the edges of the area to change the thickness.</li>
+</ul>
+<li>The 3D view is updated to show only the selected slice of q-space:
+<br /><div align="center"><img src="screenshots/3d-slice.png" /></div>
+</li>
+<li>... and this also works with redundancy:
+<br /><div align="center"><img src="screenshots/3d-slice-redundancy.png" /></div>
 </li>
 
+</ul>
+
+
+
+<h3>13. 3D Reflections View</h3>
+
+<p>Another way to measure your experimental coverage is by looking at single reflections, instead of viewing volume coverage in reciprocal space, as we have been doing before.</p>
+
+<ul><li>To switch to reflection view, clikc on the "Reflections View" tab. Instead of volumes, you now see a number of color-coded points:</li>
+<br /><img class="frameshot" src="screenshots/3d-reflections.png" />
+<li>The color-coding matches those in the volume view and the slice plot, with the addition of the dark blue peaks: those are peaks that were not measured.</li>
+</ul>
+
+<h4>13.1. How to Display Reflections</h4> 
+
+<ul>
+<li>You can change the way the peaks are drawn, in order to make the rendering clearer.
+<br /><img src="screenshots/3drefs-display.png" /> 
+</li>
+<ul>
+<li>Peaks can be displayed as small spheres (which look bigger when you zoom in) or pixels (which remain the same size).</li>
+<li>You can adjust the size of the spheres/pixels, or use the "Automatic" checkbox to let the program pick.</li>
+</ul>
+</ul>
+
+<h4>13.2. Which Reflections to Display</h4> 
+
+<ul>
+<li>In the drop-down box <img src="screenshots/3drefs-view_option.png" />, you can pick whether to show all reflections, only those that have at least one measurement, or only the ones that were never measured.
+</li>
+<li>Here is what is shown if you select to show only the measured peaks
+<br /><div align="center"><img src="screenshots/3drefs-measured.png" />
+<img src="screenshots/3drefs-panelStats-normal.png" />
+</div>
+</li> 
+<li>The statistics panel tells you how many reflections are in the experiment, and what percentage were measured once, and twice or more.</li>
+</ul>
+
+<h4>13.3. Using Crystal Symmetry</h4> 
+
+<ul>
+<li>By checking the <img src="screenshots/3drefs-checkUseSymmetry.png" /> box, you will take the crystal symmetry into account when considering peaks.
+</li>
+<li>HKL peaks that are equivalent, due to symmetry, are considered to be the same.</li>
+<li>Here is what is shown if you use symmetry:
+<br /><div align="center"><img src="screenshots/3drefs-measured-symmetry.png" />
+<img src="screenshots/3drefs-panelStats-symmetry.png" />
+</div>
+</li> 
+<li>Note how only half of the reflections are visible. This is because the crystal is set to inversion (-1) point group symmetry, meaning that every [h, k, l] has one equivalent reflection at [-h, -k, -l]. </li>
+<li>The program only displays the "primary" [h,k,l], and the number of measurements of [h,k,l] and [-h, -k, -l] are added together to do the color-coding.</li>
+<li>Note how the statistics tab now shows a much higher percentage of reflections having been measured at least once, thanks to the symmetry of the crystal. The number of <i>unique</i> reflections is also shown.</li>
+<li>Higher symmetries will show even fewer points.</li>
+</ul>
+
+<h4>13.4. Parallel Projection</h4> 
+<ul>
+<li>Parallel projection (as opposed to perspective projection) can be a useful way to visualize reflections in reciprocal space.</li>
+<li>Click the <img src="parallel_projection.png" /> icon in order to toggle parallel projection on/off. With parallel projection, our crystal looks like this:
+<br /><div align="center"><img src="screenshots/3drefs-parallel.png" />
+</div>
+</li>
+</ul>
+
+
+<h4>13.5. Selecting Reflections</h4> 
 
 </body>
 </html>

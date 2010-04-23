@@ -61,7 +61,7 @@ class Reflection():
     #----------------------------------------------------
     def __str__(self):
         """Return an informal string representing the reflection."""
-        s = "Reflection at hkl " + str(self.hkl) + "; q-vector " + str(self.q_vector.flatten()) + "\n"
+        s = "Reflection at hkl " + str(self.hkl) + "; is %sprimary; q-vector " % ['not ',''][self.is_primary] + str(self.q_vector.flatten()) + "\n"
         s += "    Measurements: " + str(self.measurements)
         return s
 

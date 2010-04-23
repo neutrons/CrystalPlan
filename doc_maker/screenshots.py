@@ -7,7 +7,7 @@ import os.path
 import wx
 import numpy as np
 
-base_screenshot_path = "/home/janik/Code/GenUtils/trunk/python/CrystalPlan/docs/screenshots/"
+base_screenshot_path = "../docs/screenshots/"
 title_bar_height = 24
 frame_width = 8
 frame_height = 4

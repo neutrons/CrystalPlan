@@ -37,7 +37,7 @@ def embed_latex_in_html(sourcefn, destfn):
     \begin{document}
     '''
 
-    imgpath = '' # path to generated equations. e.q 'img/'
+    imgpath = 'eq/' # path to generated equations. e.q 'img/'
 
     # get source and dest filenames from command line
 

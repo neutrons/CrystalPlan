@@ -192,12 +192,19 @@ class QspaceViewController(HasTraits):
         """Event handler for the 3d Scene, called when right-mouse-button is clicked."""
         self.mouse_mvt = False
         refl = self.get_reflection_under_mouse(obj, True)
+        self.select_reflection(refl)
+
+    #-----------------------------------------------------------------------------------------------
+    def select_reflection(self, refl):
+        """Select the Reflection refl, open the frame_reflection_info, and highlight the selected reflection"""
         #Open the frame_reflection_info (if needed) and set it to the reflection we clicked
         frm = self.open_frame_reflection_info()
         frm.Show()
         frm.panel.set_reflection(refl, update_textboxes=True)
         #This'll move the cube
         self.on_user_changing_reflection_selected(refl)
+        #Return the form that was opened
+        return frm
 
     #-----------------------------------------------------------------------------------------------
     def open_frame_reflection_info(self):
@@ -817,7 +824,7 @@ class FrameQspaceView(wx.Frame):
         self.SetIcon( wx.Icon(CrystalPlan_version.icon_file_3d, wx.BITMAP_TYPE_PNG) )
 
         #Create the qspace options panel
-        self.tabVolume = panel_qspace_options.QspaceOptionsPanel(parent=self.notebookView, id=wx.NewId(),
+        self.tabVolume = panel_qspace_options.PanelQspaceOptions(parent=self.notebookView, id=wx.NewId(),
               name=u'tabVolume', pos=wx.Point(40, 16),
               size=wx.Size(624, 120), style=wx.TAB_TRAVERSAL)
         #Add it to the notebook
