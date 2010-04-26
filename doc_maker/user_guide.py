@@ -21,7 +21,7 @@ main_frame = None
 def wait(ms):
     """Wait a given # of milliseconds."""
 #    print "Waiting for", ms, "ms"
-    time.sleep(ms/1000.)
+    time.sleep(3.5*ms/1000.)
 
 #-------------------------------------------------------------------------------
 def ca(function, *args, **kwargs):
@@ -224,10 +224,12 @@ def user_guide_script():
 
     # ------------------------ Detectors tab ----------------------
     ca(fm.notebook.SetSelection, 1)
-    wait(50)
+    wait(100)
     #@type td PanelDetectors
     td = fm.tab_detectors
+    wait(30)
     ca(screenshot_of, td.buttonLoadDetectors, 'detectors-buttonLoadDetectors', minheight=True, margin=6, gradient_edge=4)
+    wait(30)
     ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
     wait(2000)
     assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
@@ -331,7 +333,7 @@ def user_guide_script():
     # ------------------------ 3D Viewer! ----------------------
     #The whole frame
     ca(fv.Raise) #Bring it to front first!
-    wait(150)
+    wait(300)
 
     ca(screenshot_frame, fv, 'frame_qspace')
     wait(50)
@@ -384,7 +386,9 @@ def user_guide_script():
     ca(screenshot_of, [ta.buttonCalculate, ta.buttonCancel] , 'add-start_button', margin=20)
     ca(click, ta.buttonCalculate)
     wait(500)
+    wait(30)
     ca(screenshot_of, [ta.gaugeProgress, ta.staticTextProgress] , 'add-progress_bar', margin=10)
+    wait(30)
     ca(screenshot_of, [ta.buttonCalculate, ta.buttonCancel] , 'add-cancel_button', margin=20)
     wait(2000)
     #assert len(model.experiment.exp.inst.positions)==2, "Length of positions calculated was to be 19, it was %d." % len(model.experiment.exp.inst.positions)
@@ -422,7 +426,9 @@ def user_guide_script():
     check_margin = 4
 
     ca(screenshot_frame, fv, '3d-4orientations')
+    wait(30)
     ca(screenshot_of, fv.panelStats, '3d-panelStats', margin=10)
+    wait(30)
     ca(screenshot_of, tv.sliceControl, '3d-sliceControl', margin=10)
     wait(50)
 
@@ -431,7 +437,9 @@ def user_guide_script():
     ca(check, tv.checkHemisphere, True)
     wait(600)
     ca(screenshot_of, fv.control, '3d-hemisphere', margin=control_margins, gradient_edge=control_gradient_edge)
+    wait(30)
     ca(screenshot_of, fv.panelStats, '3d-panelStats-hemisphere', margin=10)
+    wait(30)
 
     ca(screenshot_of, tv.checkInvert, 'volume_options-checkInvert', margin=check_margin)
     ca(check, tv.checkInvert, True)
@@ -443,7 +451,9 @@ def user_guide_script():
     wait(1200)
 
     ca(screenshot_of, tv.checkShowRedundancy, 'volume_options-checkShowRedundancy', margin=check_margin)
+    wait(30)
     ca(screenshot_of, fv.control, '3d-redundancy', margin=control_margins, gradient_edge=control_gradient_edge)
+    wait(30)
 
     ca(screenshot_of, tv.checkShowSlice, 'volume_options-checkShowSlice', margin=check_margin)
     tv.sliceControl.slice_min = 3
@@ -453,6 +463,7 @@ def user_guide_script():
     ca(check, tv.checkShowSlice, True)
     wait(600)
     ca(screenshot_of, tv.sliceControl, '3d-sliceControl-on', margin=10)
+    wait(30)
     ca(screenshot_of, fv.control, '3d-slice', margin=control_margins, gradient_edge=control_gradient_edge)
     wait(50)
     ca(check, tv.checkShowRedundancy, True)
@@ -466,7 +477,7 @@ def user_guide_script():
 
     #Select it
     ca(fv.notebookView.SetSelection, 1)
-    wait(300)
+    wait(800)
     ca(screenshot_frame, fv, '3d-reflections')
     ca(screenshot_of, fv.panelStats, '3drefs-panelStats-normal', margin=10)
 

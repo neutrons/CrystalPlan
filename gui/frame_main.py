@@ -165,17 +165,24 @@ class FrameMain(wx.Frame):
     def OnMenuUserGuide(self, event):
         """Open the user guide in a browser."""
         filename = "../docs/user_guide.html"
+        absolute_file = os.path.abspath( os.path.split(__file__)[0] + "/" + filename)
         if gui_utils.is_mac():
             #Start browser on mac
-            result = os.system('open "%s"' % filename)
+            command = ['open', '"%s"' % absolute_file]
         else:
             #Start firefox
-            result = os.system('firefox "%s"' % filename)
+            command = ['firefox', '"%s"' % absolute_file]
+        #Open in background?
 
-        if result != 0:
-            absolute_file = os.path.abspath( os.path.split(__file__)[0] + "/" + filename)
-            wx.MessageDialog(self, 'Sorry! There was an error opening the user guide in the webbrowser. You can find it at:\n\n%s\n\n(You can copy/paste the file path above)' % absolute_file,
-                            'Error Opening User Guide', wx.OK|wx.ICON_ERROR).ShowModal()
+        import subprocess
+        #result = subprocess.Popen(command)
+        os.system(" ".join(command + [" &"]))
+
+
+        #if result != 0:
+        #    absolute_file = os.path.abspath( os.path.split(__file__)[0] + "/" + filename)
+        #    wx.MessageDialog(self, 'Sorry! There was an error opening the user guide in the webbrowser. You can find it at:\n\n%s\n\n(You can copy/paste the file path above)' % absolute_file,
+        #                    'Error Opening User Guide', wx.OK|wx.ICON_ERROR).ShowModal()
             
         event.Skip()
 
