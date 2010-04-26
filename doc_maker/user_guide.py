@@ -15,6 +15,7 @@ from threading import Thread
 
 import model
 import dialog_edit_crystal
+import gui_utils
 
 main_frame = None
 
@@ -22,7 +23,7 @@ main_frame = None
 def wait(ms):
     """Wait a given # of milliseconds."""
 #    print "Waiting for", ms, "ms"
-    time.sleep(3.5*ms/1000.)
+    time.sleep(5*ms/1000.)
 
 #-------------------------------------------------------------------------------
 def ca(function, *args, **kwargs):
@@ -105,8 +106,8 @@ class UserGuideThread(Thread):
         fv = self.fv
 
         #Do the latex conversion
-        import eqhtml
-        eqhtml.embed_latex_in_html("../docs/user_guide_source.html", "../docs/user_guide.html")
+        #import eqhtml
+        #eqhtml.embed_latex_in_html("../docs/user_guide_source.html", "../docs/user_guide.html")
 
         #Now run the script
         for line in self.code:
@@ -189,7 +190,7 @@ def pick_a_reflection():
 def user_guide_script():
     #Shortcuts to the tested objects
 
-    screenshots.disable_screenshots = True
+    screenshots.disable_screenshots = False
 
     #@type fm FrameMain
     #@type fv FrameQspaceView
@@ -233,15 +234,17 @@ def user_guide_script():
     wait(30)
     ca(screenshot_of, td.buttonLoadDetectors, 'detectors-buttonLoadDetectors', minheight=True, margin=6, gradient_edge=4)
     wait(30)
-    ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
-    wait(2000)
-    assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
+    if not gui_utils.is_mac(): ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
+    if not gui_utils.is_mac(): wait(2000)
+    if not gui_utils.is_mac(): assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
     ca(screenshot_of, td.button_view_detectors, 'detectors-button_view_detectors', minheight=True, margin=6, gradient_edge=4)
 
-    ##3d shot of detectors
-    #ca(click, td.button_view_detectors)
-    #wait(2000)
-    #ca(screenshot_frame, td.frame3d, 'detectors-3d_view')
+    #3d shot of detectors
+    ca(click, td.button_view_detectors)
+    wait(2000)
+    ca(screenshot_frame, td.frame3d, 'detectors-3d_view')
+    wait(30)
+    ca(fm.Raise)
 
 
     # ------------------------ goniometer tab ----------------------
@@ -559,6 +562,8 @@ def generate_user_guide(fm, fv):
 
     #Create the thread and start it
     thread = UserGuideThread(code, fm, fv)
+
+    return thread
 
 
 

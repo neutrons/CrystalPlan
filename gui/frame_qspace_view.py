@@ -26,6 +26,7 @@ try:
     from enthought.traits.api import HasTraits, Instance
     from enthought.traits.ui.api import View, Item
     from enthought.mayavi.sources.api import ArraySource
+    from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
     from enthought.mayavi.modules.iso_surface import IsoSurface
     from enthought.mayavi.modules.api import Volume, Surface
     from enthought.mayavi.filters.contour import Contour
@@ -79,13 +80,21 @@ def get_instance(parent):
 class QspaceViewController(HasTraits):
     """MayaVi Scene View, for showing the q-space visualization."""
 
-    # Scene being displayed.
+    #Make an engine just for this frame
+    engine = Instance(Engine, args=())
+
+    #Create the scene
     scene = Instance(MlabSceneModel, ())
+
+    def _scene_default(self):
+        """Default initializer for scene"""
+        self.engine.start()
+        return MlabSceneModel(engine=self.engine)
     
-    # The layout of the panel created by Traits
-    view = View(Item('scene', editor=SceneEditor(), resizable=True,
-                    show_label=False), resizable=True)
-                    
+    #3D view of the scene.
+    view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene), resizable=True,
+                        show_label=False), resizable=True)
+    
     #The FrameQspaceView that is calling this.
     parent_frame = None
 
@@ -137,6 +146,8 @@ class QspaceViewController(HasTraits):
         """Clean-up routine for closing the view."""
         #Marker to avoid a bug
         self.form_is_closing = True
+        #Remove the scene from engine
+        self.engine.remove_scene(self.scene)
         model.messages.unsubscribe(self.update_stats_panel)
         model.messages.unsubscribe(self.update_data_volume)
         model.messages.unsubscribe(self.update_data_points)
@@ -151,9 +162,13 @@ class QspaceViewController(HasTraits):
         #This vtk picker object will be used later
         self.pointpicker = tvtk.PointPicker()
 
-        self.scene.interactor.add_observer('RightButtonPressEvent', self.on_button_press)
-        self.scene.interactor.add_observer('MouseMoveEvent', self.on_mouse_move)
-        self.scene.interactor.add_observer('RightButtonReleaseEvent', self.on_button_release)
+        interactor = self.scene.interactor
+        if interactor is None:
+            print "Bad interactor! : ", interactor
+            return
+        interactor.add_observer('RightButtonPressEvent', self.on_button_press)
+        interactor.add_observer('MouseMoveEvent', self.on_mouse_move)
+        interactor.add_observer('RightButtonReleaseEvent', self.on_button_release)
 
 
     #-----------------------------------------------------------------------------------------------
@@ -288,12 +303,14 @@ class QspaceViewController(HasTraits):
             if hasattr(self, x):
                 getattr(self, x).remove()
 
+        engine = self.engine
+
         #We get the qspace_displayed array from experiment and make a copy of it.
         #   This object will REMAIN here and just have its data updated.
         self.data_src = ArraySource(scalar_data = model.experiment.exp.get_qspace_displayed().copy() )
         self.data_src.scalar_name = "coverage"
         self.data_src.visible = False
-        self.scene.engine.add_source(self.data_src)
+        engine.add_source(self.data_src)
 
         # --- Text overlay for warnings ----
         txt = Text(text="(Points were thinned down)", position_in_3d=False)
@@ -303,7 +320,7 @@ class QspaceViewController(HasTraits):
         txt.actor.text_property.font_size = 14
         txt.actor.text_property.vertical_justification = "top"
         self.warning_text = txt
-        self.scene.engine.add_module(self.warning_text)
+        engine.add_module(self.warning_text)
         self.warning_text.visible = self.warning_text_visible
         
         #---- Make the isosurface object that goes with the volume coverage data -----
@@ -322,7 +339,7 @@ class QspaceViewController(HasTraits):
         # ---- Now we make a point data source, for the individual reflection plot ---
         self.point_data_src = VTKDataSource(name="Reflection point positions")
         self.point_data_src.visible = False
-        self.scene.engine.add_source(self.point_data_src)
+        engine.add_source(self.point_data_src)
         self.point_data_src.data = self.make_point_data() #still needs to get set.
 
         # ---- Make a module of simple points, using the Surface module ----
@@ -358,7 +375,7 @@ class QspaceViewController(HasTraits):
         self.outline.manual_bounds = True
         self.outline.bounds = tuple(np.array([-1.,1.,-1.,1.,-1.,1.]) * model.experiment.exp.inst.qlim)
         #Add it to the scene directly.
-        self.scene.engine.add_module(self.outline)
+        engine.add_module(self.outline)
 
         # ---- A text overlay, to show what is under the mouse -----
 #        self.mouse_text = Text(text=self.MOUSE_TEXT_WITH_NO_REFLECTION, position_in_3d=False)
@@ -367,7 +384,7 @@ class QspaceViewController(HasTraits):
 #        self.mouse_text.actor.text_scale_mode = "none"
 #        self.mouse_text.actor.text_property.font_size = 20
 #        self.mouse_text.actor.text_property.vertical_justification = "top"
-#        self.scene.engine.add_module(self.mouse_text)
+#        engine.add_module(self.mouse_text)
 
 
         # ---- A cube highlighting where the mouse is ----
@@ -383,7 +400,7 @@ class QspaceViewController(HasTraits):
         self.mouse_point_data_src = VTKDataSource()
         self.mouse_point_data_src.name = "Mouse position (VTK Data)"
         self.mouse_point_data_src.visible = True
-        self.scene.engine.add_source(self.mouse_point_data_src)
+        engine.add_source(self.mouse_point_data_src)
         self.mouse_point_data_src.data = self.make_single_point_data( (0,0,0))
         self.mouse_point_data_src.add_module(self.mouse_cube)
         self.mouse_cube.visible = False
