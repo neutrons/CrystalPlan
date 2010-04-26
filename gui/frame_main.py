@@ -143,20 +143,20 @@ class FrameMain(wx.Frame):
         event.Skip()
 
     def OnMenuAbout(self, event):
-        description = CrystalPlan_version.description
-        licence = CrystalPlan_version.license
         info = wx.AboutDialogInfo()
-        #Icon is taken automagically from main window.
-        info.SetIcon(wx.Icon(CrystalPlan_version.icon_file, wx.BITMAP_TYPE_PNG))
         info.SetName(CrystalPlan_version.package_name)
         info.SetVersion(CrystalPlan_version.version)
-        info.SetDescription(description)
+        info.SetDescription(CrystalPlan_version.description)
         info.SetCopyright(CrystalPlan_version.copyright)
-        info.SetWebSite(CrystalPlan_version.url)
-        info.SetLicence(licence)
         info.AddDeveloper(CrystalPlan_version.author + " (" + CrystalPlan_version.author_email + ")")
         info.AddDocWriter(CrystalPlan_version.author + " (" + CrystalPlan_version.author_email + ")")
         info.AddArtist("Icons taken from the Crystal Project,\nat http://www.everaldo.com/crystal/, \ndistributed under the LGPL; \nmodified and assembled by Janik Zikovsky")
+        
+        if not gui_utils.is_mac():
+            #Some of these are not natively mac-supported, not including them makes it look better on mac
+            info.SetIcon(wx.Icon(CrystalPlan_version.icon_file, wx.BITMAP_TYPE_PNG))
+            info.SetLicence(CrystalPlan_version.license)
+            info.SetWebSite(CrystalPlan_version.url)
 
         wx.AboutBox(info)
 

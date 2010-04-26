@@ -9,6 +9,7 @@ import wx
 import os
 import copy
 import numpy as np
+import sys
 
 #--- Traits imports ---
 from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array
@@ -19,6 +20,7 @@ from enthought.traits.ui.menu import OKButton, CancelButton
 #--- GUI Imports ---
 
 #--- Model Imports ---
+if __name__=="__main__":    sys.path.insert(0, "..")
 import model
 from model.crystals import Crystal
 
@@ -120,9 +122,9 @@ class DialogEditCrystal(wx.Dialog):
         # generated method, don't edit
         wx.Dialog.__init__(self, name=u'DialogEditCrystal',
               parent=prnt, pos=wx.Point(702, 235), size=wx.Size(475, 600),
-              style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+              style= wx.RESIZE_BORDER | wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX,
               title=u'Edit Crystal Parameters')
-        self.SetClientSize(wx.Size(500, 800))
+        self.SetClientSize(wx.Size(500, 600))
 
         self.buttonOK = wx.Button(
               label=u'Ok', name=u'buttonOK', parent=self,
@@ -319,6 +321,7 @@ def show_dialog(parent, crystal):
 
 #----------------------------------------------------------------------
 if __name__=="__main__":
+    sys.path.insert(0, "..")
     c = Crystal("Test")
     print show_dialog(None, c)
     print c.name

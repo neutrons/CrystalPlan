@@ -838,16 +838,19 @@ class Instrument:
         if detectors_used is None:
             mask = np.uint64(-1) #Will show all the bits.
             mask1 = 2**31-1
-            mask2 = 2**32-1
+            mask2 = 2**31-1
         else:
             for i in range(len(detectors_used)):
                 if detectors_used[i]:
-                    mask = np.uint64(mask + 2**i) #64-bit mask
-                    #Also make two 32-bit masks
-                    if i < 31:
-                        mask1 = mask1 + 2**i
+                    if i < 62:
+                        mask = np.uint64(mask + 2**i) #64-bit mask
+                        #Also make two 32-bit masks
+                        if i < 31:
+                            mask1 = mask1 + 2**i
+                        else:
+                            mask2 = mask2 + 2**(i-31)
                     else:
-                        mask2 = mask2 + 2**(i-31)
+                        print "cannot compute total_coverage for detector #%d as it exceed the max of 62 detectors." % i
 
         #Make sure the list of positions makes sense
         if orientations_used is None:
@@ -886,7 +889,7 @@ class Instrument:
             for (j=0; j<num_coverage; j++)
                 each_coverage[j] = (PyArrayObject*) PyList_GetItem(coverage_list, j);
 
-            npy_uint* one_coverage;
+            // npy_uint* one_coverage;
             npy_uint low, high;
 
             for (j=0; j<num_coverage; j++)
@@ -928,7 +931,7 @@ class Instrument:
 
             }
             """
-            varlist = ['number_of_ints', 'coverage', 'coverage_size', 'mask', 'mask1', 'mask2', 'num_coverage', 'coverage_list']
+            varlist = ['number_of_ints', 'coverage', 'coverage_size', 'mask1', 'mask2', 'num_coverage', 'coverage_list']
             weave.inline(code, varlist, compiler='gcc', support_code = support)
 
 
@@ -1030,8 +1033,8 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         #Do a full list at 0
         ret = tst_inst.calculate_coverage(tst_inst.detectors, [0, 0, 0], quick_calc=False, use_inline_c=True)
         found = np.sum(ret > 0)
-        wanted = 52152
-        if more_det: wanted = 155896
+        wanted = 55870
+        if more_det: wanted = 167077
         assert found == wanted, "%d points found with %d detectors. We expected %d points" % (found, len(tst_inst.detectors), wanted)
 
     def test_simulate_and_total(self):
@@ -1066,7 +1069,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         print "Total coverage test 3"
         cov = tst_inst.total_coverage(None, tst_inst.positions)
         cov_sum = np.sum(cov)
-        expected = 208332
+        expected = 223107
         assert cov_sum==expected, "total_coverage() total should be %d for these settings, but we got %s." % (expected, cov_sum)
         assert np.sum(cov)==total, "total_coverage() total (%s) should match the total those of each individual position (%s)." % (cov_sum, total)
         #Compare without inline_c
@@ -1096,7 +1099,10 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         cov_python = tst_inst.total_coverage([True]*48, tst_inst.positions, use_inline_c=False)
         cov_python_sum = np.sum(cov)
         assert cov_python_sum==position_coverage_sum, "The sum of total_coverage(use_inline_c=False) and that of of all non-zero elements in the PositionCoverage object matches."
-
+        #Feed it too many detector positions to check!
+        cov = tst_inst.total_coverage([True]*100, None)
+        #Same thing if you give it None for the detector list
+        cov = tst_inst.total_coverage(None, None)
 
 
 

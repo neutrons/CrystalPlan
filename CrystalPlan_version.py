@@ -18,8 +18,10 @@
 
 version = '1.1-a'
 package_name = 'CrystalPlan'
-description = "CrystalPlan is an experiment planning tool for crystallography. You can choose an instrument and supply your sample's lattice parameters to simulate which reflections will be measured, by which detectors and at what wavelengths."
-license = """License is ???"""
+description = \
+"""CrystalPlan is an experiment planning tool for crystallography. You can choose an instrument and supply your sample's lattice parameters to simulate which reflections will be measured, by which detectors and at what wavelengths."""
+
+license = """Enter license text here."""
 author = "Janik Zikovsky"
 author_email = "zikovskyjl@ornl.gov"
 url = 'http://neutronsr.us'
