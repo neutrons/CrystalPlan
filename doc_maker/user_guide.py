@@ -305,57 +305,57 @@ def user_guide_script():
     wait(50)
     ca(screenshot_of, ts.buttonApplyRange, 'sample-buttonApplyRange', margin=10, gradient_edge=0)
 
-#    # ------------------------- Trial Positions tab -----------------------
-#    ca(fm.notebook.SetSelection, 4)
-#    wait(40)
-#    #Make the main window narrower
-#    ca(fm.SetSize, wx.Size(500, original_size[1]))
-#    wait(150)
-#    #@type tt PanelTryPosition
-#    tt = fm.tab_try
-#    ca(screenshot_of, tt.boxSizerAll, 'try', minheight=True, margin=[10, 10, 40, 10], gradient_edge=5)
-#    #Check the box
-#    ca(check, tt.checkAdd, True)
-#    wait(100)
-#    ca(screenshot_of, tt.checkAdd, 'try-checkAdd', margin=6, gradient_edge=2)
-#    wait(40)
-#
-#    #@type slid ValueSlider
-#    slid = tt.sliders[0]
-#    ca(slid.SetValue, -30)
-#    wait(50)
-#    ca(slid.SendScrollEndEvent)
-#    wait(500)
-#    ca(screenshot_of, slid, 'try-phi-30', margin=6, gradient_edge=2)
-#
-#    # ------------------------ 3D Viewer! ----------------------
-#    #The whole frame
-#    ca(fv.Raise) #Bring it to front first!
-#    wait(150)
-#
-#    ca(screenshot_frame, fv, 'frame_qspace')
-#    wait(50)
-#
-#    #Animate a phi rotation
-#    wait(100)
-#    #make_animated_phi_rotation(slid, fv, "3d-phi_rotation_anim.png")
-#    #make_animated_phi_rotation(tt.sliders[1], fv, "3d-chi_rotation_anim.png")
-#
-#    # ------------------------ Try Positions, bad goniometer ----------------------
-#    ca(fm.Raise)
-#
-#    #Set a chi of +45 deg
-#    slid = tt.sliders[1]
-#    ca(slid.SetValue, +45)
-#    ca(slid.SendScrollEvent) #Trigger the showing the warning
-#    wait(50)
-#    ca(screenshot_of, slid, 'try-chi-45', margin=6, gradient_edge=2)
-#    wait(200)
-#    ca(screenshot_of, [tt.staticTextWarning, tt.staticTextWarningReason], 'try-staticTextWarning', margin=6)
-#    ca(screenshot_of, tt.buttonSave, 'try-buttonSave', margin=6)
-#    wait(50)
-#    #un-check the box
-#    ca(check, tt.checkAdd, False)
+    # ------------------------- Trial Positions tab -----------------------
+    ca(fm.notebook.SetSelection, 4)
+    wait(40)
+    #Make the main window narrower
+    ca(fm.SetSize, wx.Size(500, original_size[1]))
+    wait(150)
+    #@type tt PanelTryPosition
+    tt = fm.tab_try
+    ca(screenshot_of, tt.boxSizerAll, 'try', minheight=True, margin=[10, 10, 40, 10], gradient_edge=5)
+    #Check the box
+    ca(check, tt.checkAdd, True)
+    wait(100)
+    ca(screenshot_of, tt.checkAdd, 'try-checkAdd', margin=6, gradient_edge=2)
+    wait(40)
+
+    #@type slid ValueSlider
+    slid = tt.sliders[0]
+    ca(slid.SetValue, -30)
+    wait(50)
+    ca(slid.SendScrollEndEvent)
+    wait(500)
+    ca(screenshot_of, slid, 'try-phi-30', margin=6, gradient_edge=2)
+
+    # ------------------------ 3D Viewer! ----------------------
+    #The whole frame
+    ca(fv.Raise) #Bring it to front first!
+    wait(150)
+
+    ca(screenshot_frame, fv, 'frame_qspace')
+    wait(50)
+
+    #Animate a phi rotation
+    wait(100)
+    #make_animated_phi_rotation(slid, fv, "3d-phi_rotation_anim.png")
+    #make_animated_phi_rotation(tt.sliders[1], fv, "3d-chi_rotation_anim.png")
+
+    # ------------------------ Try Positions, bad goniometer ----------------------
+    ca(fm.Raise)
+
+    #Set a chi of +45 deg
+    slid = tt.sliders[1]
+    ca(slid.SetValue, +45)
+    ca(slid.SendScrollEvent) #Trigger the showing the warning
+    wait(50)
+    ca(screenshot_of, slid, 'try-chi-45', margin=6, gradient_edge=2)
+    wait(200)
+    ca(screenshot_of, [tt.staticTextWarning, tt.staticTextWarningReason], 'try-staticTextWarning', margin=6)
+    ca(screenshot_of, tt.buttonSave, 'try-buttonSave', margin=6)
+    wait(50)
+    #un-check the box
+    ca(check, tt.checkAdd, False)
 
 
     # ------------------------ Add Orientations tab ----------------------
@@ -364,15 +364,15 @@ def user_guide_script():
     #@type ta PanelAddPositions
     ta = fm.tab_add
     
-#    ca(ta.controller.textAngles[0].SetValue, "0, 10, 35.5")
-#    ca(ta.controller.textAngles[1].SetValue, "arange(0, 50, 12.5)")
-#    ca(ta.controller.textAngles[2].SetValue, "linspace(0, 360, 6)")
-#    wait(300)
-#    ca(screenshot_of, [ta.boxSizerAngles] , 'add-lists', margin=12)
-#    ca(ta.controller.textAngles[0].SetValue, "0")
-#    ca(ta.controller.textAngles[1].SetValue, "arange(-20, 20, 5)")
-#    ca(ta.controller.textAngles[2].SetValue, "0")
-#    wait(300)
+    ca(ta.controller.textAngles[0].SetValue, "0, 10, 35.5")
+    ca(ta.controller.textAngles[1].SetValue, "arange(0, 50, 12.5)")
+    ca(ta.controller.textAngles[2].SetValue, "linspace(0, 360, 6)")
+    wait(300)
+    ca(screenshot_of, [ta.boxSizerAngles] , 'add-lists', margin=12)
+    ca(ta.controller.textAngles[0].SetValue, "0")
+    ca(ta.controller.textAngles[1].SetValue, "arange(-20, 20, 5)")
+    ca(ta.controller.textAngles[2].SetValue, "0")
+    wait(300)
     ca(screenshot_of, [ta.staticTextWarnings, ta.textWarnings], 'add-textWarnings', margin=12)
     ca(screenshot_of, ta.boxSizerAngles , 'add-lists2', margin=12)
     ca(ta.controller.textAngles[0].SetValue, "0, 30, 60, 90")
@@ -389,25 +389,25 @@ def user_guide_script():
     wait(2000)
     #assert len(model.experiment.exp.inst.positions)==2, "Length of positions calculated was to be 19, it was %d." % len(model.experiment.exp.inst.positions)
 
-#    # ------------------------ Experiment Plan tab ----------------------
-#    ca(fm.notebook.SetSelection, 6)
-#
-#    #Restore the window width
-#    ca(fm.SetSize, original_size)
-#    wait(150)
-#
-#    #@type te PanelExperiment
-#    te = fm.tab_experiment
-#
-#    ca(te.gridExp.SelectBlock, 1,0,1,100)
-#    wait(50)
-#    ca(screenshot_of, te.gridExp, 'exp-grid', margin=12)
-#    ca(screenshot_of, te.boxSizerDelete, 'exp-delete_buttons', margin=8)
-#    ca(screenshot_of, [te.checkUseAll, te.buttonDontUseHighlighted], 'exp-select_buttons', margin=8)
-#    wait(50)
-#    ca(screenshot_of, te.buttonSaveToCSV, 'exp-buttonSaveToCSV', margin=6)
-#    ca(screenshot_of, te.staticTextEstimatedTime, 'exp-estimated_time', margin=6)
-#    wait(50)
+    # ------------------------ Experiment Plan tab ----------------------
+    ca(fm.notebook.SetSelection, 6)
+
+    #Restore the window width
+    ca(fm.SetSize, original_size)
+    wait(150)
+
+    #@type te PanelExperiment
+    te = fm.tab_experiment
+
+    ca(te.gridExp.SelectBlock, 1,0,1,100)
+    wait(50)
+    ca(screenshot_of, te.gridExp, 'exp-grid', margin=12)
+    ca(screenshot_of, te.boxSizerDelete, 'exp-delete_buttons', margin=8)
+    ca(screenshot_of, [te.checkUseAll, te.buttonDontUseHighlighted], 'exp-select_buttons', margin=8)
+    wait(50)
+    ca(screenshot_of, te.buttonSaveToCSV, 'exp-buttonSaveToCSV', margin=6)
+    ca(screenshot_of, te.staticTextEstimatedTime, 'exp-estimated_time', margin=6)
+    wait(50)
 
     # ------------------------ Back to 3D view----------------------
     #The q-space options panel
@@ -421,43 +421,43 @@ def user_guide_script():
     control_gradient_edge = 100
     check_margin = 4
 
-#    ca(screenshot_frame, fv, '3d-4orientations')
-#    ca(screenshot_of, fv.panelStats, '3d-panelStats', margin=10)
-#    ca(screenshot_of, tv.sliceControl, '3d-sliceControl', margin=10)
-#    wait(50)
-#
-#
-#    ca(screenshot_of, tv.checkHemisphere, 'volume_options-checkHemisphere', margin=check_margin)
-#    ca(check, tv.checkHemisphere, True)
-#    wait(600)
-#    ca(screenshot_of, fv.control, '3d-hemisphere', margin=control_margins, gradient_edge=control_gradient_edge)
-#    ca(screenshot_of, fv.panelStats, '3d-panelStats-hemisphere', margin=10)
-#
-#    ca(screenshot_of, tv.checkInvert, 'volume_options-checkInvert', margin=check_margin)
-#    ca(check, tv.checkInvert, True)
-#    wait(600)
-#    ca(screenshot_of, fv.control, '3d-inverted', margin=control_margins, gradient_edge=control_gradient_edge)
-#    ca(check, tv.checkInvert, False)
-#    ca(check, tv.checkHemisphere, False)
-#    ca(check, tv.checkShowRedundancy, True)
-#    wait(1200)
-#
-#    ca(screenshot_of, tv.checkShowRedundancy, 'volume_options-checkShowRedundancy', margin=check_margin)
-#    ca(screenshot_of, fv.control, '3d-redundancy', margin=control_margins, gradient_edge=control_gradient_edge)
-#
-#    ca(screenshot_of, tv.checkShowSlice, 'volume_options-checkShowSlice', margin=check_margin)
-#    tv.sliceControl.slice_min = 3
-#    tv.sliceControl.slice_max = 3.5
-#    wait(30)
-#    ca(check, tv.checkShowRedundancy, False)
-#    ca(check, tv.checkShowSlice, True)
-#    wait(600)
-#    ca(screenshot_of, tv.sliceControl, '3d-sliceControl-on', margin=10)
-#    ca(screenshot_of, fv.control, '3d-slice', margin=control_margins, gradient_edge=control_gradient_edge)
-#    wait(50)
-#    ca(check, tv.checkShowRedundancy, True)
-#    wait(900)
-#    ca(screenshot_of, fv.control, '3d-slice-redundancy', margin=control_margins, gradient_edge=control_gradient_edge)
+    ca(screenshot_frame, fv, '3d-4orientations')
+    ca(screenshot_of, fv.panelStats, '3d-panelStats', margin=10)
+    ca(screenshot_of, tv.sliceControl, '3d-sliceControl', margin=10)
+    wait(50)
+
+
+    ca(screenshot_of, tv.checkHemisphere, 'volume_options-checkHemisphere', margin=check_margin)
+    ca(check, tv.checkHemisphere, True)
+    wait(600)
+    ca(screenshot_of, fv.control, '3d-hemisphere', margin=control_margins, gradient_edge=control_gradient_edge)
+    ca(screenshot_of, fv.panelStats, '3d-panelStats-hemisphere', margin=10)
+
+    ca(screenshot_of, tv.checkInvert, 'volume_options-checkInvert', margin=check_margin)
+    ca(check, tv.checkInvert, True)
+    wait(600)
+    ca(screenshot_of, fv.control, '3d-inverted', margin=control_margins, gradient_edge=control_gradient_edge)
+    ca(check, tv.checkInvert, False)
+    ca(check, tv.checkHemisphere, False)
+    ca(check, tv.checkShowRedundancy, True)
+    wait(1200)
+
+    ca(screenshot_of, tv.checkShowRedundancy, 'volume_options-checkShowRedundancy', margin=check_margin)
+    ca(screenshot_of, fv.control, '3d-redundancy', margin=control_margins, gradient_edge=control_gradient_edge)
+
+    ca(screenshot_of, tv.checkShowSlice, 'volume_options-checkShowSlice', margin=check_margin)
+    tv.sliceControl.slice_min = 3
+    tv.sliceControl.slice_max = 3.5
+    wait(30)
+    ca(check, tv.checkShowRedundancy, False)
+    ca(check, tv.checkShowSlice, True)
+    wait(600)
+    ca(screenshot_of, tv.sliceControl, '3d-sliceControl-on', margin=10)
+    ca(screenshot_of, fv.control, '3d-slice', margin=control_margins, gradient_edge=control_gradient_edge)
+    wait(50)
+    ca(check, tv.checkShowRedundancy, True)
+    wait(900)
+    ca(screenshot_of, fv.control, '3d-slice-redundancy', margin=control_margins, gradient_edge=control_gradient_edge)
 
 
     # ------------------------ Reflections View ---------------------

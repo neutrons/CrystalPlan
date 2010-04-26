@@ -1,14 +1,17 @@
 #Boa:Frame:FrameMain
 """FrameMain: main GUI window for the CrystalPlan application.
 """
+import os.path
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov
 # Version: $Id$
 
 #--- General Imports ---
+import wx
 import wx.gizmos
 import sys
 import doc_maker
 import doc_maker.screenshots
+import os
 
 #--- GUI Imports ---
 import panel_experiment
@@ -74,12 +77,18 @@ class FrameMain(wx.Frame):
 
     def _init_menuHelp(self, parent):
         id = wx.NewId()
-        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Generate User Guide\tCtrl+H')
-        self.Bind(wx.EVT_MENU, self.OnMenuGenerateUserGuide, id=id)
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Open User Guide in WebBrowser\tF1')
+        self.Bind(wx.EVT_MENU, self.OnMenuUserGuide, id=id)
 
         id = wx.NewId()
         parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'About %s...' % CrystalPlan_version.package_name)
         self.Bind(wx.EVT_MENU, self.OnMenuAbout, id=id)
+
+        parent.AppendSeparator()
+
+        id = wx.NewId()
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Generate User Guide (ADVANCED)\tCtrl+H')
+        self.Bind(wx.EVT_MENU, self.OnMenuGenerateUserGuide, id=id)
 
 
     def _init_menus(self):
@@ -153,6 +162,23 @@ class FrameMain(wx.Frame):
 
         event.Skip()
 
+    def OnMenuUserGuide(self, event):
+        """Open the user guide in a browser."""
+        filename = "../docs/user_guide.html"
+        if gui_utils.is_mac():
+            #Start browser on mac
+            result = os.system('open "%s"' % filename)
+        else:
+            #Start firefox
+            result = os.system('firefox "%s"' % filename)
+
+        if result != 0:
+            absolute_file = os.path.abspath( os.path.split(__file__)[0] + "/" + filename)
+            wx.MessageDialog(self, 'Sorry! There was an error opening the user guide in the webbrowser. You can find it at:\n\n%s\n\n(You can copy/paste the file path above)' % absolute_file,
+                            'Error Opening User Guide', wx.OK|wx.ICON_ERROR).ShowModal()
+            
+        event.Skip()
+
     def OnMenuGenerateUserGuide(self, event):
 #        gui_utils.find_parent_frame(self.tab_add.staticTextHelp)
 #        doc_maker.screenshots.animated_screenshot( self.tab_detectors.frame3d, self.tab_detectors.frame3d.visualization.scene)
@@ -162,7 +188,7 @@ class FrameMain(wx.Frame):
         #Make the user guide screenshots
         doc_maker.user_guide.generate_user_guide(self, frame_qspace_view.get_instance(self))
         event.Skip()
-        
+
     def OnMenu(self, event):
         event.Skip()
 
