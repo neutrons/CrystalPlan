@@ -6,6 +6,7 @@ import wx
 import sys
 import os
 import warnings
+import screenshots
 from screenshots import *
 
 import time
@@ -187,6 +188,8 @@ def pick_a_reflection():
 # - Finish with "#---END---\n"
 def user_guide_script():
     #Shortcuts to the tested objects
+
+    screenshots.disable_screenshots = True
 
     #@type fm FrameMain
     #@type fv FrameQspaceView
@@ -511,6 +514,8 @@ def user_guide_script():
 #    refl = pick_a_reflection()
 #    #Select it
 #    ca(fv.controller.select_reflection, refl)
+
+    screenshots.disable_screenshots = False
     wait(250)
     ca(screenshot_of, fv.control, '3drefs-reflection_selected', margin=control_margins, gradient_edge=control_gradient_edge)
 

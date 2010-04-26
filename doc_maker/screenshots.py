@@ -7,6 +7,9 @@ import os.path
 import wx
 import numpy as np
 
+#Flag to stop taking screenshots
+disable_screenshots = False
+
 base_screenshot_path = "../docs/screenshots/"
 title_bar_height = 24
 frame_width = 8
@@ -63,6 +66,11 @@ def screenshot_frame(frame, filename, top_only=0):
     Parameters
         top_only: take only the first (top_only) pixels; if 0, take everything.
     """
+    #Screenshot taking can be disabled temporarily
+    if disable_screenshots:
+        print "Not taking screenshot, disable_screenshots is True"
+        return
+
     rect = frame.GetScreenRect()
     rect.width += frame_width
     if top_only > 0:
@@ -113,6 +121,11 @@ def screenshot_of(window, filename, margin=0, gradient_edge=0, minheight=False):
         minheight: grab a screenshot of the minimum height the control can be. Only for a single window
 
     """
+    #Screenshot taking can be disabled temporarily
+    if disable_screenshots:
+        print "Not taking screenshot, disable_screenshots is True"
+        return
+
     #@type rect Rect
 
     #Find the rectangle
