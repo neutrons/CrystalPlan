@@ -835,6 +835,7 @@ class Experiment:
 
         Parameters:
             pos_param: a ParamPositions object holding which positions to keep in the calculation.
+                or: a list of PositionCoverage objects directly.
             calculation_callback: a function that will be called on each step of the calculation.
                 Will be used by GUI to update.
                 Function must expect one parameter, a PositionCoverage object.
@@ -853,12 +854,19 @@ class Experiment:
         det_bool = self.get_detectors_bool_array()
 
         #Get all the positions to use
-        positions_used = self.get_positions_used(pos_param)
+        if isinstance(pos_param, list):
+            #The list is already directly provided
+            positions_used = pos_param
+        else:
+            #Extract it from the ParamPositions
+            positions_used = self.get_positions_used(pos_param)
+
+        #Ok, go through the positions.
         for poscov in positions_used:
             poscov_id = id(poscov)
 
             #Report progress
-            print "Calculating hkl reflections for angles at ", poscov.angles
+            if self.verbose: print "Calculating hkl reflections for angles at ", poscov.angles
             if not calculation_callback is None:
                 if callable(calculation_callback):
                     calculation_callback(poscov)

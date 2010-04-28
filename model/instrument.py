@@ -148,7 +148,10 @@ class Instrument:
     q_resolution = 0.1
     
     #The extents of defined q-space are -qlim to +qlim in the 3 axes, will be calculated from d_min
-    qlim = 8
+    @property
+    def qlim(self):
+        """Limit in defined q-space."""
+        return 2*np.pi / self.d_min
 
     verbose = True
 
@@ -242,6 +245,18 @@ class Instrument:
         self.positions = list()
 
 
+#    #========================================================================================================
+#    def __getstate__(self):
+#        """For saving the states - return a modified dictionary of myself."""
+#        d = self.__dict__.copy()
+#
+#
+#    #========================================================================================================
+#    def __setstate__(self, dict):
+#        """Called when loading instrument from file."""
+#
+
+
     #========================================================================================================
     def set_parameters(self, params):
         """Set some of the parameters in the instrument.
@@ -302,6 +317,7 @@ class Instrument:
                             sample_U_matrix=new_sample_U_matrix, quick_calc=False)
         #And make sure to save the U matrix (changed or not)
         poscov.sample_U_matrix = new_sample_U_matrix
+        
 
     #========================================================================================================
     def evaluate_position_list(self, angles_lists, ignore_gonio):
@@ -396,8 +412,7 @@ class Instrument:
         print "Generating q-space matrix."
         
         #Limit to q volume given the d_min
-        qlim = 2*pi/self.d_min
-        self.qlim = qlim
+        qlim = self.qlim
 
         #Create the lists giving the q values
         self.qx_list = np.arange(-qlim, qlim, self.q_resolution)

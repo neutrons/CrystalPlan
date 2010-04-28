@@ -21,3 +21,5 @@ cfg = ModelConfig()
 #Fix filenames' relative paths to point to package data properly.
 import os
 cfg.default_detector_filename = os.path.join(os.path.dirname(__file__), cfg.default_detector_filename)
+
+

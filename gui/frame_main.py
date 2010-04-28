@@ -27,6 +27,7 @@ import frame_reflection_info
 import dialog_preferences
 import CrystalPlan_version
 import doc_maker.user_guide
+import display_thread
 
 #--- Model Imports ---
 import model
@@ -74,6 +75,11 @@ class FrameMain(wx.Frame):
         parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Other...')
         self.Bind(wx.EVT_MENU, self.OnMenu, id=id)
 
+    def _init_menuOptimize(self, parent):
+        id = wx.NewId()
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Optimize Positions...')
+        self.Bind(wx.EVT_MENU, self.OnMenuOptimizePositions, id=id)
+
 
     def _init_menuHelp(self, parent):
         id = wx.NewId()
@@ -107,6 +113,10 @@ class FrameMain(wx.Frame):
 #        self.menuParameters = wx.Menu()
 #        self._init_menuParameters(self.menuParameters)
 #        bar.Append(self.menuParameters, "&Parameters")
+
+        self.menuOptimize = wx.Menu()
+        self._init_menuOptimize(self.menuOptimize)
+        bar.Append(self.menuOptimize, "&Parameters")
 
         self.menuHelp = wx.Menu()
         self._init_menuHelp(self.menuHelp)
@@ -197,6 +207,26 @@ class FrameMain(wx.Frame):
             print "The thread has already started!"
         else:
             self.user_guide_thread = doc_maker.user_guide.generate_user_guide(self, frame_qspace_view.get_instance(self))
+        event.Skip()
+
+
+    def OnMenuOptimizePositions(self, event):
+        print "Optimizing"
+        #Do the optimization
+        positions = model.optimization.run_main(20)
+        #Now add them
+        out_positions = []
+        for pos_cov_empty in positions:
+            #Do the calculation
+            poscov = model.instrument.inst.simulate_position(pos_cov_empty.angles, sample_U_matrix=pos_cov_empty.sample_U_matrix, use_multiprocessing=False, quick_calc=False)
+            out_positions.append(poscov)
+
+        #Add it to the list of selected items
+        display_thread.select_position_coverage(out_positions, update_gui=True)
+
+        event.Skip()
+
+    def OnMenu(self, event):
         event.Skip()
 
     def OnMenu(self, event):
