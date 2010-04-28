@@ -223,8 +223,9 @@ class PanelReflectionMeasurement(wx.Panel):
             self.staticTextMeasurementNumber.SetLabel("#%d:" % meas.measurement_num)
 
     def OnButtonPlace(self, event):
-        reflection_placer.show_placer_frame(self, self.refl, self.meas)
+        self.last_placer_frame = reflection_placer.show_placer_frame(self, self.refl, self.meas)
         event.Skip()
+
 
 if __name__ == "__main__":
     import gui_utils

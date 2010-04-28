@@ -1,6 +1,6 @@
 <html>
 <head>
-<title />
+<title>CrystalPlan 1.0 User Guide</title>
 <meta content="Bluefish 1.0.7" name="generator" />
 <meta content="Janik Zikovsky" name="author" />
 <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
@@ -174,7 +174,11 @@ Here, you ensure that CrystalPlan has the correct detector geometry loaded.
 which displays them in a window like this one:
 <br /><img alt="" border="0" class="frameshot" src="screenshots/detectors-3d_view.png" />
 </li>
-<li>We will come back later to the other controls on this tab.</li>
+<li>There are additional controls on this tab that are not commonly used:</li>
+<ul>
+<li>The list of detectors has checkboxes. You can uncheck a detector to indicate that it will not be used in the experiment (perhaps it is obscured or malfunctioning).</li>
+<li>The Coverage Stats button calculates the coverage of each detector. The Select Best Detectors selects the best detectors based on these coverage statistics.</li>
+</ul>
 </ul>
 
 
@@ -697,6 +701,57 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 
 
 <h4>13.5. Selecting Reflections</h4> 
+
+<ul>
+<li>Right-click on a point in the reflection view to select it. It becomes highlighted with a small cube, and a separate window ("Single Reflection Info") pops up, as shown below: </li>
+<br /><div align="center"><img src="screenshots/3drefs-reflection_selected.png" />
+<img src="screenshots/ref_info.png" />
+</div>
+<li>When the Single Reflection Info window is up, another way to select a reflection is to type in the H K L indices of the peak of interest. If the peak is out of range (was not calculated), the boxes turn red:
+<img src="screenshots/ref_info-bad_hkl.png" />
+</li>
+<li>Type in an H,K,L of 3, 2, and -4, and the selected reflection changes:</li>
+<br /><div align="center"><img src="screenshots/ref_info2.png" /></div>
+<ul>
+<li>Check the <img src="screenshots/ref_info-checkUseEquivalent.png" /> box and the equivalent hkl's will be displayed in the same list. In this case, -3, -2, 4 is the equivalent HKL:
+<br /><div align="center"><img src="screenshots/ref_info2-equivalent.png" /></div>
+</li>
+<li>The Q-vector and corresponding d-spacing of this hkl are shown.</li>
+
+
+<li>Each entry corresponds to a different sample orientation where the reflection was measured.
+<br /><div align="center"><img src="screenshots/prm.png" /></div>
+</li>
+<li>Several pieces of information are shown:</li>
+<ul>
+<li>The top line shows the sample orientation angles of that particular measurement, and the HKL at which the reflection was measured (relevant when the <img src="screenshots/ref_info-checkUseEquivalent.png" /> box is checked. </li>
+<dt>wl</dt> <dd>The wavelength at which the peak is measured.</dd>
+<dt>Det.#</dt> <dd>The name of the detector on which this peak is measured.</dd>
+<dt>X and Y</dt> <dd>Positions on the detector face, with 0 as the center of the detector.</dd>
+<dt>1/2-width</dt> <dd>The half-width of the spot, assuming the scattered beam has a divergence entered here:
+<img src="screenshots/ref_info-textCtrlDivergence.png" /> . The black spot on the graphic also represents this divergence.
+</dd>
+</ul>
+
+</ul>
+
+</ul>
+
+<h4>13.6. The Reflection Placer</h4> 
+
+<ul>
+<li>Click the <img src="screenshots/prm-buttonPlace.png" /> to bring up the reflection placer window: 
+</li>
+<br /><div align="center"><img src="screenshots/ref_placer.png" /></div>
+<li>The HKL of the reflection you had selected, and the detector on which it was are pre-selected; but you can type in your own selections if you wish to place a particular HKL on a particular detector.</li>
+<li>The map in the center of the window represents the detector face.</li>
+<li>Click on the detector with the mouse, or type in values for the X/Y coordinates you want on the detector.</li>
+<li>The program calculates the sample orientation angles phi, chi and omega that will place the peak at that point. </li>
+<li>Note that the currently selected goniometer has limitations in chi tilt that make some areas not reachable - these are shown in red in the map. Green areas can be achieved; yellow areas are spots where the orientation is possible but the peak will be detected in a wavelength range that is outside the current range set in the Q-Space tab in the main window.</li>
+<li>With an unrestrained goniometer, there is a range of sample orientation angles that will place a peak at a particular point (think of it as performing a rotation of the peaks while keeping your peak of interest centered). However, for this goniometer, the program attempts to find a chi angle as close to zero as possible (since the goniometer is limited to a few degrees near zero). </li>
+<li>Click the <img alt="Add This Orientation" src="screenshots/ref_placer-buttonAddOrientation.png" /> button and the calculated sample orientation will be added to the current experiment plan.</li>
+</ul>
+
 
 </body>
 </html>

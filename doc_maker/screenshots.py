@@ -10,7 +10,10 @@ import numpy as np
 #Flag to stop taking screenshots
 disable_screenshots = False
 
+#Path to save screenshots to
 base_screenshot_path = "../docs/screenshots/"
+
+#For linux (UBUNTU) correct sizes of full frames:
 title_bar_height = 24
 frame_width = 8
 frame_height = 4

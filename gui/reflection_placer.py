@@ -572,6 +572,7 @@ def show_placer_frame(parent, refl, meas):
     """Show the reflection placer frame with the given values as starting points."""
     frm = FrameReflectionPlacer(parent, refl, meas)
     frm.Show()
+    return frm
 
 
 #===========================================================================

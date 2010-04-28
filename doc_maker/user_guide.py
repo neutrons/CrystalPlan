@@ -23,7 +23,79 @@ main_frame = None
 def wait(ms):
     """Wait a given # of milliseconds."""
 #    print "Waiting for", ms, "ms"
-    time.sleep(5*ms/1000.)
+    time.sleep(ms/1000.)
+
+#-------------------------------------------------------------------------------
+def waitfor( expression, timeout_sec=10, check_interval_sec=0.01, post_wait_sec=0.05):
+    """Wait for a given expression to evaluate to true.
+
+    Parameters:
+        expression: string that evaluates to true or false
+        timeout_sec: timeout in seconds.
+        check_interval_sec: frequency to check, in seconds
+        post_wait_sec: wait, in seconds, after the expression evaluates True
+
+    Returns:
+        True if the expression evaluated to True before timeout, False otherwise.
+    """
+
+    t_start = time.time()
+    while time.time()-t_start < timeout_sec:
+        result = eval(expression)
+        if result:
+            time.sleep(post_wait_sec)
+            return True
+        #Delay before checking
+        time.sleep(check_interval_sec)
+    print "Warning! waitfor('%s') timed out!" % expression
+    return False
+
+#-------------------------------------------------------------------------------
+_waitfor_function = None
+_waitfor_function_args = None
+_waitfor_function_kwargs = None
+_waitfor_start_value = None
+
+#-------------------------------------------------------------------------------
+def waitfor_set( function, *args, **kwargs):
+    """Use in combination with waitfor_change. Sets a function that will be monitored for a
+    change in result value.
+
+    Parameters:
+        function: function to evaluate.
+        args and kwargs: arguments and keyword arguments to the function (optional)"""
+    global _waitfor_function, _waitfor_function_args, _waitfor_function_kwargs, _waitfor_start_value
+    _waitfor_function = function
+    _waitfor_function_args = args
+    _waitfor_function_kwargs = kwargs
+    #Evaluate the function now to save the value.
+    _waitfor_start_value = _waitfor_function(*_waitfor_function_args, **_waitfor_function_kwargs)
+
+
+#-------------------------------------------------------------------------------
+def waitfor_change(timeout_sec=10, check_interval_sec=0.01, post_wait_sec=0.05):
+    """Wait for the return value of a function to change. Set the function with waitfor_set()
+    before calling this.
+
+    Parameters:
+        timeout_sec: timeout in seconds.
+        check_interval_sec: frequency to check, in seconds
+        post_wait_sec: wait, in seconds, after the expression evaluates True
+    """
+    global _waitfor_function, _waitfor_function_args, _waitfor_function_kwargs, _waitfor_start_value
+    t_start = time.time()
+    while time.time()-t_start < timeout_sec:
+        result = _waitfor_function(*_waitfor_function_args, **_waitfor_function_kwargs)
+        if result != _waitfor_start_value:
+            time.sleep(post_wait_sec)
+            #Reset the start value for next time
+            _waitfor_start_value = result
+            return True
+        #Delay before checking
+        time.sleep(check_interval_sec)
+    print "Warning! waitfor_change of %s() timed out!" % _waitfor_function.__name__
+    return False
+
 
 #-------------------------------------------------------------------------------
 def ca(function, *args, **kwargs):
@@ -106,8 +178,8 @@ class UserGuideThread(Thread):
         fv = self.fv
 
         #Do the latex conversion
-        #import eqhtml
-        #eqhtml.embed_latex_in_html("../docs/user_guide_source.html", "../docs/user_guide.html")
+        import eqhtml
+        eqhtml.embed_latex_in_html("../docs/user_guide_source.html", "../docs/user_guide.html")
 
         #Now run the script
         for line in self.code:
@@ -118,11 +190,15 @@ class UserGuideThread(Thread):
                 exec(line)
                 #Wait a default of 10 ms between lines
                 time.sleep(0.01)
+                #Was line = taking a screenshot?
+                if line.startswith('ca(screenshot'):
+                    #Give it time to save
+                    wait(50)
 
         #Ok we are done.
         print "-> Script Complete!"
         #Close the main frame to exit the program
-        fm.Destroy()
+        #fm.Destroy()
 
 
 
@@ -233,18 +309,20 @@ def user_guide_script():
     td = fm.tab_detectors
     wait(30)
     ca(screenshot_of, td.buttonLoadDetectors, 'detectors-buttonLoadDetectors', minheight=True, margin=6, gradient_edge=4)
-    wait(30)
-    if not gui_utils.is_mac(): ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
-    if not gui_utils.is_mac(): wait(2000)
-    if not gui_utils.is_mac(): assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
+    wait(50)
     ca(screenshot_of, td.button_view_detectors, 'detectors-button_view_detectors', minheight=True, margin=6, gradient_edge=4)
-
-    #3d shot of detectors
-    ca(click, td.button_view_detectors)
-    wait(2000)
-    ca(screenshot_frame, td.frame3d, 'detectors-3d_view')
     wait(30)
-    ca(fm.Raise)
+    ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
+    waitfor( 'len(model.instrument.inst.detectors) >= 48' )
+    assert len(inst.detectors) == 48, "loaded 48 detectors from TOPAZ. We have %d" % len(inst.detectors)
+
+#    #3d shot of detectors
+#    ca(click, td.button_view_detectors)
+#    wait(2000)
+#    ca(screenshot_frame, td.frame3d, 'detectors-3d_view')
+#    #Bring back the main window
+#    ca(fm.Raise)
+#    wait(100)
 
 
     # ------------------------ goniometer tab ----------------------
@@ -253,14 +331,11 @@ def user_guide_script():
     #@type tg PanelGoniometer
     tg = fm.tab_goniometer
     ca(screenshot_of, tg.boxSizerSelected, 'goniometer-selected', minheight=True, margin=[10, 10, 40, 10], gradient_edge=4)
-    wait(50)
     ca(screenshot_of, tg.buttonSwitchGoniometer, 'goniometer-buttonSwitchGoniometer', margin=6, gradient_edge=0)
-    wait(50)
     #Select the TopazInHouseGoniometer and switch to it
     ca(select_name, tg.choiceGonio, model.goniometer.TopazInHouseGoniometer().name)
     wait(50)
     ca(screenshot_of, tg.choiceGonio, 'goniometer-choice', margin=6, gradient_edge=0)
-    wait(50)
     ca(screenshot_of, [tg.staticTextDesc, tg.staticTextDescLabel], 'goniometer-desc', margin=6, gradient_edge=0)
     ca(click, tg.buttonSwitchGoniometer)
     wait(100)
@@ -281,19 +356,16 @@ def user_guide_script():
     dlg.crystal.description = "Tutorial sample of quartz."
     wait(50)
     ca(screenshot_frame, dlg, 'dialog_edit_crystal', top_only=80)
-    wait(50)
     ca(dlg.notebook.SetSelection, 1)
     wait(50)
     ca(screenshot_of, dlg.notebook, 'dialog_edit_crystal-notebook1', margin=10)
     ca(screenshot_of, dlg.buttonGenerateUB, 'dialog_edit_crystal-buttonGenerateUB', margin=6)
-    wait(50)
     ca(dlg.notebook.SetSelection, 0)
     wait(50)
     ca(screenshot_of, dlg.boxSizerIsaw, 'dialog_edit_crystal-notebook0', margin=[16, 16, 46, 16], gradient_edge=6, minheight=True)
     ca(screenshot_of, dlg.buttonReadUB, 'dialog_edit_crystal-buttonReadUB', margin=6)
     ca(screenshot_of, dlg.buttonOK, 'dialog_edit_crystal-buttonOK', margin=6)
     ca(screenshot_of, dlg.buttonCancel, 'dialog_edit_crystal-buttonCancel', margin=6)
-    wait(50)
     angles = np.array([30, 15, 60])
     (phi, chi, omega) = angles
     dlg.ub_orientation.phi_degrees = phi
@@ -301,16 +373,13 @@ def user_guide_script():
     dlg.ub_orientation.omega_degrees = omega
     wait(50)
     ca(screenshot_of, dlg.control_load_angles, 'dialog_edit_crystal-control_load_angles', margin=6)
-    wait(50)
     ca(dlg.crystal.read_ISAW_ubmatrix_file, "../model/data/quartzub.txt", np.deg2rad(angles))
     wait(200)
     ca(screenshot_of, dlg.control_top, 'dialog_edit_crystal-control_top', margin=6)
-    wait(50)
     ca(click, dlg.buttonOK)
     wait(500)
 
     ca(screenshot_of, ts.range_control, 'sample-range_control', margin=10, gradient_edge=0)
-    wait(50)
     ca(screenshot_of, ts.buttonApplyRange, 'sample-buttonApplyRange', margin=10, gradient_edge=0)
 
     # ------------------------- Trial Positions tab -----------------------
@@ -342,7 +411,6 @@ def user_guide_script():
     wait(300)
 
     ca(screenshot_frame, fv, 'frame_qspace')
-    wait(50)
 
     #Animate a phi rotation
     wait(100)
@@ -356,12 +424,10 @@ def user_guide_script():
     slid = tt.sliders[1]
     ca(slid.SetValue, +45)
     ca(slid.SendScrollEvent) #Trigger the showing the warning
-    wait(50)
+    wait(150)
     ca(screenshot_of, slid, 'try-chi-45', margin=6, gradient_edge=2)
-    wait(200)
     ca(screenshot_of, [tt.staticTextWarning, tt.staticTextWarningReason], 'try-staticTextWarning', margin=6)
     ca(screenshot_of, tt.buttonSave, 'try-buttonSave', margin=6)
-    wait(50)
     #un-check the box
     ca(check, tt.checkAdd, False)
 
@@ -371,32 +437,35 @@ def user_guide_script():
 
     #@type ta PanelAddPositions
     ta = fm.tab_add
-    
+
+    waitfor_set(ta.textWarnings.GetValue)
     ca(ta.controller.textAngles[0].SetValue, "0, 10, 35.5")
     ca(ta.controller.textAngles[1].SetValue, "arange(0, 50, 12.5)")
     ca(ta.controller.textAngles[2].SetValue, "linspace(0, 360, 6)")
-    wait(300)
+    waitfor_change()
     ca(screenshot_of, [ta.boxSizerAngles] , 'add-lists', margin=12)
     ca(ta.controller.textAngles[0].SetValue, "0")
     ca(ta.controller.textAngles[1].SetValue, "arange(-20, 20, 5)")
     ca(ta.controller.textAngles[2].SetValue, "0")
-    wait(300)
+    waitfor_change()
     ca(screenshot_of, [ta.staticTextWarnings, ta.textWarnings], 'add-textWarnings', margin=12)
     ca(screenshot_of, ta.boxSizerAngles , 'add-lists2', margin=12)
     ca(ta.controller.textAngles[0].SetValue, "0, 30, 60, 90")
     ca(ta.controller.textAngles[1].SetValue, "0")
     ca(ta.controller.textAngles[2].SetValue, "0")
-    wait(300)
+    waitfor_change()
     ca(screenshot_of, ta.boxSizerAngles , 'add-lists3', margin=12)
     wait(50)
     ca(screenshot_of, [ta.buttonCalculate, ta.buttonCancel] , 'add-start_button', margin=20)
     ca(click, ta.buttonCalculate)
-    wait(500)
-    wait(30)
+    #Delay util the progress bar has something
+    waitfor('len(model.experiment.exp.inst.positions) > 1')
     ca(screenshot_of, [ta.gaugeProgress, ta.staticTextProgress] , 'add-progress_bar', margin=10)
     wait(30)
     ca(screenshot_of, [ta.buttonCalculate, ta.buttonCancel] , 'add-cancel_button', margin=20)
-    wait(2000)
+    #Wait till done
+    waitfor('len(model.experiment.exp.inst.positions) >= 4')
+    wait(50)
     #assert len(model.experiment.exp.inst.positions)==2, "Length of positions calculated was to be 19, it was %d." % len(model.experiment.exp.inst.positions)
 
     # ------------------------ Experiment Plan tab ----------------------
@@ -414,7 +483,6 @@ def user_guide_script():
     ca(screenshot_of, te.gridExp, 'exp-grid', margin=12)
     ca(screenshot_of, te.boxSizerDelete, 'exp-delete_buttons', margin=8)
     ca(screenshot_of, [te.checkUseAll, te.buttonDontUseHighlighted], 'exp-select_buttons', margin=8)
-    wait(50)
     ca(screenshot_of, te.buttonSaveToCSV, 'exp-buttonSaveToCSV', margin=6)
     ca(screenshot_of, te.staticTextEstimatedTime, 'exp-estimated_time', margin=6)
     wait(50)
@@ -432,20 +500,15 @@ def user_guide_script():
     check_margin = 4
 
     ca(screenshot_frame, fv, '3d-4orientations')
-    wait(30)
     ca(screenshot_of, fv.panelStats, '3d-panelStats', margin=10)
-    wait(30)
     ca(screenshot_of, tv.sliceControl, '3d-sliceControl', margin=10)
-    wait(50)
 
 
     ca(screenshot_of, tv.checkHemisphere, 'volume_options-checkHemisphere', margin=check_margin)
     ca(check, tv.checkHemisphere, True)
     wait(600)
     ca(screenshot_of, fv.control, '3d-hemisphere', margin=control_margins, gradient_edge=control_gradient_edge)
-    wait(30)
     ca(screenshot_of, fv.panelStats, '3d-panelStats-hemisphere', margin=10)
-    wait(30)
 
     ca(screenshot_of, tv.checkInvert, 'volume_options-checkInvert', margin=check_margin)
     ca(check, tv.checkInvert, True)
@@ -457,9 +520,7 @@ def user_guide_script():
     wait(1200)
 
     ca(screenshot_of, tv.checkShowRedundancy, 'volume_options-checkShowRedundancy', margin=check_margin)
-    wait(30)
     ca(screenshot_of, fv.control, '3d-redundancy', margin=control_margins, gradient_edge=control_gradient_edge)
-    wait(30)
 
     ca(screenshot_of, tv.checkShowSlice, 'volume_options-checkShowSlice', margin=check_margin)
     tv.sliceControl.slice_min = 3
@@ -469,9 +530,7 @@ def user_guide_script():
     ca(check, tv.checkShowSlice, True)
     wait(600)
     ca(screenshot_of, tv.sliceControl, '3d-sliceControl-on', margin=10)
-    wait(30)
     ca(screenshot_of, fv.control, '3d-slice', margin=control_margins, gradient_edge=control_gradient_edge)
-    wait(50)
     ca(check, tv.checkShowRedundancy, True)
     wait(900)
     ca(screenshot_of, fv.control, '3d-slice-redundancy', margin=control_margins, gradient_edge=control_gradient_edge)
@@ -492,7 +551,6 @@ def user_guide_script():
     ca(call_event, tr.choiceView, wx.EVT_CHOICE)
     wait(400)
     ca(screenshot_of, fv.control, '3drefs-measured', margin=control_margins, gradient_edge=control_gradient_edge)
-
     ca(screenshot_of, tr.boxSizerDisplay, '3drefs-display', margin=10, gradient_edge=4)
     ca(screenshot_of, [tr.staticTextViewOption, tr.choiceView], '3drefs-view_option', margin=check_margin, gradient_edge=2)
     ca(screenshot_of, tr.checkUseSymmetry, '3drefs-checkUseSymmetry', margin=check_margin)
@@ -521,8 +579,47 @@ def user_guide_script():
     screenshots.disable_screenshots = False
     wait(250)
     ca(screenshot_of, fv.control, '3drefs-reflection_selected', margin=control_margins, gradient_edge=control_gradient_edge)
+    #@type fri FrameReflectionInfo
+    fri = fv.controller.open_frame_reflection_info()
+    ca(screenshot_frame, fri, 'ref_info')
+    #@type pri PanelReflectionInfo
+    pri = fri.panel
 
-    blarg_crash
+    #Put in bad values for hkl
+    ca(pri.textCtrlH.SetValue, "20")
+    wait(40)
+    ca(screenshot_of, [pri.staticTextHKLLabel, pri.gridSizerHKL], 'ref_info-bad_hkl', margin=10, gradient_edge=5)
+    ca(pri.textCtrlH.SetValue, "3")
+    ca(pri.textCtrlK.SetValue, "2")
+    ca(pri.textCtrlL.SetValue, "-4")
+    wait(100)
+    size = fri.GetSize()
+    ca(fri.SetSize, wx.Size(size[0], 600))
+    ca(screenshot_of, pri, 'ref_info2', margin=5, gradient_edge=0)
+    #Check it
+    ca(check, pri.checkUseEquivalent, True)
+    ca(screenshot_of, pri.checkUseEquivalent, 'ref_info-checkUseEquivalent', margin=4, gradient_edge=2)
+    ca(screenshot_of, pri.boxSizerDivergence, 'ref_info-textCtrlDivergence', margin=4, gradient_edge=2)
+    wait(150)
+    ca(screenshot_of, pri, 'ref_info2-equivalent', margin=5, gradient_edge=0)
+
+    #@type prm PanelReflectionMeasurement
+    prm = pri.measure_panels[0]
+    ca(screenshot_of, prm, 'prm', margin=5, gradient_edge=0)
+    ca(screenshot_of, prm.buttonPlace, 'prm-buttonPlace', margin=5, gradient_edge=0)
+    ca(click, prm.buttonPlace)
+    wait(800)
+    #@type frp FrameReflectionPlacer
+    global frp
+    frp = prm.last_placer_frame
+    #--------------- The Reflection Placer -------------
+    #Wait for calculation to be done
+    wait(1800)
+    frp.placer.xy[0] = -5
+    wait(100)
+    ca(screenshot_frame, frp, 'ref_placer')
+    ca(screenshot_of, frp.buttonAddOrientation, 'ref_placer-buttonAddOrientation', margin=4, gradient_edge=2)
+
 #---END---
     
 
