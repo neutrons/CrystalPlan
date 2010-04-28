@@ -43,7 +43,9 @@ def get_all_tests():
 
     return all_tests
 
-
-if __name__=="__main__":
+def main():
     all_tests = get_all_tests()
     unittest.TextTestRunner(verbosity=2).run(all_tests)
+
+if __name__=="__main__":
+    main()

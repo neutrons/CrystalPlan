@@ -14,6 +14,7 @@ import sys
 import os
 import traceback
 import datetime
+from optparse import OptionParser
 
 if __name__=="__main__":
     #Manipulate the PYTHONPATH to put model directly in view of it
@@ -201,6 +202,17 @@ def launch_gui():
 
 
 if __name__=="__main__":
-    #For launching from source
+    # --- Handle Command Line Arguments -----
+    parser = OptionParser()
+    parser.add_option("-t", "--test", dest="test",
+                     action="store_true", default=False,
+                     help="perform a suite of unit tests on the software")
+    (options, args) = parser.parse_args()
 
-    launch_gui()
+    if options.test:
+        #Run unit tests
+        os.chdir("../model")
+        os.system("python test_all.py")
+    else:
+        #Start the GUI
+        launch_gui()

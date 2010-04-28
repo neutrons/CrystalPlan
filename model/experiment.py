@@ -1779,12 +1779,13 @@ class TestExperiment(unittest.TestCase):
         #--- Smaller wl_min ---
         e.inst.wl_min = 0.2
         e.recalculate_reflections(self.pos_param)
-        self.continue_get_reflections_measured(True, 200, " at wl_min=0.2")
+        self.continue_get_reflections_measured(True, 216, " at wl_min=0.2")
         #--- Limit wl_max ---
         e.inst.wl_min = 0.2
         e.inst.wl_max = 0.5
         e.recalculate_reflections(self.pos_param)
-        self.continue_get_reflections_measured(True, 192, " at wl_max=0.5")
+        num_reflections = 208
+        self.continue_get_reflections_measured(True, num_reflections, " at wl_max=0.5")
         #------ Add a 2nd position, same angles though ----
         poscov2 = instrument.PositionCoverage( [0, 0, 0.], None, sample_U_matrix=np.eye(3))
         e.inst.positions.append(poscov2)
@@ -1792,11 +1793,11 @@ class TestExperiment(unittest.TestCase):
         pos_param2.positions [id(poscov2)] = True
         e.recalculate_reflections(pos_param2)
         #Same # of reflections measured
-        self.continue_get_reflections_measured(True, 192, " at wl_max=0.5")
+        self.continue_get_reflections_measured(True, num_reflections, " at wl_max=0.5")
         #But counting the total measurements = twice as much
         total = 0
         for ref in e.reflections: total += ref.times_measured()
-        assert  total == 192*2, "total times measured with two positions"
+        assert  total == num_reflections*2, "total times measured with two positions"
         #--- Now test the detector settings ----
         self.exp.params[PARAM_DETECTORS] = ParamDetectors([False]*48)
         e.recalculate_reflections(self.pos_param)
@@ -1806,16 +1807,16 @@ class TestExperiment(unittest.TestCase):
         self.continue_get_reflections_measured(True, 1, " when only 1 detector is selected.")
         self.exp.params[PARAM_DETECTORS] = ParamDetectors([True]*24 + [False]*24)
         e.recalculate_reflections(self.pos_param)
-        self.continue_get_reflections_measured(True, 96, " when only half the detectors are selected.")
+        self.continue_get_reflections_measured(True, num_reflections/2, " when only half the detectors are selected.")
         self.exp.params[PARAM_DETECTORS] = ParamDetectors([True]*48)
         e.recalculate_reflections(self.pos_param)
-        self.continue_get_reflections_measured(True, 192, " when all the detectors are selected.")
+        self.continue_get_reflections_measured(True, num_reflections, " when all the detectors are selected.")
         # --- Half the detectors, counted twice ----
         self.exp.params[PARAM_DETECTORS] = ParamDetectors([True]*24 + [False]*24)
         e.recalculate_reflections(pos_param2)
         total = 0
         for ref in e.reflections: total += ref.times_measured()
-        assert  total == 192, "total times measured with two positions, with half the detectors"
+        assert  total == num_reflections, "total times measured with two positions, with half the detectors"
 
 
     def test_reflection_masking(self):
