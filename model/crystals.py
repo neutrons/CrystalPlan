@@ -714,7 +714,7 @@ class TestCrystal(unittest.TestCase):
         #@type c Crystal
         print "test_ub_matrix_and_recip_lattice"
         c = self.c
-        c.read_ISAW_ubmatrix_file("data/natrolite_807_ub.txt", [0,0,0])
+        c.read_ISAW_ubmatrix_file("data/natrolite_807.mat", [0,0,0])
         UB = c.ub_matrix
         print "UB matrix loaded (including 2pi) is:\n", UB
 
