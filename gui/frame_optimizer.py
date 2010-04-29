@@ -2,6 +2,7 @@
 
 import wx
 import thread
+import threading
 
 import display_thread
 
@@ -15,6 +16,21 @@ if __name__=="__main__":
     import sys
     sys.path.insert(0, "..")
     
+
+#================================================================================================
+class OptimizationThread(threading.Thread):
+    """Thread to run the GA optimization."""
+    def __init__ (self, controller):
+        threading.Thread.__init__(self)
+        self.controller = controller
+        self.start() #Start on creation
+
+    def run(self):
+        #Just run the optimization
+        (best, aborted, converged) = model.optimization.run_optimization(self.controller.params, self.controller.step_callback)
+        #Call the completion function.
+        self.controller.complete( aborted, converged )
+            
 
 #================================================================================================
 #================================================================================================
@@ -32,33 +48,60 @@ class OptimizerController():
         self.params = OptimizationParameters()
         self.best = None
         self.best_score = 0
+        self.average_score = 0
         self.best_chromosome = []
         self.currentGeneration = 0
+        self.run_thread = None
 
     #--------------------------------------------------------------------
     def update(self):
         """Update GUI elements to reflect the current status."""
         frm = self.frame #@type frm FrameOptimizer
+        if frm is None:
+            return
+        #Coverage stats
         frm.staticTextCoverage.SetLabel("Best Coverage: %7.2f %%" % (self.best_score*100))
         frm.gaugeCoverage.SetValue(self.best_score*100)
+        frm.staticTextAverage.SetLabel("Average Coverage: %7.2f %%" % (self.average_score*100))
+        frm.gaugeAverage.SetValue(self.average_score*100)
         #The generation counter
         maxgen = self.params.max_generations
         frm.gaugeGeneration.SetRange(maxgen)
         frm.gaugeGeneration.SetValue(self.currentGeneration)
         frm.staticTextGeneration.SetLabel("Generation %5d of %5d:" % (self.currentGeneration, maxgen))
-
+        #The individual
         if not self.best is None:
             frm.textStatus.SetValue(str(self.best))
+            frm.buttonApply.Enable(True)
         else:
             frm.textStatus.SetValue("No best individual")
+            frm.buttonApply.Enable(False)
+        #The start/stop buttons enabling
+        frm.buttonStart.Enable((self.run_thread is None))
+        frm.buttonStop.Enable(not (self.run_thread is None))
 
     #--------------------------------------------------------------------
     def start(self, event, *args):
         """Start the optimization."""
         self._want_abort = False
-        #Start it!
+        #Start the thread
 #        model.optimization.run_optimization(self.frame.params, self.step_callback)
-        self.run_thread = thread.start_new_thread(model.optimization.run_optimization, (self.params, self.step_callback))
+#        self.run_thread = thread.start_new_thread(model.optimization.run_optimization, (self.params, self.step_callback))
+        self.run_thread = OptimizationThread(self)
+        #Set the buttons right away.
+        frm = self.frame #@type frm FrameOptimizer
+        frm.buttonStart.Enable((self.run_thread is None))
+        frm.buttonStop.Enable(not (self.run_thread is None))
+
+        self.frame.staticTextComplete.SetLabel("Optimization started...")
+        if not event is None: event.Skip()
+
+    #--------------------------------------------------------------------
+    def close_form(self, event, *args):
+        """Call when the form is closing. Aborth the thread if it is running."""
+        self._want_abort = True
+        #Marker to avoid trying to change GUI
+        self.frame = None
         if not event is None: event.Skip()
 
     #--------------------------------------------------------------------
@@ -74,6 +117,31 @@ class OptimizerController():
         self._want_abort = True
         #TODO: Wait for it to stop.
         if not event is None: event.Skip()
+
+    #--------------------------------------------------------------------
+    def complete(self,  aborted, converged):
+        """Called when the optimization completes.
+        
+        Parameters:
+            aborted: True if the optimization was aborted manually
+            converged: True if the criterion was reached.
+        """
+        if aborted:
+            label = "ABORTED - Optimization was aborted before completing!"
+        elif converged:
+            label = "SUCCESS - Optimization met the coverage criterion!"
+        else:
+            label = "FAILED - Reached the max. # of generations without enough coverage!"
+
+        self.run_thread = None
+        wx.CallAfter(self.frame.staticTextComplete.SetLabel, label)
+        wx.CallAfter(self.update)
+
+        if self.params.auto_increment and not aborted and not converged:
+            #Try again with 1 more orientation
+            self.params.number_of_orientations += 1
+            wx.CallAfter(self.start, None)
+
 
     #--------------------------------------------------------------------
     def apply(self, event, *args):
@@ -101,13 +169,19 @@ class OptimizerController():
         
     #--------------------------------------------------------------------
     def step_callback(self, ga_engine, *args):
-        """Callback during evolution to abort it."""
-        print "step_callback called!"
+        """Callback during evolution; used to abort it and to display
+        stats."""
         #Find the best individual
         self.best = ga_engine.bestIndividual()
         self.best_score = self.best.score
+        #More stats
+        stats = ga_engine.getStatistics()
+        self.average_score = stats["rawAve"]
         #Other stats
         self.currentGeneration = ga_engine.currentGeneration
+        
+        if self.currentGeneration >= self.params.max_generations:
+            print "Optimization complete!"
         #Update gui
         wx.CallAfter(self.update)
         return self._want_abort
@@ -162,6 +236,11 @@ class FrameOptimizer(wx.Frame):
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=wx.EXPAND)
         parent.AddWindow(self.staticTextCoverage, 0, border=4, flag=wx.LEFT)
         parent.AddWindow(self.gaugeCoverage, 0, border=10, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=wx.EXPAND)
+        parent.AddWindow(self.staticTextAverage, 0, border=4, flag=wx.LEFT)
+        parent.AddWindow(self.gaugeAverage, 0, border=10, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.staticTextComplete, 0, border=4, flag=wx.LEFT)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(wx.StaticLine(parent=self.panelStatus), 0, border=0, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
@@ -212,6 +291,7 @@ class FrameOptimizer(wx.Frame):
               parent=prnt, pos=wx.Point(976, 171), size=wx.Size(715, 599),
               style=wx.DEFAULT_FRAME_STYLE, title=u'Coverage Automatic Optimizer')
         self.SetClientSize(wx.Size(900, 599))
+        self.Bind(wx.EVT_CLOSE, self.controller.close_form)
 
         self.splitterMain = wx.SplitterWindow(id=wxID_FRAMEOPTIMIZERSPLITTERMAIN,
               name=u'splitterMain', parent=self, pos=wx.Point(8, 8),
@@ -262,6 +342,18 @@ class FrameOptimizer(wx.Frame):
 
         self.staticTextCoverage = wx.StaticText(id=wxID_FRAMEOPTIMIZERSTATICTEXTCOVERAGE,
               label=u'Best Coverage:', name=u'staticTextCoverage',
+              parent=self.panelStatus, pos=wx.Point(0, 460), style=0)
+
+        self.gaugeAverage = wx.Gauge(id=wxID_FRAMEOPTIMIZERGAUGECOVERAGE,
+              name=u'gaugeAverage', parent=self.panelStatus, pos=wx.Point(0,
+              477), range=100,  style=wx.GA_HORIZONTAL)
+
+        self.staticTextAverage = wx.StaticText(id=wxID_FRAMEOPTIMIZERSTATICTEXTCOVERAGE,
+              label=u'Average Coverage:', name=u'staticTextAverage',
+              parent=self.panelStatus, pos=wx.Point(0, 460), style=0)
+
+        self.staticTextComplete = wx.StaticText(id=wx.NewId(),
+              label=u'...', name=u'staticTextComplete',
               parent=self.panelStatus, pos=wx.Point(0, 460), style=0)
 
         self.buttonAddOrientation = wx.Button(id=wxID_FRAMEOPTIMIZERBUTTONADDORIENTATION,

@@ -31,6 +31,7 @@ class OptimizationParameters(HasTraits):
     number_of_orientations = Int(10, desc="the number of orientations you want in the sample plan.")
     desired_coverage = Float(85.0, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
     use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection coverage.")
+    auto_increment = Bool(True, label='Auto increment # of orientations?', desc="that if the optimization does not converge in the # of generations, add one to the # of sample orientations and try again.")
 
     population = Int(100, desc="the number of individuals to evolve.")
     max_generations = Int(100, desc="the maximum number of generations to evolve before giving up.")
@@ -42,6 +43,7 @@ class OptimizationParameters(HasTraits):
             Item('number_of_orientations'),
             Item('desired_coverage'),
             Item('use_symmetry'),
+            Item('auto_increment'),
             label='Optimization Settings'
         ),
         Group(
@@ -92,7 +94,6 @@ def eval_func(chromosome):
         score = exp.reflection_stats_with_symmetry.measured * 1.0 / exp.reflection_stats_with_symmetry.total
     else:
         score = exp.reflection_stats.measured * 1.0 / exp.reflection_stats.total
-
 #    print  "Fitness score was %s" % score
 
     return score
@@ -159,15 +160,13 @@ def run_optimization(optim_params, step_callback=None):
     ga.setDBAdapter(sqlite_adapter)
 
     # Do the evolution, with stats dump freq
-    ga.evolve(freq_stats=1)
-
-    # Best individual
-    best = ga.bestIndividual()
+    freq_stats = 0
+    if __name__ == "__main__": freq_stats = 1
+    results = ga.evolve(freq_stats=freq_stats)
 
     exp.verbose = True
 
-    #Return the positions
-    return get_angles(best)
+    return results
 
 
 if __name__ == "__main__":

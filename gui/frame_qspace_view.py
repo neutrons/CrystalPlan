@@ -93,7 +93,7 @@ class QspaceViewController(HasTraits):
     
     #3D view of the scene.
     view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene), resizable=True,
-                        show_label=False), resizable=True)
+                    show_label=False), resizable=True)
     
     #The FrameQspaceView that is calling this.
     parent_frame = None

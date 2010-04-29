@@ -117,7 +117,7 @@ class FrameMain(wx.Frame):
 
         self.menuOptimize = wx.Menu()
         self._init_menuOptimize(self.menuOptimize)
-        bar.Append(self.menuOptimize, "&Parameters")
+        bar.Append(self.menuOptimize, "&Optimization")
 
         self.menuHelp = wx.Menu()
         self._init_menuHelp(self.menuHelp)

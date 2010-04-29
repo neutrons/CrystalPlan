@@ -719,6 +719,7 @@ class GSimpleGA:
       self.internalPop.statistics()
       self.dbAdapter.insert(self)
 
+    #----------------------------------------------------------
    def evolve(self, freq_stats=0):
       """ Do all the generations until the termination criteria, accepts
       the freq_stats (default is 0) to dump statistics at n-generation
@@ -729,7 +730,11 @@ class GSimpleGA:
 
       :param freq_stats: if greater than 0, the statistics will be
                          printed every freq_stats generation.
-      :rtype: returns the best individual of the evolution
+      :rtype: returns a tuple:
+        best: the best individual of the evolution
+        stopFlagCallback: stopped by the step_callback
+        stopFlagTerminationCriteria: stopped by reching the criterion
+
 
       .. versionadded:: 0.6
          the return of the best individual
@@ -843,7 +848,7 @@ class GSimpleGA:
          self.migrationAdapter.stop()
          if freq_stats: print "done !"
 
-      return self.bestIndividual()
+      return (self.bestIndividual(), stopFlagCallback, stopFlagTerminationCriteria)
 
    def select(self, **args):
       """ Select one individual from population

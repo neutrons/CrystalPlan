@@ -62,7 +62,7 @@ class DetectorVisualization(HasTraits):
         #Map mlab to the scene in the control.
         mlab = self.scene.mlab
         self.scene.disable_render = True #Render without displaying, to speed it up.
-        mlab.clf
+        mlab.clf()
         mlab.options.offscreen = False
         #Make a simple color map
         c = 0
