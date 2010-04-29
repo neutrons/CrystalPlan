@@ -28,6 +28,7 @@ import dialog_preferences
 import CrystalPlan_version
 import doc_maker.user_guide
 import display_thread
+import frame_optimizer
 
 #--- Model Imports ---
 import model
@@ -77,7 +78,7 @@ class FrameMain(wx.Frame):
 
     def _init_menuOptimize(self, parent):
         id = wx.NewId()
-        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Optimize Positions...')
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Optimize Positions...\tCtrl+O')
         self.Bind(wx.EVT_MENU, self.OnMenuOptimizePositions, id=id)
 
 
@@ -212,18 +213,9 @@ class FrameMain(wx.Frame):
 
     def OnMenuOptimizePositions(self, event):
         print "Optimizing"
-        #Do the optimization
-        positions = model.optimization.run_main(20)
-        #Now add them
-        out_positions = []
-        for pos_cov_empty in positions:
-            #Do the calculation
-            poscov = model.instrument.inst.simulate_position(pos_cov_empty.angles, sample_U_matrix=pos_cov_empty.sample_U_matrix, use_multiprocessing=False, quick_calc=False)
-            out_positions.append(poscov)
 
-        #Add it to the list of selected items
-        display_thread.select_position_coverage(out_positions, update_gui=True)
-
+        frm = frame_optimizer.FrameOptimizer(parent=self)
+        frm.Show()
         event.Skip()
 
     def OnMenu(self, event):

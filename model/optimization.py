@@ -20,6 +20,41 @@ from pyevolve import Initializators
 import numpy as np
 
 
+#--- Traits Imports ---
+from enthought.traits.api import HasTraits,Int,Float,Str,Property,Bool, List
+from enthought.traits.ui.api import View,Item,Label,Heading, Spring, Handler, Group
+from enthought.traits.ui.menu import OKButton, CancelButton
+
+
+# ===========================================================================================
+class OptimizationParameters(HasTraits):
+    number_of_orientations = Int(10, desc="the number of orientations you want in the sample plan.")
+    desired_coverage = Float(85.0, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
+    use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection coverage.")
+
+    population = Int(100, desc="the number of individuals to evolve.")
+    max_generations = Int(100, desc="the maximum number of generations to evolve before giving up.")
+    mutation_rate = Float(0.05, desc="the probability of mutation per individual.")
+    use_multiprocessing = Bool(True, desc="to use multiprocessing (multiple processors) to speed up calculation.")
+
+    view = View(
+        Group(
+            Item('number_of_orientations'),
+            Item('desired_coverage'),
+            Item('use_symmetry'),
+            label='Optimization Settings'
+        ),
+        Group(
+            Item('population'),
+            Item('max_generations'),
+            Item('mutation_rate'),
+            Item('use_multiprocessing'),
+            label='Genetic Algorithm Settings'
+        ),
+        Spring(label=' ')
+        )
+    
+
 
 #-----------------------------------------------------------------------------------------------
 def get_angles(chromosome):
@@ -41,6 +76,8 @@ def get_angles(chromosome):
 
 #-----------------------------------------------------------------------------------------------
 def eval_func(chromosome):
+    """Fitness evaluation function for a chromosome in coverage optimization."""
+    global op #@type op OptimizationParameters
     inst = instrument.inst
 
     positions = get_angles(chromosome)
@@ -51,8 +88,10 @@ def eval_func(chromosome):
     exp.recalculate_reflections(positions, calculation_callback=None)
 
     #Return the measured fraction
-    score = exp.reflection_stats_with_symmetry.measured * 1.0 / exp.reflection_stats_with_symmetry.total
-    score = exp.reflection_stats.measured * 1.0 / exp.reflection_stats.total
+    if op.use_symmetry:
+        score = exp.reflection_stats_with_symmetry.measured * 1.0 / exp.reflection_stats_with_symmetry.total
+    else:
+        score = exp.reflection_stats.measured * 1.0 / exp.reflection_stats.total
 
 #    print  "Fitness score was %s" % score
 
@@ -60,7 +99,26 @@ def eval_func(chromosome):
 
 
 #-----------------------------------------------------------------------------------------------
-def run_main(num_positions):
+def termination_func(ga_engine):
+    """Termination function for G.A. terminates evolution when
+    the desired fitness (coverage) is reached."""
+    global op #@type op OptimizationParameters
+    best_score = ga_engine.bestIndividual().score
+    #When you reach the desired coverage (in %) you are done.
+    return best_score * 100.0 >= op.desired_coverage
+    
+
+#-----------------------------------------------------------------------------------------------
+def run_optimization(optim_params, step_callback=None):
+    """
+    Parameters:
+        optim_params: OptimizationParameters object with the parameters
+        step_callback: function called after every generation, that
+            returns True to abort the optimization.
+    """
+    global op #@type op OptimizationParameters
+    op = optim_params
+
     #The instrument to use
     inst = instrument.inst
     exp = experiment.exp
@@ -68,7 +126,7 @@ def run_main(num_positions):
 
     # Genome instance, 1D List of 50 elements
     num_angles = len(inst.angles)
-    genome = G1DList.G1DList( num_angles * num_positions )
+    genome = G1DList.G1DList( num_angles * op.number_of_orientations )
 
     #Make the initializator a real value
     genome.initializator.set(Initializators.G1DListInitializatorReal)
@@ -80,15 +138,18 @@ def run_main(num_positions):
     genome.evaluator.set(eval_func)
 
     # Genetic Algorithm Instance
+
     ga = GSimpleGA.GSimpleGA(genome)
+    ga.setMutationRate(op.mutation_rate)
     ga.setMultiProcessing(True, full_copy=False)
-    ga.setPopulationSize(100)
+    ga.setPopulationSize(op.population)
+    ga.stepCallback.set(step_callback)
 
     # Set the Roulette Wheel selector method, the number of generations and
     # the termination criteria
     ga.selector.set(Selectors.GRouletteWheel)
-    ga.setGenerations(100)
-    ga.terminationCriteria.set(GSimpleGA.ConvergenceCriteria)
+    ga.setGenerations(op.max_generations)
+    ga.terminationCriteria.set(termination_func)
 
     # Sets the DB Adapter, the resetDB flag will make the Adapter recreate
     # the database and erase all data every run, you should use this flag
@@ -97,8 +158,7 @@ def run_main(num_positions):
     sqlite_adapter = DBAdapters.DBSQLite(identify="ex1", resetDB=True)
     ga.setDBAdapter(sqlite_adapter)
 
-    # Do the evolution, with stats dump
-    # frequency of 20 generations
+    # Do the evolution, with stats dump freq
     ga.evolve(freq_stats=1)
 
     # Best individual
@@ -118,5 +178,12 @@ if __name__ == "__main__":
     exp.initialize_reflections()
     exp.verbose = False
     #Run
-    print run_main(10)
+    op=OptimizationParameters()
+    op.desired_coverage = 85
+    op.number_of_orientations = 10
+    op.mutation_rate = 0.05
+    op.use_symmetry = True
+    op.max_generations = 1000
+    op.use_multiprocessing = True
+    print run_main( op )
 
