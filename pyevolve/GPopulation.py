@@ -177,6 +177,8 @@ class GPopulation:
 
       """
       self.multiProcessing = (flag, full_copy)
+      if flag:
+          print "Multiprocessing enabled; will use %d processors." % CPU_COUNT
    
    def setMinimax(self, minimax):
       """ Sets the population minimax

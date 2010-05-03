@@ -111,7 +111,9 @@ def termination_func(ga_engine):
 
 #-----------------------------------------------------------------------------------------------
 def run_optimization(optim_params, step_callback=None):
-    """
+    """Perform GA optimization of detector coverage. Is meant to be run
+    within a background thread, but can run directly.
+
     Parameters:
         optim_params: OptimizationParameters object with the parameters
         step_callback: function called after every generation, that
@@ -119,6 +121,9 @@ def run_optimization(optim_params, step_callback=None):
     """
     global op #@type op OptimizationParameters
     op = optim_params
+
+    #Enable logging
+    pyevolve.logEnable()
 
     #The instrument to use
     inst = instrument.inst
@@ -148,7 +153,9 @@ def run_optimization(optim_params, step_callback=None):
     ga.setGenerations(op.max_generations)
 
     #This is the function that can abort the progress.
-    ga.stepCallback.set(step_callback)
+    if not step_callback is None:
+        ga.stepCallback.set(step_callback)
+        
     #And this is the termination function
     ga.terminationCriteria.set(termination_func)
 
@@ -185,7 +192,8 @@ if __name__ == "__main__":
     op.number_of_orientations = 10
     op.mutation_rate = 0.05
     op.use_symmetry = True
-    op.max_generations = 1000
+    op.max_generations = 10
     op.use_multiprocessing = True
-    print run_main( op )
+
+    print run_optimization( op )
 

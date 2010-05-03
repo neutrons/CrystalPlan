@@ -212,8 +212,6 @@ class FrameMain(wx.Frame):
 
 
     def OnMenuOptimizePositions(self, event):
-        print "Optimizing"
-
         frm = frame_optimizer.FrameOptimizer(parent=self)
         frm.Show()
         event.Skip()
