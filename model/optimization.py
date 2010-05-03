@@ -139,18 +139,21 @@ def run_optimization(optim_params, step_callback=None):
     genome.evaluator.set(eval_func)
 
     # Genetic Algorithm Instance
-
     ga = GSimpleGA.GSimpleGA(genome)
-    ga.setMutationRate(op.mutation_rate)
-    ga.setMultiProcessing(True, full_copy=False)
-    ga.setPopulationSize(op.population)
-    ga.stepCallback.set(step_callback)
 
-    # Set the Roulette Wheel selector method, the number of generations and
-    # the termination criteria
-    ga.selector.set(Selectors.GRouletteWheel)
+    #Set the GA parameters from the configuration variable
+    ga.setMutationRate(op.mutation_rate)
+    ga.setMultiProcessing(op.use_multiprocessing, full_copy=False)
+    ga.setPopulationSize(op.population)
     ga.setGenerations(op.max_generations)
+
+    #This is the function that can abort the progress.
+    ga.stepCallback.set(step_callback)
+    #And this is the termination function
     ga.terminationCriteria.set(termination_func)
+
+    # Set the Roulette Wheel selector method
+    ga.selector.set(Selectors.GRouletteWheel)
 
     # Sets the DB Adapter, the resetDB flag will make the Adapter recreate
     # the database and erase all data every run, you should use this flag

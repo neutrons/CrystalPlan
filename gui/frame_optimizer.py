@@ -1,7 +1,7 @@
 #Boa:Frame:FrameOptimizer
 
 import wx
-import thread
+import time
 import threading
 
 import display_thread
@@ -52,6 +52,7 @@ class OptimizerController():
         self.best_chromosome = []
         self.currentGeneration = 0
         self.run_thread = None
+        self.start_time = 0
 
     #--------------------------------------------------------------------
     def update(self):
@@ -84,6 +85,7 @@ class OptimizerController():
     def start(self, event, *args):
         """Start the optimization."""
         self._want_abort = False
+        self.start_time = time.time()
         #Start the thread
 #        model.optimization.run_optimization(self.frame.params, self.step_callback)
 #        self.run_thread = thread.start_new_thread(model.optimization.run_optimization, (self.params, self.step_callback))
@@ -141,6 +143,10 @@ class OptimizerController():
             #Try again with 1 more orientation
             self.params.number_of_orientations += 1
             wx.CallAfter(self.start, None)
+        else:
+            #Done!
+            print "Optimization finished in %.3f seconds." % (time.time() - self.start_time)
+
 
 
     #--------------------------------------------------------------------

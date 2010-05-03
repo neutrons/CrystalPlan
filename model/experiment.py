@@ -1659,6 +1659,7 @@ class TestExperiment(unittest.TestCase):
         instrument.inst.goniometer = goniometer.Goniometer()
         self.exp = Experiment(instrument.inst)
         e = self.exp
+        e.inst.d_min = 0.5
         e.crystal.lattice_lengths = (1.0, 1.0, 1.0)
         e.crystal.lattice_angles_deg = (90.0, 90.0, 90.0)
         #UB and reciprocal
@@ -1700,19 +1701,19 @@ class TestExperiment(unittest.TestCase):
         e.range_k = (-10,10)
         e.range_l = (-10,10)
         e.initialize_reflections()
-        assert len(e.reflections) == 7, "Correct # of reflections"
+        assert len(e.reflections) == 27, "Correct # of reflections. We got %d" % len(e.reflections)
         assert np.all(e.reflections_q_norm <= e.inst.qlim), "No reflection is past qlim"
         e.range_automatic = True
         e.range_limit_to_sphere = False
         e.initialize_reflections()
-        assert len(e.reflections) == 27, "Correct # of reflections, automatic mode, not limited to sphere"
+        assert len(e.reflections) == 125, "Correct # of reflections (we got %d), automatic mode, not limited to sphere" % len(e.reflections)
         e.range_h = (-10,10)
         e.range_k = (-10,10)
         e.range_l = (-10,10)
         e.range_automatic = False
         e.range_limit_to_sphere = True
         e.initialize_reflections()
-        assert len(e.reflections) == 7, "Correct # of reflections, limited to sphere"
+        assert len(e.reflections) == 27, "Correct # of reflections (we got %d), limited to sphere" % len(e.reflections)
 
 
     def test_get_reflection(self):
@@ -1950,11 +1951,11 @@ class TestExperiment(unittest.TestCase):
         e.find_primary_reflections()
 
 if __name__ == "__main__":
-#    unittest.main()
+    unittest.main()
     
-    tst = TestExperiment('test_recalculate_reflections')
-    tst.setUp()
-    tst.test_recalculate_reflections()
+#    tst = TestExperiment('test_recalculate_reflections')
+#    tst.setUp()
+#    tst.test_recalculate_reflections()
 
     
 #    import instrument
