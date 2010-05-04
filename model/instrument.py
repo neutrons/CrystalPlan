@@ -145,7 +145,7 @@ class Instrument:
     d_max = 5
 
     #Resolution of the coverage map of q-space, in Angstroms^-1
-    q_resolution = 0.1
+    q_resolution = 0.2
     
     #The extents of defined q-space are -qlim to +qlim in the 3 axes, will be calculated from d_min
     @property
@@ -424,6 +424,8 @@ class Instrument:
         (qx, qy, qz) = np.ogrid[-lims:lims, -lims:lims, -lims:lims]
         #So we do the radius calculation in units of "self.q_resolution"
         self.qspace_radius = np.sqrt( qx**2 + qy**2 + qz**2 ) * self.q_resolution
+
+        print "qspace has %d points" % self.qspace_radius.size
 
 
     #-------------------------------------------------------------------------------

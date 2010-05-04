@@ -4,6 +4,10 @@ import wx
 import time
 import threading
 
+import matplotlib
+matplotlib.interactive( True )
+matplotlib.use( 'WXAgg' )
+
 import display_thread
 
 #--- Model Imports ----
@@ -17,6 +21,105 @@ if __name__=="__main__":
     sys.path.insert(0, "..")
     
 
+#================================================================================================
+#================================================================================================
+class PlotPanel (wx.Panel):
+    """The PlotPanel has a Figure and a Canvas. OnSize events simply set a
+flag, and the actual resizing of the figure is triggered by an Idle event."""
+    def __init__( self, parent, color=None, dpi=None, **kwargs ):
+        from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg
+        from matplotlib.figure import Figure
+
+        # initialize Panel
+        if 'id' not in kwargs.keys():
+            kwargs['id'] = wx.ID_ANY
+        if 'style' not in kwargs.keys():
+            kwargs['style'] = wx.NO_FULL_REPAINT_ON_RESIZE
+        wx.Panel.__init__( self, parent, **kwargs )
+
+        # initialize matplotlib stuff
+        self.figure = Figure( None, dpi )
+        self.canvas = FigureCanvasWxAgg( self, -1, self.figure )
+        self.SetColor( color )
+
+        self._resizeflag = False
+
+        self.Bind(wx.EVT_IDLE, self._onIdle)
+        self.Bind(wx.EVT_SIZE, self._onSize)
+
+    def SetColor( self, rgbtuple=None ):
+        """Set figure and canvas colours to be the same."""
+        if rgbtuple is None:
+            rgbtuple = wx.SystemSettings.GetColour( wx.SYS_COLOUR_BTNFACE ).Get()
+        clr = [c/255. for c in rgbtuple]
+        self.figure.set_facecolor( clr )
+        self.figure.set_edgecolor( clr )
+        self.canvas.SetBackgroundColour( wx.Colour( *rgbtuple ) )
+
+    def _onSize( self, event ):
+        self._resizeflag = True
+
+    def _onIdle( self, evt ):
+        if self._resizeflag:
+            self._resizeflag = False
+            self.canvas.SetSize( self.GetSize() )
+
+    def draw(self, *args, **kwargs):
+        pass # abstract, to be overridden by child classes
+        if not hasattr( self, 'subplot' ):
+            self.subplot = self.figure.add_subplot( 111 )
+        clr = [0.5, 0.5, 0.5]
+        self.subplot.plot( [1,2,3,4], [-5,12,3,45], color=clr )
+
+
+#================================================================================================
+class PlotPanelGAStats(PlotPanel):
+    """Panel that draws the GA generational stats."""
+    def __init__( self, *args, **kwargs ):
+        PlotPanel.__init__(self, *args, **kwargs)
+
+    def draw(self, generations):
+        """Make a plot of the raw score with error bars."""
+        if not hasattr( self, 'subplot' ):
+            self.subplot = self.figure.add_subplot( 111 )
+            
+        x = []
+        y = []
+        yerr_max = []
+        yerr_min = []
+
+        #@type it GAStats
+        for it in generations:
+            x.append(it.generation)
+            y.append(it.average)
+            ymax = it.best - it.average
+            ymin = it.average - it.worst
+
+            yerr_max.append(ymax)
+            yerr_min.append(ymin)
+
+        self.subplot.clear()
+        if len(x)>0:
+            self.subplot.errorbar(x, y, [yerr_min, yerr_max], ecolor="g")
+        self.subplot.grid(True)
+        self.subplot.set_xlabel('Generation (#)')
+        self.subplot.set_ylabel('Coverage Score Min/Avg/Max')
+        self.subplot.set_title("Evolution of coverage")
+        #Signal refresh?
+        self._resizeflag = True
+
+
+#================================================================================================
+class GAData():
+    """Simple class holding data about each GA generation."""
+    def __init__(self, generation, best, average, worst):
+        self.generation = generation
+        self.best = best
+        self.average = average
+        self.worst = worst
+
+
+#================================================================================================
 #================================================================================================
 class OptimizationThread(threading.Thread):
     """Thread to run the GA optimization."""
@@ -54,6 +157,7 @@ class OptimizerController():
         self.run_thread = None
         self.start_time = 0
         self.last_population = None
+        self.generations = []
 
     #--------------------------------------------------------------------
     def update(self):
@@ -73,7 +177,7 @@ class OptimizerController():
         frm.staticTextGeneration.SetLabel("Generation %5d of %5d:" % (self.currentGeneration, maxgen))
         #The individual
         if not self.best is None:
-            frm.textStatus.SetValue(str(self.best))
+            frm.textStatus.SetValue("Best individual has %7.3f coverage:\n%s" % (self.best.coverage, str(self.best.genomeList)))
             frm.buttonApply.Enable(True)
         else:
             frm.textStatus.SetValue("No best individual")
@@ -89,6 +193,7 @@ class OptimizerController():
         """Start the optimization."""
         self._want_abort = False
         self.start_time = time.time()
+        self.init_data()
         #Start the thread
         self.params.use_old_population = False
         self.run_thread = OptimizationThread(self)
@@ -101,11 +206,26 @@ class OptimizerController():
         if not event is None: event.Skip()
 
     #--------------------------------------------------------------------
-    def close_form(self, event, *args):
-        """Call when the form is closing. Aborth the thread if it is running."""
-        self._want_abort = True
-        #Marker to avoid trying to change GUI
-        self.frame = None
+    def keep_going(self, event):
+        """Continue optimization, using the last saved population."""
+        if self.last_population is None:
+            wx.MessageDialog("Error! No saved population. You need to start the optimization at least once.").ShowModal()
+            return
+
+        self._want_abort = False
+        self.start_time = time.time()
+        self.init_data()
+        #Start the thread
+        self.params.use_old_population = True
+        self.params.add_trait("old_population", self.last_population)
+        self.run_thread = OptimizationThread(self)
+
+        #Set the buttons right away.
+        frm = self.frame #@type frm FrameOptimizer
+        frm.buttonStart.Enable((self.run_thread is None))
+        frm.buttonStop.Enable(not (self.run_thread is None))
+
+        self.frame.staticTextComplete.SetLabel("Optimization started...")
         if not event is None: event.Skip()
 
     #--------------------------------------------------------------------
@@ -114,6 +234,34 @@ class OptimizerController():
         self._want_abort = True
         #Will have to wait for the next generation to stop
         if not event is None: event.Skip()
+        
+    #--------------------------------------------------------------------
+    def close_form(self, event, *args):
+        """Call when the form is closing. Aborth the thread if it is running."""
+        self._want_abort = True
+        #Marker to avoid trying to change GUI
+        self.frame = None
+        if not event is None: event.Skip()
+
+
+
+
+    #--------------------------------------------------------------------
+    def init_data(self):
+        """Initialize and clear the GA data log."""
+        self.generations = []
+
+    #--------------------------------------------------------------------
+    def add_data(self, ga):
+        """Add one entry to the GA data log."""
+        stats = ga.getStatistics()
+        self.generations.append( GAData(ga.currentGeneration, stats["rawMax"], stats["rawAve"], stats["rawMin"]) )
+
+    #--------------------------------------------------------------------
+    def plot_data(self):
+        """Plot whatever the data currently is"""
+        self.frame.plotControl.draw(self.generations)
+
 
     #--------------------------------------------------------------------
     def complete(self, ga, aborted, converged):
@@ -146,56 +294,6 @@ class OptimizerController():
             #Done!
             print "Optimization finished in %.3f seconds." % (time.time() - self.start_time)
 
-
-
-    #--------------------------------------------------------------------
-    def apply(self, event, *args):
-        """Apply the best results."""
-        #TODO: Confirmation message box?
-        
-        #Get the angles of the best one
-        positions = model.optimization.get_angles(self.best)
-        print "Applying best individual", self.best
-        
-        #This deletes everything in the list in the instrument
-        del model.instrument.inst.positions[:]
-        #Make sure to clear the parameters too, by giving it an empty dict() object.
-        display_thread.clear_positions_selected()
-        
-        #Now add the new results
-        out_positions = []
-        for pos_cov_empty in positions:
-            #Do the calculation
-            poscov = model.instrument.inst.simulate_position(pos_cov_empty.angles, sample_U_matrix=pos_cov_empty.sample_U_matrix, use_multiprocessing=False, quick_calc=False)
-            out_positions.append(poscov)
-
-        #Add it to the list of selected items
-        display_thread.select_position_coverage(out_positions, update_gui=True)
-        if not event is None: event.Skip()
-
-    #--------------------------------------------------------------------
-    def keep_going(self, event):
-        """Continue optimization, using the last saved population."""
-        if self.last_population is None:
-            wx.MessageDialog("Error! No saved population. You need to start the optimization at least once.").ShowModal()
-            return
-
-        self._want_abort = False
-        self.start_time = time.time()
-        #Start the thread
-        self.params.use_old_population = True
-        self.params.add_trait("old_population", self.last_population)
-        self.run_thread = OptimizationThread(self)
-        
-        #Set the buttons right away.
-        frm = self.frame #@type frm FrameOptimizer
-        frm.buttonStart.Enable((self.run_thread is None))
-        frm.buttonStop.Enable(not (self.run_thread is None))
-
-        self.frame.staticTextComplete.SetLabel("Optimization started...")
-        if not event is None: event.Skip()
-
-        if not event is None: event.Skip()
         
     #--------------------------------------------------------------------
     def step_callback(self, ga, *args):
@@ -212,9 +310,12 @@ class OptimizerController():
         self.average_coverage = stats["rawAve"]
         #Other stats
         self.currentGeneration = ga.currentGeneration
+        #Log the stats too
+        self.add_data(ga)
+
         
         #Adjust settings while going on
-        ga.setGenerations(op.max_generations)
+        if op.max_generations > 0: ga.setGenerations(op.max_generations)
         ga.setMutationRate(op.mutation_rate)
         ga.setPreMutationRate(op.pre_mutation_rate)
         ga.setCrossoverRate(op.crossover_rate)
@@ -224,14 +325,44 @@ class OptimizerController():
         
         if self.currentGeneration >= self.params.max_generations:
             print "Optimization complete!"
+
         #Update gui
+        wx.CallAfter(self.frame.plotControl.draw, self.generations)
         wx.CallAfter(self.update)
         return self._want_abort
 
-    
 
 
 
+
+
+    #--------------------------------------------------------------------
+    def apply(self, event, *args):
+        """Apply the best results."""
+        #TODO: Confirmation message box?
+
+        #Get the angles of the best one
+        positions = model.optimization.get_angles(self.best)
+        print "Applying best individual", self.best
+
+        #This deletes everything in the list in the instrument
+        del model.instrument.inst.positions[:]
+        #Make sure to clear the parameters too, by giving it an empty dict() object.
+        display_thread.clear_positions_selected()
+
+        #Now add the new results
+        out_positions = []
+        for pos_cov_empty in positions:
+            if not pos_cov_empty is None:
+                #Do the calculation
+                poscov = model.instrument.inst.simulate_position(pos_cov_empty.angles, sample_U_matrix=pos_cov_empty.sample_U_matrix, use_multiprocessing=False, quick_calc=False)
+                out_positions.append(poscov)
+
+        #Add it to the list of selected items
+        display_thread.select_position_coverage(out_positions, update_gui=True)
+        if not event is None: event.Skip()
+
+        
 
 
 
@@ -264,6 +395,8 @@ class FrameOptimizer(wx.Frame):
         parent.AddWindow(self.staticText1, 0, border=0, flag=0)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(self.staticLine1, 0, border=0, flag=wx.EXPAND)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.staticTextHelp, 0, border=0, flag=wx.EXPAND)
 
     def _init_coll_boxSizerStatus_Items(self, parent):
         # generated method, don't edit
@@ -272,6 +405,8 @@ class FrameOptimizer(wx.Frame):
         parent.AddWindow(self.staticTextResults, 0, border=4, flag=wx.LEFT)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(self.textStatus, 1, border=10, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.plotControl, 3, border=10, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.SHRINK)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(self.staticTextGeneration, 0, border=4, flag=wx.LEFT)
         parent.AddWindow(self.gaugeGeneration, 0, border=10, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
@@ -345,18 +480,24 @@ class FrameOptimizer(wx.Frame):
         self.panelParams = wx.Panel(id=wxID_FRAMEOPTIMIZERPANELPARAMS,
               name=u'panelParams', parent=self.splitterMain, pos=wx.Point(0, 0),
               size=wx.Size(10, 575), style=wx.TAB_TRAVERSAL)
-        self.panelParams.SetBackgroundColour(wx.Colour(246, 246, 245))
+        self.panelParams.SetBackgroundColour(wx.Colour(246, 246, 235))
 
         self.panelStatus = wx.Panel(id=wxID_FRAMEOPTIMIZERPANELSTATUS,
               name=u'panelStatus', parent=self.splitterMain, pos=wx.Point(18,
               0), size=wx.Size(681, 575), style=wx.TAB_TRAVERSAL)
-        self.panelStatus.SetBackgroundColour(wx.Colour(200, 246, 245))
+        self.panelStatus.SetBackgroundColour(wx.Colour(235, 246, 245))
         self.splitterMain.SplitVertically(self.panelParams, self.panelStatus)
 
         self.staticText1 = wx.StaticText(id=wxID_FRAMEOPTIMIZERSTATICTEXT1,
               label=u'Optimization Parameters:', name='staticText1',
               parent=self.panelParams, pos=wx.Point(0, 8), style=0)
         self.staticText1.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD, False, u'Sans'))
+
+        self.staticTextHelp = wx.StaticText(id=wx.NewId(), name='staticText1',
+              label=u"""The GA attempts to maximize the percentage of measured reflections. Enter the goals and GA parameters above.
+DO NOT modify settings (such as goniometer choice, sample parameters, etc.) while optimization is running, as that will cause problems!!!
+Click Apply Results while optimizing to see the current best solution.""",
+              parent=self.panelParams, pos=wx.Point(0, 8), style=0)
 
         self.staticLine1 = wx.StaticLine(id=wxID_FRAMEOPTIMIZERSTATICLINE1,
               name='staticLine1', parent=self.panelParams, pos=wx.Point(0, 33),
@@ -404,25 +545,30 @@ class FrameOptimizer(wx.Frame):
               name=u'buttonKeepGoing', parent=self.panelStatus,
               pos=wx.Point(380, 513), size=wx.Size(152, 29), style=0)
         self.buttonKeepGoing.Bind(wx.EVT_BUTTON, self.controller.keep_going)
-        self.buttonKeepGoing.SetToolTipString("Keep optimizing using the last saved population as the starting point.")
+        self.buttonKeepGoing.SetToolTipString("Keep optimizing using ~ the last saved population as the starting point.")
 
         self.buttonStart = wx.Button(id=wxID_FRAMEOPTIMIZERBUTTONSTART,
               label=u'Start Optimization', name=u'buttonStart',
               parent=self.panelStatus, pos=wx.Point(93, 513), size=wx.Size(152,
               29), style=0)
-        self.buttonStart.SetToolTipString(u'Begin the optimization process in the background')
+        self.buttonStart.SetToolTipString(u'Begin the optimization process in a background thread.')
         self.buttonStart.Bind(wx.EVT_BUTTON, self.controller.start)
 
         self.buttonStop = wx.Button(id=wxID_FRAMEOPTIMIZERBUTTONSTOP,
               label=u'Stop!', name=u'buttonStop', parent=self.panelStatus,
               pos=wx.Point(126, 546), size=wx.Size(85, 29), style=0)
+        self.buttonStop.SetToolTipString("Abort the Genetic Algorithm search.")
         self.buttonStop.Bind(wx.EVT_BUTTON, self.controller.stop)
 
         self.buttonApply = wx.Button(id=wxID_FRAMEOPTIMIZERBUTTONAPPLY,
-              label=u'Apply Results...', name=u'buttonApply',
+              label=u'Apply Results', name=u'buttonApply',
               parent=self.panelStatus, pos=wx.Point(441, 546), size=wx.Size(142,
               29), style=0)
+        self.buttonApply.SetToolTipString("Set the experiment plan to be the best solution found by the genetic algorithm.")
         self.buttonApply.Bind(wx.EVT_BUTTON, self.controller.apply)
+
+        #--- Plot ---
+        self.plotControl = PlotPanelGAStats(self.panelStatus)
 
         self._init_sizers()
 
@@ -434,11 +580,14 @@ class FrameOptimizer(wx.Frame):
 
         #Initial update.
         self.controller.update()
+        #Clear axes
+        self.controller.plot_data()
 
         #--- Parameters ----
         self.params_control = self.controller.params.edit_traits(parent=self.panelParams,kind='subpanel').control
         self.boxSizerParams.Insert(2, self.params_control, 0, border=1, flag=wx.EXPAND)
         self.boxSizerParams.Layout()
+
 
 
 

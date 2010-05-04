@@ -15,7 +15,6 @@ import experiment
 import goniometer
 
 import pyevolve
-print "pyevolve is version", pyevolve.__version__
 from pyevolve import G1DList
 from pyevolve import Consts
 from pyevolve import GSimpleGA
@@ -470,7 +469,7 @@ def run_optimization(optim_params, step_callback=None):
         ga.setDBAdapter(sqlite_adapter)
 
     # Do the evolution, with stats dump freq
-    freq_stats = 1
+    freq_stats = 0
     if __name__ == "__main__": freq_stats = 1
     (best, aborted, converged) = ga.evolve(freq_stats=freq_stats)
 
