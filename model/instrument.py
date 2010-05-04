@@ -356,7 +356,7 @@ class Instrument:
             for i in range(num_angles):
                 angles[i] = angles_lists[i][indices[i]]
             #Check it!
-            (allowed, reason) = self.goniometer.are_angles_allowed(angles)
+            (allowed, reason) = self.goniometer.are_angles_allowed(angles, return_reason=True)
             if ignore_gonio or allowed:
                 #Yes, it is possible
                 valid.append( angles )

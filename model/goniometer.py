@@ -96,15 +96,15 @@ class AngleInfo:
     #Range to use, in friendly units; for sliders and such.
     friendly_range = [-180, 180]
     #Randomization range: when generating an angle at random (in a genetic algorithm, for example,
-    # us this range.
-    random_range = [-180, 180]
+    # us this range. In internal units
+    random_range = [-np.pi, np.pi]
 
     #Units required by the DAS group to be used in the output CSV file
     das_units = "deg"
     #Conversion factor from internal units to DAS units (multiply the internal by THIS to get DAS units)
     das_conversion = np.deg2rad(1)
 
-    def __init__(self, name, type="angle", units="rad", friendly_units="deg", conversion=np.deg2rad(1), friendly_range=[-180, 180], random_range=[-180, 180]):
+    def __init__(self, name, type="angle", units="rad", friendly_units="deg", conversion=np.deg2rad(1), friendly_range=[-180, 180], random_range=[-np.pi, np.pi]):
         """Constructor."""
         self.name = name
         self.type = type
@@ -113,6 +113,7 @@ class AngleInfo:
         if conversion != 0:
             self.conversion = conversion
         self.friendly_range = friendly_range
+        self.random_range = random_range
 
     def friendly_to_internal(self, value):
         """Convert a friendly unit angle value to an internal value."""
@@ -136,6 +137,10 @@ class AngleInfo:
         s = "%.1f" % self.internal_to_friendly(value)
         if add_unit: s += " " + self.friendly_units
         return s
+
+    def get_random(self):
+        """Return a random angle within the specified range of this angle."""
+        return np.random.uniform(self.random_range[0], self.random_range[1], 1)[0]
 
     def __str__(self):
         return "%s, %s, ranges from %.1f to %.1f %s" % (self.name, self.type, self.friendly_range[0], self.friendly_range[1], self.friendly_units)
@@ -162,19 +167,23 @@ class Goniometer:
         self.angles = [AngleInfo('Phi'), AngleInfo('Chi'), AngleInfo('Omega')]
 
     #-------------------------------------------------------------------------
-    def are_angles_allowed(self, angles):
+    def are_angles_allowed(self, angles, return_reason=False):
         """Calculate whether the given angles can be reached with the goniometer.
         Will be overridden by subclasses as needed.
 
         Parameters:
             angles: list of angles of the goniometer (typically phi, chi, omega).
+            return_reason: do you want to return the reason (as string)?
 
         Returns:
             allowed: True if the angle provided can be reached.
             reason: string describing the reason they cannot be reached. Empty if the angles are allowed.
         """
         #The base goniometer can reach all angles.
-        return (True, "")
+        if return_reason:
+            return (True, "")
+        else:
+            return True
 
     #-------------------------------------------------------------------------
     def get_angles(self):
@@ -354,7 +363,7 @@ class Goniometer:
             count_for, count_value: stopping criterion
         """
         #Calculate if its allowed
-        (allowed, reason) = self.are_angles_allowed(angle_values)
+        (allowed, reason) = self.are_angles_allowed(angle_values, return_reason=True)
         #Convert from internal to DAS units.
         das_angles = [self.angles[i].internal_to_das(angle_values[i]) for i in xrange(len(self.angles))]
         if not allowed:
@@ -941,19 +950,23 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         #Make the arrays with the XY limits of leg movement
         self.calculate_leg_xy_limits(visualize=False)
         #Make the angle info object
-        self.angles = [AngleInfo('Phi'), AngleInfo('Chi'), AngleInfo('Omega')]
+        self.angles = [AngleInfo('Phi'),
+                    AngleInfo('Chi', random_range=[np.deg2rad(-12), np.deg2rad(+12)]),
+                    AngleInfo('Omega', random_range=[np.deg2rad(-12), np.deg2rad(+12)])]
 
 
 
     #===============================================================================================
-    def are_angles_allowed(self, angles):
+    def are_angles_allowed(self, angles, return_reason=False):
         """Calculate whether the given angles can be reached with the goniometer.
 
         Parameters:
             angles: list of angles of the goniometer (phi, chi, omega), in radians.
+            return_reason: return the reason string?
 
         Returns:
             True if the angle provided can be reached.
+            optionally: reason, a string.
         """
         if len(angles) != 3:
             raise ValueError("In-house goniometer expects 3 angles (phi, chi, omega).")
@@ -976,7 +989,11 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         reason = ""
         if not allowed:
             reason = "Limit to leg positions"
-        return (allowed, reason)
+        if return_reason:
+            return (allowed, reason)
+        else:
+            return allowed
+
 
 
     #===============================================================================================
@@ -1530,7 +1547,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         angle_comment = '#"Equivalent goniometer angles (phi, chi, omega) are: ' + string.join(["%.3f" % np.rad2deg(x) for x in angles], ", ") + ' degrees."\n'
         fileobj.write(angle_comment)
         #Calculate if its allowed
-        (allowed, reason) = self.are_angles_allowed(angles)
+        (allowed, reason) = self.are_angles_allowed(angles, return_reason=True)
         #Get coordinates
         legs = self.get_leg_coordinates()
         if not allowed:

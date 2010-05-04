@@ -863,31 +863,32 @@ class Experiment:
 
         #Ok, go through the positions.
         for poscov in positions_used:
-            poscov_id = id(poscov)
+            if not poscov is None:
+                poscov_id = id(poscov)
 
-            #Report progress
-            if self.verbose: print "Calculating hkl reflections for angles at ", poscov.angles
-            if not calculation_callback is None:
-                if callable(calculation_callback):
-                    calculation_callback(poscov)
+                #Report progress
+                if self.verbose: print "Calculating hkl reflections for angles at ", poscov.angles
+                if not calculation_callback is None:
+                    if callable(calculation_callback):
+                        calculation_callback(poscov)
 
-            #This is the sample orientation rotation matrix
-            rot_matrix = self.inst.goniometer.make_sample_rot_matrix(poscov.angles)
-            #This UB matrix comes from the crystal data
-            ub_matrix = self.crystal.ub_matrix
-            #Calculate the scattered beam direction and inverse wavelength.
-            beam = crystal_calc.get_scattered_beam( self.reflections_hkl, rot_matrix, ub_matrix)
+                #This is the sample orientation rotation matrix
+                rot_matrix = self.inst.goniometer.make_sample_rot_matrix(poscov.angles)
+                #This UB matrix comes from the crystal data
+                ub_matrix = self.crystal.ub_matrix
+                #Calculate the scattered beam direction and inverse wavelength.
+                beam = crystal_calc.get_scattered_beam( self.reflections_hkl, rot_matrix, ub_matrix)
 
-            for (detector_num, det) in enumerate(self.inst.detectors):
-                #Do the parameters say to use this detector?
-                if det_bool[detector_num]:
-                    #Compute the scattered beam position in the coordinates of the detector.
-                    (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam, self.inst.wl_min, self.inst.wl_max)
-                    #These are only the ones that did hit the detector
-                    indices = np.nonzero(hits_it)[0]
-                    for i in indices:
-                        #print self.reflections_hkl[:, i], "hit the detector", detector_num
-                        refls[i].add_measurement(poscov_id, detector_num, h[i], v[i], wl[i], distance[i])
+                for (detector_num, det) in enumerate(self.inst.detectors):
+                    #Do the parameters say to use this detector?
+                    if det_bool[detector_num]:
+                        #Compute the scattered beam position in the coordinates of the detector.
+                        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam, self.inst.wl_min, self.inst.wl_max)
+                        #These are only the ones that did hit the detector
+                        indices = np.nonzero(hits_it)[0]
+                        for i in indices:
+                            #print self.reflections_hkl[:, i], "hit the detector", detector_num
+                            refls[i].add_measurement(poscov_id, detector_num, h[i], v[i], wl[i], distance[i])
                     
         #We make the array of how many times measured, for all the positions
         self.get_reflections_times_measured(None)

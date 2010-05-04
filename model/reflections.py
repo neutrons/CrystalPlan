@@ -76,6 +76,14 @@ class Reflection():
         return 1 / (vector_length(self.q_vector) / (2*np.pi))
 
     #----------------------------------------------------
+    def get_all_measurements(self):
+        """Returns all measurements, including those from equivalent reflections."""
+        out = self.measurements
+        for refl in self.equivalent:
+            out += refl.measurements
+        return out
+
+    #----------------------------------------------------
     def add_measurement(self, poscov_id, detector_num, horizontal, vertical, wavelength, distance):
         """Saves a measurement to the list.
 

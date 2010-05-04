@@ -121,6 +121,7 @@ class GPopulation:
       """ The GPopulation Class creator """
 
       if isinstance(genome, GPopulation):
+          #Cloning a population?
          self.oneSelfGenome  = genome.oneSelfGenome
          self.internalPop    = []
          self.internalPopRaw = []
@@ -177,8 +178,8 @@ class GPopulation:
 
       """
       self.multiProcessing = (flag, full_copy)
-      if flag:
-          print "Multiprocessing enabled; will use %d processors." % CPU_COUNT
+#      if flag:
+#          print "Multiprocessing enabled; will use %d processors." % CPU_COUNT
    
    def setMinimax(self, minimax):
       """ Sets the population minimax

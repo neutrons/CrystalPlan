@@ -27,9 +27,9 @@ class OptimizationThread(threading.Thread):
 
     def run(self):
         #Just run the optimization
-        (best, aborted, converged) = model.optimization.run_optimization(self.controller.params, self.controller.step_callback)
+        (ga, aborted, converged) = model.optimization.run_optimization(self.controller.params, self.controller.step_callback)
         #Call the completion function.
-        self.controller.complete( aborted, converged )
+        self.controller.complete( ga, aborted, converged )
             
 
 #================================================================================================
@@ -47,12 +47,13 @@ class OptimizerController():
         self.frame = frame
         self.params = OptimizationParameters()
         self.best = None
-        self.best_score = 0
-        self.average_score = 0
+        self.best_coverage = 0
+        self.average_coverage = 0
         self.best_chromosome = []
         self.currentGeneration = 0
         self.run_thread = None
         self.start_time = 0
+        self.last_population = None
 
     #--------------------------------------------------------------------
     def update(self):
@@ -61,10 +62,10 @@ class OptimizerController():
         if frm is None:
             return
         #Coverage stats
-        frm.staticTextCoverage.SetLabel("Best Coverage: %7.2f %%" % (self.best_score*100))
-        frm.gaugeCoverage.SetValue(self.best_score*100)
-        frm.staticTextAverage.SetLabel("Average Coverage: %7.2f %%" % (self.average_score*100))
-        frm.gaugeAverage.SetValue(self.average_score*100)
+        frm.staticTextCoverage.SetLabel("Best Coverage: %7.2f %%" % (self.best_coverage*100))
+        frm.gaugeCoverage.SetValue(self.best_coverage*100)
+        frm.staticTextAverage.SetLabel("Average Coverage: %7.2f %%" % (self.average_coverage*100))
+        frm.gaugeAverage.SetValue(self.average_coverage*100)
         #The generation counter
         maxgen = self.params.max_generations
         frm.gaugeGeneration.SetRange(maxgen)
@@ -80,6 +81,8 @@ class OptimizerController():
         #The start/stop buttons enabling
         frm.buttonStart.Enable((self.run_thread is None))
         frm.buttonStop.Enable(not (self.run_thread is None))
+        #The keep going button
+        frm.buttonKeepGoing.Enable( not (self.last_population is None) and (self.run_thread is None) )
 
     #--------------------------------------------------------------------
     def start(self, event, *args):
@@ -87,8 +90,7 @@ class OptimizerController():
         self._want_abort = False
         self.start_time = time.time()
         #Start the thread
-#        model.optimization.run_optimization(self.frame.params, self.step_callback)
-#        self.run_thread = thread.start_new_thread(model.optimization.run_optimization, (self.params, self.step_callback))
+        self.params.use_old_population = False
         self.run_thread = OptimizationThread(self)
         #Set the buttons right away.
         frm = self.frame #@type frm FrameOptimizer
@@ -114,17 +116,11 @@ class OptimizerController():
         if not event is None: event.Skip()
 
     #--------------------------------------------------------------------
-    def try_again(self, event, *args):
-        """Re-start the optimization with more detectors."""
-        self._want_abort = True
-        #TODO: Wait for it to stop.
-        if not event is None: event.Skip()
-
-    #--------------------------------------------------------------------
-    def complete(self,  aborted, converged):
+    def complete(self, ga, aborted, converged):
         """Called when the optimization completes.
         
         Parameters:
+            ga: the GSimpleGA instance
             aborted: True if the optimization was aborted manually
             converged: True if the criterion was reached.
         """
@@ -139,10 +135,13 @@ class OptimizerController():
         wx.CallAfter(self.frame.staticTextComplete.SetLabel, label)
         wx.CallAfter(self.update)
 
+        #Save the population
+        self.last_population = ga.getPopulation()
+
         if self.params.auto_increment and not aborted and not converged:
             #Try again with 1 more orientation
             self.params.number_of_orientations += 1
-            wx.CallAfter(self.start, None)
+            wx.CallAfter(self.keep_going, None)
         else:
             #Done!
             print "Optimization finished in %.3f seconds." % (time.time() - self.start_time)
@@ -156,6 +155,7 @@ class OptimizerController():
         
         #Get the angles of the best one
         positions = model.optimization.get_angles(self.best)
+        print "Applying best individual", self.best
         
         #This deletes everything in the list in the instrument
         del model.instrument.inst.positions[:]
@@ -172,19 +172,55 @@ class OptimizerController():
         #Add it to the list of selected items
         display_thread.select_position_coverage(out_positions, update_gui=True)
         if not event is None: event.Skip()
+
+    #--------------------------------------------------------------------
+    def keep_going(self, event):
+        """Continue optimization, using the last saved population."""
+        if self.last_population is None:
+            wx.MessageDialog("Error! No saved population. You need to start the optimization at least once.").ShowModal()
+            return
+
+        self._want_abort = False
+        self.start_time = time.time()
+        #Start the thread
+        self.params.use_old_population = True
+        self.params.add_trait("old_population", self.last_population)
+        self.run_thread = OptimizationThread(self)
+        
+        #Set the buttons right away.
+        frm = self.frame #@type frm FrameOptimizer
+        frm.buttonStart.Enable((self.run_thread is None))
+        frm.buttonStop.Enable(not (self.run_thread is None))
+
+        self.frame.staticTextComplete.SetLabel("Optimization started...")
+        if not event is None: event.Skip()
+
+        if not event is None: event.Skip()
         
     #--------------------------------------------------------------------
-    def step_callback(self, ga_engine, *args):
+    def step_callback(self, ga, *args):
         """Callback during evolution; used to abort it and to display
         stats."""
+        #@type ga GSimpleGA
+        op = self.params #@type op OptimizationParameters
+        
         #Find the best individual
-        self.best = ga_engine.bestIndividual()
-        self.best_score = self.best.score
+        self.best = ga.bestIndividual()
+        self.best_coverage = self.best.coverage
         #More stats
-        stats = ga_engine.getStatistics()
-        self.average_score = stats["rawAve"]
+        stats = ga.getStatistics()
+        self.average_coverage = stats["rawAve"]
         #Other stats
-        self.currentGeneration = ga_engine.currentGeneration
+        self.currentGeneration = ga.currentGeneration
+        
+        #Adjust settings while going on
+        ga.setGenerations(op.max_generations)
+        ga.setMutationRate(op.mutation_rate)
+        ga.setPreMutationRate(op.pre_mutation_rate)
+        ga.setCrossoverRate(op.crossover_rate)
+        ga.setElitism(op.elitism)
+        ga.setElitismReplacement(op.elitism_replacement)
+        ga.setMultiProcessing(op.use_multiprocessing, full_copy=True)
         
         if self.currentGeneration >= self.params.max_generations:
             print "Optimization complete!"
@@ -208,7 +244,7 @@ class OptimizerController():
 def create(parent):
     return FrameOptimizer(parent)
 
-[wxID_FRAMEOPTIMIZER, wxID_FRAMEOPTIMIZERBUTTONADDORIENTATION, 
+[wxID_FRAMEOPTIMIZER, wxID_FRAMEOPTIMIZERbuttonKeepGoing,
  wxID_FRAMEOPTIMIZERBUTTONAPPLY, wxID_FRAMEOPTIMIZERBUTTONSTART, 
  wxID_FRAMEOPTIMIZERBUTTONSTOP, wxID_FRAMEOPTIMIZERGAUGECOVERAGE, 
  wxID_FRAMEOPTIMIZERGAUGEGENERATION, wxID_FRAMEOPTIMIZERPANELPARAMS, 
@@ -266,7 +302,7 @@ class FrameOptimizer(wx.Frame):
 
         parent.AddWindow(self.buttonStart, 0, border=0,
               flag=wx.ALIGN_CENTER_HORIZONTAL)
-        parent.AddWindow(self.buttonAddOrientation, 0, border=0,
+        parent.AddWindow(self.buttonKeepGoing, 0, border=0,
               flag=wx.ALIGN_CENTER_HORIZONTAL)
         parent.AddWindow(self.buttonStop, 0, border=0, flag=wx.ALIGN_CENTER)
         parent.AddWindow(self.buttonApply, 0, border=0, flag=wx.ALIGN_CENTER)
@@ -298,6 +334,7 @@ class FrameOptimizer(wx.Frame):
               style=wx.DEFAULT_FRAME_STYLE, title=u'Coverage Automatic Optimizer')
         self.SetClientSize(wx.Size(900, 599))
         self.Bind(wx.EVT_CLOSE, self.controller.close_form)
+        self.SetIcon(prnt.GetIcon())
 
         self.splitterMain = wx.SplitterWindow(id=wxID_FRAMEOPTIMIZERSPLITTERMAIN,
               name=u'splitterMain', parent=self, pos=wx.Point(8, 8),
@@ -362,11 +399,12 @@ class FrameOptimizer(wx.Frame):
               label=u'...', name=u'staticTextComplete',
               parent=self.panelStatus, pos=wx.Point(0, 460), style=0)
 
-        self.buttonAddOrientation = wx.Button(id=wxID_FRAMEOPTIMIZERBUTTONADDORIENTATION,
-              label=u'Add an Orientation and Try Again...',
-              name=u'buttonAddOrientation', parent=self.panelStatus,
-              pos=wx.Point(380, 513), size=wx.Size(264, 29), style=0)
-        self.buttonAddOrientation.Bind(wx.EVT_BUTTON, self.controller.try_again)
+        self.buttonKeepGoing = wx.Button(id=wxID_FRAMEOPTIMIZERbuttonKeepGoing,
+              label=u'Keep Going...',
+              name=u'buttonKeepGoing', parent=self.panelStatus,
+              pos=wx.Point(380, 513), size=wx.Size(152, 29), style=0)
+        self.buttonKeepGoing.Bind(wx.EVT_BUTTON, self.controller.keep_going)
+        self.buttonKeepGoing.SetToolTipString("Keep optimizing using the last saved population as the starting point.")
 
         self.buttonStart = wx.Button(id=wxID_FRAMEOPTIMIZERBUTTONSTART,
               label=u'Start Optimization', name=u'buttonStart',

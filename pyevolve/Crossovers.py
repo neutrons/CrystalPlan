@@ -112,7 +112,7 @@ def G1DListCrossoverSinglePoint(genome, **args):
    gDad = args["dad"]
    
    if len(gMom) == 1:
-      Util.raiseException("The 1D List have one element, can't use the Single Point Crossover method !", TypeError)
+      Util.raiseException("The 1D List has one element, can't use the Single Point Crossover method !", TypeError)
       
    cut = rand_randint(1, len(gMom)-1)
 
@@ -160,7 +160,9 @@ def G1DListCrossoverTwoPoint(genome, **args):
    return (sister, brother)
 
 def G1DListCrossoverUniform(genome, **args):
-   """ The G1DList Uniform Crossover """
+   """ The G1DList Uniform Crossover.
+   Each element of the list is swapped with (usually 0.5) probability.
+   """
    sister = None
    brother = None
    gMom = args["mom"]

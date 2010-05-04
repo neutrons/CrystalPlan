@@ -129,6 +129,8 @@ class G1DList(GenomeBase, G1DBase):
 
    """
 
+   premutator = None
+
    crossover = None
    """ This is the reproduction function slot, the crossover. You
    can change the default crossover method using: ::

@@ -336,7 +336,7 @@ class ReflectionPlacer(HasTraits):
                     #Is that position allowed?
                     can_go_there = False
                     if not angles is None:
-                        (can_go_there, reason) = model.instrument.inst.goniometer.are_angles_allowed(angles)
+                        can_go_there = model.instrument.inst.goniometer.are_angles_allowed(angles, return_reason=False)
 
                     allowed[ix, iy] = can_go_there
                     calculated[ix, iy] = True
@@ -402,7 +402,7 @@ class ReflectionPlacer(HasTraits):
         else:
             self.angles_deg = np.rad2deg(angles).reshape(1,len(angles))
             self.angles_deg_string = string.join( ["%.2f" % (np.rad2deg(x)) for x in angles], ", ")
-            (allowed, reason) = model.instrument.inst.goniometer.are_angles_allowed(angles)
+            (allowed, reason) = model.instrument.inst.goniometer.are_angles_allowed(angles, return_reason=True)
             self.angles_allowed_bool = allowed
             if allowed:
                 self.angles_allowed = "Yes!"

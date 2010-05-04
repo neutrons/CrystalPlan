@@ -58,6 +58,7 @@ Class
 -------------------------------------------------------------
 
 """
+import copy
 
 from GPopulation  import GPopulation
 from FunctionSlot import FunctionSlot
@@ -484,6 +485,15 @@ class GSimpleGA:
          Util.raiseException("Mutation rate must be >= 0.0 and <= 1.0", ValueError)
       self.pMutation = rate
 
+   def setPreMutationRate(self, rate):
+      """ Sets the pre-mutation rate, > 0.0.
+      Premutation is done only when no cross-over occurs.
+      :param rate: the rate, >= 0.0
+      """
+      if (rate<0.0):
+         Util.raiseException("Pre-mutation rate must be >= 0.0", ValueError)
+      self.pPreMutation = rate
+
    def setCrossoverRate(self, rate):
       """ Sets the crossover rate, between 0.0 and 1.0
 
@@ -627,23 +637,31 @@ class GSimpleGA:
       # Odd population size
       if size_iterate % 2 != 0: size_iterate -= 1
 
+      #Check on the crossover function by picking a random individual - is it empty?
       crossover_empty = self.select(popID=self.currentGeneration).crossover.isEmpty()
       
       for i in xrange(0, size_iterate, 2):
+         #Ok, we select 2 parents using the selector (RouletteWheel, etc.)
          genomeMom = self.select(popID=self.currentGeneration)
          genomeDad = self.select(popID=self.currentGeneration)
-         
+
          if not crossover_empty and self.pCrossover >= 1.0:
+            #Crossover all of them
             for it in genomeMom.crossover.applyFunctions(mom=genomeMom, dad=genomeDad, count=2):
                (sister, brother) = it
          else:
+            #Filp a coin each time to determine if you should crossover
             if not crossover_empty and Util.randomFlipCoin(self.pCrossover):
                for it in genomeMom.crossover.applyFunctions(mom=genomeMom, dad=genomeDad, count=2):
                   (sister, brother) = it
             else:
                sister = genomeMom.clone()
                brother = genomeDad.clone()
+               #And "pre" mutate them
+               sister.premutate(pmut=self.pPreMutation, ga_engine=self)
+               brother.premutate(pmut=self.pPreMutation, ga_engine=self)
 
+         #Now each offspring is mutated
          sister.mutate(pmut=self.pMutation, ga_engine=self)
          brother.mutate(pmut=self.pMutation, ga_engine=self)
 
@@ -651,6 +669,7 @@ class GSimpleGA:
          newPop.internalPop.append(brother)
 
       if len(self.internalPop) % 2 != 0:
+         #Odd-numbered population
          genomeMom = self.select(popID=self.currentGeneration)
          genomeDad = self.select(popID=self.currentGeneration)
 
@@ -660,10 +679,13 @@ class GSimpleGA:
          else:
             sister = random.choice([genomeMom, genomeDad])
             sister = sister.clone()
+            #Do the 2 mutations
+            sister.premutate(pmut=self.pPreMutation, ga_engine=self)
             sister.mutate(pmut=self.pMutation, ga_engine=self)
 
          newPop.internalPop.append(sister)
 
+      #---- Evaluate fitness ------
       logging.debug("Evaluating the new created population.")
       newPop.evaluate()
 
@@ -673,6 +695,7 @@ class GSimpleGA:
       if self.elitism:
          logging.debug("Doing elitism.")
          if self.getMinimax() == Consts.minimaxType["maximize"]:
+            #Replace the n-th worst new ones with the nth best old ones
             for i in xrange(self.nElitismReplacement):
                if self.internalPop.bestRaw(i).score > newPop.bestRaw(i).score:
                   newPop[len(newPop)-1-i] = self.internalPop.bestRaw(i)
@@ -688,7 +711,7 @@ class GSimpleGA:
 
       self.currentGeneration += 1
 
-      return (self.currentGeneration == self.nGenerations)
+      return (self.currentGeneration >= self.nGenerations)
    
    def printStats(self):
       """ Print generation statistics
@@ -756,7 +779,10 @@ class GSimpleGA:
          if gp_function_prefix is not None:
             self.__gp_catch_functions(gp_function_prefix)
 
+      #Create the population
       self.initialize()
+
+      #Initial fitness evaluation
       self.internalPop.evaluate()
       self.internalPop.sort()
       logging.debug("Starting loop over evolutionary algorithm.")
@@ -769,6 +795,7 @@ class GSimpleGA:
                self.internalPop.clearFlags()
                self.internalPop.sort()
 
+            #The step callback is called before each step
             if not self.stepCallback.isEmpty():
                for it in self.stepCallback.applyFunctions(self):
                   stopFlagCallback = it
@@ -797,36 +824,11 @@ class GSimpleGA:
                   print "\n\tEvolution stopped by Step Callback function !\n"
                break
 
-            if self.interactiveMode:
-               if sys_platform[:3] == "win":
-                  if msvcrt.kbhit():
-                     if ord(msvcrt.getch()) == Consts.CDefESCKey:
-                        print "Loading modules for Interactive Mode...",
-                        logging.debug("Windows Interactive Mode key detected ! generation=%d", self.getCurrentGeneration())
-                        from pyevolve import Interaction
-                        print " done !"
-                        interact_banner = "## Pyevolve v.%s - Interactive Mode ##\nPress CTRL-Z to quit interactive mode." % (pyevolve.__version__,)
-                        session_locals = { "ga_engine"  : self,
-                                           "population" : self.getPopulation(),
-                                           "pyevolve"   : pyevolve,
-                                           "it"         : Interaction}
-                        print
-                        code.interact(interact_banner, local=session_locals)
-
-               if (self.getInteractiveGeneration() >= 0) and (self.getInteractiveGeneration() == self.getCurrentGeneration()):
-                        print "Loading modules for Interactive Mode...",
-                        logging.debug("Manual Interactive Mode key detected ! generation=%d", self.getCurrentGeneration())
-                        from pyevolve import Interaction
-                        print " done !"
-                        interact_banner = "## Pyevolve v.%s - Interactive Mode ##" % (pyevolve.__version__,)
-                        session_locals = { "ga_engine"  : self,
-                                           "population" : self.getPopulation(),
-                                           "pyevolve"   : pyevolve,
-                                           "it"         : Interaction}
-                        print
-                        code.interact(interact_banner, local=session_locals)
+            #(Here was interactive mode code, removed)
 
             if self.step(): break #exit if the number of generations is equal to the max. number of gens.
+            
+        #(end While True)
 
       except KeyboardInterrupt:
          logging.debug("CTRL-C detected, finishing evolution.")

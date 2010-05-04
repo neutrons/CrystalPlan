@@ -14,6 +14,9 @@ import inspect
 from FunctionSlot import FunctionSlot
 import Util
 
+#=======================================================================================
+#=======================================================================================
+#=======================================================================================
 class GenomeBase:
    """ GenomeBase Class - The base of all chromosome representation """
 
@@ -42,6 +45,8 @@ class GenomeBase:
 
    """
 
+   premutator = None
+
    crossover = None
    """ This is the reproduction function slot, the crossover. You
    can change the default crossover method using: ::
@@ -55,6 +60,7 @@ class GenomeBase:
       self.evaluator = FunctionSlot("Evaluator")
       self.initializator = FunctionSlot("Initializator")
       self.mutator = FunctionSlot("Mutator")
+      self.premutator = FunctionSlot("PreMutator")
       self.crossover = FunctionSlot("Crossover")
  
       self.internalParams = {}
@@ -159,6 +165,17 @@ class GenomeBase:
          nmuts+=it
       return nmuts
 
+   def premutate(self, **args):
+      """ Called to pre-mutate the genome
+
+      :param args: this parameters will be passed to the premutator
+      :rtype: the number of mutations returned by mutation operator
+      """
+      nmuts = 0
+      for it in self.premutator.applyFunctions(self, **args):
+         nmuts+=it
+      return nmuts
+
    def copy(self, g):
       """ Copy the current GenomeBase to 'g'
 
@@ -173,6 +190,7 @@ class GenomeBase:
       g.evaluator = self.evaluator
       g.initializator = self.initializator
       g.mutator = self.mutator
+      g.premutator = self.premutator
       g.crossover = self.crossover
       #g.internalParams = self.internalParams.copy()
       g.internalParams = self.internalParams
@@ -188,7 +206,11 @@ class GenomeBase:
       newcopy = GenomeBase()
       self.copy(newcopy)
       return newcopy
+
    
+#=======================================================================================
+#=======================================================================================
+#=======================================================================================
 class G1DBase:
    """ G1DBase Class - The base class for 1D chromosomes
    
@@ -305,6 +327,10 @@ class G1DBase:
       """
       self.genomeList = lst
 
+
+#=======================================================================================
+#=======================================================================================
+#=======================================================================================
 class GTreeNodeBase:
    """ GTreeNodeBase Class - The base class for the node tree genomes
    
@@ -420,6 +446,9 @@ class GTreeNodeBase:
       return newcopy
    
 
+#=======================================================================================
+#=======================================================================================
+#=======================================================================================
 class GTreeBase:
    """ GTreeBase Class - The base class for the tree genomes
    

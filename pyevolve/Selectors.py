@@ -121,6 +121,7 @@ def GRouletteWheel(population, **args):
    """ The Roulette Wheel selector """
    psum = None
    if args["popID"] != GRouletteWheel.cachePopID:
+      #Prepare the roulette wheel the first time it is called (for this population).
       GRouletteWheel.cachePopID = args["popID"]
       psum = GRouletteWheel_PrepareWheel(population)
       GRouletteWheel.cacheWheel = psum

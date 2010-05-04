@@ -106,7 +106,7 @@ class TryPositionController:
     def test_angles(self, angles):
         """Test the validity of the given angles."""
         #Validate the angles
-        (valid, reason) = model.instrument.inst.goniometer.are_angles_allowed(angles)
+        (valid, reason) = model.instrument.inst.goniometer.are_angles_allowed(angles, return_reason=True)
         if valid:
             self.panel.staticTextWarning.Hide()
             self.panel.staticTextWarningReason.Hide()
