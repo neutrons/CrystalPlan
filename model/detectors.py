@@ -19,34 +19,39 @@ from numpy_utils import rotation_matrix, x_rotation_matrix, column, vector_lengt
 #========================================================================================================
 class Detector:
     """Base class for detector geometry."""
-    #Name of the detector
-    name = None
 
-    #List of 3-D vectors giving the coordinates of each corner of the detector,
-    #or other points of the outline for non-rectangular detectors.
-    #   Used for plotting and others.
-    corners = list()
+    #---------------------------------------------------------------------------------------------
+    def __init__(self, detector_name):
+        """Constructor for a FlatDetector object.
+        """
+        #Name of the detector
+        self.name = detector_name
 
-    #Pixels in x and y (width and height)
-    xpixels = 256
-    ypixels = 256
+        #List of 3-D vectors giving the coordinates of each corner of the detector,
+        #or other points of the outline for non-rectangular detectors.
+        #   Used for plotting and others.
+        self.corners = list()
 
-    #Time-of-flight pixels
-    tof_pixels = 2000
+        #Pixels in x and y (width and height)
+        self.xpixels = 256
+        self.ypixels = 256
 
-    #Azimuthal angle (along the horizontal plane) of each pixel
-    # Coordinates are [Y, X]
-    azimuthal_angle = None
-    
-    #Elevation angle (above the horizontal plane) of each pixel
-    # Coordinates are [Y, X]
-    elevation_angle = None
+        #Time-of-flight pixels
+        self.tof_pixels = 2000
 
-    #Time of flight "pixels" in ??? seconds
-    time_of_flight = None
+        #Azimuthal angle (along the horizontal plane) of each pixel
+        # Coordinates are [Y, X]
+        self.azimuthal_angle = None
 
-    #3 by Y by X, where the first dimension gives a 3D vector of the pixel XYZ position
-    pixels = None
+        #Elevation angle (above the horizontal plane) of each pixel
+        # Coordinates are [Y, X]
+        self.elevation_angle = None
+
+        #Time of flight "pixels" in ??? seconds
+        self.time_of_flight = None
+
+        #3 by Y by X, where the first dimension gives a 3D vector of the pixel XYZ position
+        self.pixels = None
 
     #-------------------------------------------------------------------------------
     def hits_detector(self, az, elev):
@@ -71,47 +76,47 @@ class Detector:
 #========================================================================================================
 class FlatDetector(Detector):
     """Base class for a flat (planar) detector."""
-    #Azimuth angle  (along the horizontal plane, relative to positive Z direction) of the center
-    azimuth_center = 0
-
-    #elevation angle of the center (above the XZ plane)
-    elevation_center = 0
-
-    #Distance from center (mm)
-    distance = 400
-
-    #3D Vector, columnar, defining the position of the center of the detector.
-    #The detector face is assumed to be normal to this vector.
-#    center_vector = column([0, 0, 1000])
-
-    #Width and height of the detector (mm)
-    width = 100
-    height = 100
-
-    #Angle (rad) between the "width" dimension and the horizon (X-Z) plane.
-    #aka: the rotation of the detector around the center_vector.
-    rotation = 0
-
-    #Vector normal to the surface; along with one corner, defines the plane equation.
-    normal = None
-
-    #Vector defining the horizontal (or X-axis) direction in the plane (normalized)
-    horizontal = None
-
-    #Vector defining the vertical (or Y-axis) direction in the plane (normalized)
-    vertical = None
-
-    #XYZ position of the CENTER of the detector.
-    base_point = None
-
-    #Rotation matrix to use to convert detector horiz, vert to XYZ in real space
-    pixel_rotation_matrix = np.identity(3)
 
     #---------------------------------------------------------------------------------------------
     def __init__(self, detector_name):
         """Constructor for a FlatDetector object.
         """
-        self.name = detector_name
+        Detector.__init__(self, detector_name)
+        #Azimuth angle  (along the horizontal plane, relative to positive Z direction) of the center
+        self.azimuth_center = 0
+
+        #elevation angle of the center (above the XZ plane)
+        self.elevation_center = 0
+
+        #Distance from center (mm)
+        self.distance = 400
+
+        #3D Vector, columnar, defining the position of the center of the detector.
+        #The detector face is assumed to be normal to this vector.
+    #    self.center_vector = column([0, 0, 1000])
+
+        #Width and height of the detector (mm)
+        self.width = 100
+        self.height = 100
+
+        #Angle (rad) between the "width" dimension and the horizon (X-Z) plane.
+        #aka: the rotation of the detector around the center_vector.
+        self.rotation = 0
+
+        #Vector normal to the surface; along with one corner, defines the plane equation.
+        self.normal = None
+
+        #Vector defining the horizontal (or X-axis) direction in the plane (normalized)
+        self.horizontal = None
+
+        #Vector defining the vertical (or Y-axis) direction in the plane (normalized)
+        self.vertical = None
+
+        #XYZ position of the CENTER of the detector.
+        self.base_point = None
+
+        #Rotation matrix to use to convert detector horiz, vert to XYZ in real space
+        self.pixel_rotation_matrix = np.identity(3)
 
 
     #-------------------------------------------------------------------------------
@@ -613,7 +618,7 @@ import unittest
 class TestDetector(unittest.TestCase):
     """Unit test for the Detector base class."""
     def setUp(self):
-        self.det = Detector()
+        self.det = Detector("detector_name")
 
     def test_notimplemented(self):
         """Make sure Detector's virtual methods raise NotImplementedError."""
