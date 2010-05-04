@@ -39,6 +39,7 @@ class StartupTraitsHandler(Handler):
         self.add_trait('instrument', "")
         #Make it change the linked object to reflect the current instrument state.
         self.revert()
+        self.check_validity()
 
     #----------------------------------------------------------------------
     def setattr(self, info, object, name, value):
@@ -48,14 +49,22 @@ class StartupTraitsHandler(Handler):
 
     #----------------------------------------------------------------------
     def check_validity(self):
+        par = self.frame.params #@type par StartupParameters
+        
+        #Try to adjust the points?
+        if par.keep_points_same:
+            qr = (par.q_lim*2) /(par.points_goal**(1./3))
+            par.q_resolution = qr
+
         #Show a warning
-        if self.frame.params.points > 3e6:
-            self.frame.staticTextSpaceWarning.Show()
+        if par.points > 3e6:
+            wx.CallAfter(self.frame.staticTextSpaceWarning.Show)
         else:
-            self.frame.staticTextSpaceWarning.Hide()
-        self.frame.GetSizer().Layout()
+            wx.CallAfter(self.frame.staticTextSpaceWarning.Hide)
+        wx.CallAfter(self.frame.GetSizer().Layout)
+
         #Disable the start button if too few points come up
-        self.frame.buttonApply.Enable( self.frame.params.points > 100 )
+        wx.CallAfter(self.frame.buttonApply.Enable, self.frame.params.points > 100 )
 
     #----------------------------------------------------------------------
     def apply(self):
@@ -72,6 +81,11 @@ class StartupTraitsHandler(Handler):
 
         #Ensure that the q-space viewer refreshes properly.
         display_thread.handle_change_of_qspace()
+
+        #Save the points goal
+        par = self.frame.params #@type par StartupParameters
+        par.points_goal = par.points
+
 
     #----------------------------------------------------------------------
     def revert(self):
@@ -96,12 +110,15 @@ class StartupTraitsHandler(Handler):
 class StartupParameters(HasTraits):
     """This traits object holds parameters to start-up the program,
     or when re-calculating the q-space."""
-    d_min = Float(1.8)
-    q_resolution = Float(0.05)
+    d_min = Float(1.0)
+    q_resolution = Float(0.2)
     d_max = Str(" +infinity ")
     #Detector wavelength limits in A
     wl_min = Range(1e-3, +np.inf, 0.5, exclude_low=False)
     wl_max = Range(1e-3, +np.inf, 4.0, exclude_low=False)
+
+    keep_points_same = Bool(True, label='Keep # of points ~constant?', desc="to adjust the resolution so as to keep the # of points in 3D approximately constant.")
+    points_goal = Float(250000, label='Target # of points:', desc="the desired number of points (3D voxels). The resolution will be adjusted to match." )
 
     #q-space limit property
     q_lim = Property(Float,depends_on=["d_min"])
@@ -117,7 +134,7 @@ class StartupParameters(HasTraits):
         if  self.d_min < 1e-3 or self.q_resolution < 1e-3:
             return 0
         else:
-            return round(2*np.pi / self.d_min/ self.q_resolution)**3
+            return round(2*2*np.pi / self.d_min/ self.q_resolution)**3
 
 
     #Create the view
@@ -128,7 +145,9 @@ class StartupParameters(HasTraits):
                  Item("d_min", label="d_min (angstroms)", format_str="%.3f", tooltip="Minimum d spacing to simulate."),
                  Item("d_max", label="d_max (angstroms)", style='readonly', tooltip="Maximum d spacing to simulate."),
                  Item("q_lim",  label="Resulting q-space range is:", style='readonly', format_str="+-%.3f angstroms^-1", enabled_when="True"),
-                 Item("q_resolution",  label="Resolution in q-space (angstroms^-1)", format_str="%.3f"),
+                 Item("q_resolution",  label="Resolution in q-space (angstroms^-1)", format_str="%.3f", enabled_when="not keep_points_same"),
+                 Item("keep_points_same"),
+                 Item("points_goal", format_str="%.0f", enabled_when="keep_points_same"),
                  Item("points",  label="Number of points in space:", style='readonly', format_func=gui_utils.print_large_number),
                  second_label,
                  Item("wl_min", label="Min. wavelength (angstroms)", format_str="%.3f", tooltip="Minimum wavelength that the detectors can measure."),
@@ -294,6 +313,10 @@ class PanelStartup(wx.Panel):
 
         #Setup the parameter editor traits ui panel
         self.params = StartupParameters()
+        if not model.instrument.inst is None:
+            if not model.instrument.inst.qspace_radius is None:
+                self.params.points_goal = model.instrument.inst.qspace_radius.size
+                
         self.handler = StartupTraitsHandler(self)
         self.control = self.params.edit_traits(parent=self, kind='subpanel', handler=self.handler).control
         self.boxSizerParams.AddWindow(self.control, 3, border=1, flag=wx.EXPAND)
