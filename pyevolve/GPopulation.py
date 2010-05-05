@@ -37,6 +37,7 @@ from FunctionSlot import FunctionSlot
 from Statistics import Statistics
 from math import sqrt as math_sqrt
 import logging
+import time
 
 try:
    from multiprocessing import cpu_count, Pool
@@ -137,6 +138,7 @@ class GPopulation:
 
          self.statted = False
          self.stats   = Statistics()
+         self.proc_pool = genome.proc_pool
          return
 
       logging.debug("New population instance, %s class genomes.", genome.__class__.__name__)
@@ -144,6 +146,7 @@ class GPopulation:
       self.internalPop    = []
       self.internalPopRaw = []
       self.popSize       = 0
+      self.proc_pool = None
       self.sortType      = Consts.CDefPopSortType
       self.sorted        = False
       self.minimax       = Consts.CDefPopMinimax
@@ -158,29 +161,44 @@ class GPopulation:
       self.statted = False
       self.stats   = Statistics()
 
+   #---------------------------------------------------------------------------------
    def setMultiProcessing(self, flag=True, full_copy=False, number_of_processes=None):
-      """ Sets the flag to enable/disable the use of python multiprocessing module.
-      Use this option when you have more than one core on your CPU and when your
-      evaluation function is very slow.
-      The parameter "full_copy" defines where the individual data should be copied back
-      after the evaluation or not. This parameter is useful when you change the
-      individual in the evaluation function.
-      
-      :param flag: True (default) or False
-      :param full_copy: True or False (default)
-      :param number_of_processes: None = use the default, or specify the number
+        """ Sets the flag to enable/disable the use of python multiprocessing module.
+        Use this option when you have more than one core on your CPU and when your
+        evaluation function is very slow.
+        The parameter "full_copy" defines where the individual data should be copied back
+        after the evaluation or not. This parameter is useful when you change the
+        individual in the evaluation function.
 
-      .. warning:: Use this option only when your evaluation function is slow, se you
+        :param flag: True (default) or False
+        :param full_copy: True or False (default)
+        :param number_of_processes: None = use the default, or specify the number
+
+        .. warning:: Use this option only when your evaluation function is slow, se you
                    will get a good tradeoff between the process communication speed and the
                    parallel evaluation.
+        """
+        #Save the parameters
+        old_settings = self.multiProcessing
+        self.multiProcessing = (flag, full_copy, number_of_processes)
+        #Re-initialize if anything changed.
+        if (old_settings != self.multiProcessing):
+            self.initializeMultiProcessing()
 
-      .. versionadded:: 0.6
-         The `setMultiProcessing` method.
-
-      """
-      self.multiProcessing = (flag, full_copy, number_of_processes)
-#      if flag:
-#          print "Multiprocessing enabled; will use %d processors." % CPU_COUNT
+   #---------------------------------------------------------------------------------
+   def initializeMultiProcessing(self):
+        """Initialize the multiprocessing interface. Create the process pool."""
+        if self.multiProcessing[0]:
+            t1 = time.time()
+            #Create the process pool with the # of processes
+            num_proc = self.multiProcessing[2]
+            if num_proc is None:
+                self.proc_pool = Pool()
+            elif num_proc > 0:
+                self.proc_pool = Pool(processes=num_proc)
+            else:
+                self.proc_pool = Pool()
+            print "Multiprocessing initialized in %03.3f sec; will use %d processors." % ( (time.time()-t1), num_proc )
    
    def setMinimax(self, minimax):
       """ Sets the population minimax
@@ -366,23 +384,18 @@ class GPopulation:
       # We have multiprocessing
       if self.multiProcessing[0] and MULTI_PROCESSING:
          logging.debug("Evaluating the population using the multiprocessing method")
-         #The # of processes
-         num_proc = self.multiProcessing[2]
-         if num_proc is None:
-            proc_pool = Pool()
-         elif num_proc > 0:
-            proc_pool = Pool(processes=num_proc)
-         else:
-            proc_pool = Pool()
 
+         #Make sure we have a process pool.
+         if self.proc_pool is None:
+             self.initializeMultiProcessing()
 
          # Multiprocessing full_copy parameter
          if self.multiProcessing[1]:
-            results = proc_pool.map(multiprocessing_eval_full, self.internalPop)
+            results = self.proc_pool.map(multiprocessing_eval_full, self.internalPop)
             for i in xrange(len(self.internalPop)):
                self.internalPop[i] = results[i]
          else:
-            results = proc_pool.map(multiprocessing_eval, self.internalPop)
+            results = self.proc_pool.map(multiprocessing_eval, self.internalPop)
             for individual, score in zip(self.internalPop, results):
                individual.score = score
       else:

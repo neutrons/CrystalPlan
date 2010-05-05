@@ -39,10 +39,10 @@ class OptimizationParameters(HasTraits):
     number_of_orientations = Int(10, desc="the number of orientations you want in the sample plan.")
     desired_coverage = Float(85.0, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
     use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection coverage.")
-    auto_increment = Bool(True, label='Auto increment # of orientations?', desc="that if the optimization does not converge in the # of generations, add one to the # of sample orientations and try again.")
+    auto_increment = Bool(False, label='Auto increment # of orientations?', desc="that if the optimization does not converge in the # of generations, add one to the # of sample orientations and try again.")
 
     population = Int(100, desc="the number of individuals to evolve.")
-    max_generations = Int(100, desc="the maximum number of generations to evolve before giving up.")
+    max_generations = Int(10, desc="the maximum number of generations to evolve before giving up.")
     pre_mutation_rate = Float(0.8, label='Worst-gene mutation rate', desc="that the n-th worst sample orientations will be mutated prior to mating.")
     mutation_rate = Float(0.02, desc="the probability of randomized mutation per gene.")
     crossover_rate = Float(0.05, desc="the probability of cross-over.")
@@ -429,6 +429,7 @@ def run_optimization(optim_params, step_callback=None):
     #The instrument to use
     instr = instrument.inst
     exp = experiment.exp
+    exp.verbose = False
 
     # Genome instance, list of list of angles
     genome = ChromosomeAngles( op.number_of_orientations )
@@ -473,9 +474,6 @@ def run_optimization(optim_params, step_callback=None):
         
     #And this is the termination function
     ga.terminationCriteria.set(termination_func)
-
-    # Do the evolution, with stats dump freq
-    exp.verbose = False
     
     freq_stats = 0
     if __name__ == "__main__": freq_stats = 1
