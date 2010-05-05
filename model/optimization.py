@@ -47,6 +47,7 @@ class OptimizationParameters(HasTraits):
     mutation_rate = Float(0.02, desc="the probability of randomized mutation per gene.")
     crossover_rate = Float(0.05, desc="the probability of cross-over.")
     use_multiprocessing = Bool(True, desc="to use multiprocessing (multiple processors) to speed up calculation.")
+    number_of_processors = Int(4, desc="the number of processors to use, if multiprocessing is enabled. Enter <=0 to use all the processors available.")
     use_old_population = Bool(False)
     elitism = Bool(True, desc="to use elitism, which means to keep the best individuals from the previous generation.")
     elitism_replacement = Int(2, desc="the Elitism replacement number - how many of the best individuals from the previous generation to keep.")
@@ -69,6 +70,7 @@ class OptimizationParameters(HasTraits):
             Item('elitism'),
             Item('elitism_replacement'),
             Item('use_multiprocessing'),
+            Item('number_of_processors', enabled_when="use_multiprocessing"),
             label='Genetic Algorithm Settings'
         ),
         Spring(label=' ')
@@ -389,6 +391,28 @@ def termination_func(ga_engine):
     return best_score * 100.0 >= op.desired_coverage
     
 
+
+#-----------------------------------------------------------------------------------------------
+def set_changeable_parameters(optim_params, ga):
+    """Set in the GA engine the parameters that can change generation from generation.
+    
+    Parameters:
+        op: OptimizationParameters instance.
+        ga: GA engine instance."""
+    #@type op OptimizationParameters
+    #@type ga GSimpleGA
+
+    #Set the GA parameters from the configuration variable
+    ga.setMutationRate(optim_params.mutation_rate)
+    ga.setPreMutationRate(optim_params.pre_mutation_rate)
+    ga.setCrossoverRate(optim_params.crossover_rate)
+    #Set the multiprocessing. full_copy=True because we change the individual!
+    ga.setMultiProcessing(optim_params.use_multiprocessing, full_copy=True, number_of_processes=optim_params.number_of_processors)
+    if optim_params.max_generations > 0: ga.setGenerations(optim_params.max_generations)
+    ga.setElitism(optim_params.elitism)
+    ga.setElitismReplacement(optim_params.elitism_replacement)
+
+
 #-----------------------------------------------------------------------------------------------
 def run_optimization(optim_params, step_callback=None):
     """Perform GA optimization of detector coverage. Is meant to be run
@@ -405,7 +429,6 @@ def run_optimization(optim_params, step_callback=None):
     #The instrument to use
     instr = instrument.inst
     exp = experiment.exp
-    exp.verbose = False
 
     # Genome instance, list of list of angles
     genome = ChromosomeAngles( op.number_of_orientations )
@@ -436,18 +459,13 @@ def run_optimization(optim_params, step_callback=None):
     #Fixed settings
     #We want to maximize the score
     ga.setMinimax(Consts.minimaxType["maximize"])
-
-    #Set the GA parameters from the configuration variable
-    ga.setMutationRate(op.mutation_rate)
-    ga.setPreMutationRate(op.pre_mutation_rate)
-    ga.setCrossoverRate(op.crossover_rate)
-    #Set the multiprocessing. full_copy=True because we change the individual!
-    ga.setMultiProcessing(op.use_multiprocessing, full_copy=True)
-    ga.setPopulationSize(op.population)
-    ga.setGenerations(op.max_generations)
+    ga.setPopulationSize(optim_params.population)
     ga.setSortType(pyevolve.Consts.sortType["scaled"])
-    ga.setElitism(op.elitism)
-    ga.setElitismReplacement(op.elitism_replacement)
+    # Set the Roulette Wheel selector method
+    ga.selector.set(Selectors.GRouletteWheel)
+
+    #Changeable settings
+    set_changeable_parameters(op, ga)
 
     #This is the function that can abort the progress.
     if not step_callback is None:
@@ -456,31 +474,14 @@ def run_optimization(optim_params, step_callback=None):
     #And this is the termination function
     ga.terminationCriteria.set(termination_func)
 
-    # Set the Roulette Wheel selector method
-    ga.selector.set(Selectors.GRouletteWheel)
-    #ga.selector.set(Selectors.GRankSelector)
-
-    if False:
-        # Sets the DB Adapter, the resetDB flag will make the Adapter recreate
-        # the database and erase all data every run, you should use this flag
-        # just in the first time, after the pyevolve.db was created, you can
-        # omit it.
-        sqlite_adapter = DBAdapters.DBSQLite(identify="ex1", resetDB=True)
-        ga.setDBAdapter(sqlite_adapter)
-
     # Do the evolution, with stats dump freq
+    exp.verbose = False
+    
     freq_stats = 0
     if __name__ == "__main__": freq_stats = 1
     (best, aborted, converged) = ga.evolve(freq_stats=freq_stats)
 
     ga.getPopulation().sort()
-
-#    for (i, ind) in enumerate(ga.getPopulation()):
-#        print "--- Individual %3d has score %7.3f" % (i, eval_func(ind, verbose=False))
-#        #print ind
-#        #print "And I find his score to be:", eval_func(ind, verbose=True)
-#
-#    print "---- BEST ---------------------\n", ga.bestIndividual()
 
     exp.verbose = True
 
@@ -489,6 +490,7 @@ def run_optimization(optim_params, step_callback=None):
 
 
 def print_pop(ga_engine, *args):
+    return
     for x in ga_engine.getPopulation():
         print  "score %7.3f; coverage %7.3f, %s" % (x.score, x.coverage, x.genomeList)
 
@@ -509,18 +511,18 @@ if __name__ == "__main__":
     op.crossover_rate = 0.1
     op.pre_mutation_rate = 1.5
     op.use_symmetry = False
-    op.max_generations = 10
-    op.population = 10
-    op.use_multiprocessing = False
+    op.max_generations = 100
+    op.population = 100
+    op.use_multiprocessing = True
 
     (ga, a1, a2) = run_optimization( op, print_pop)
-    print_pop(ga)
-    print "Keep going!"
-    op.add_trait('old_population', ga.getPopulation())
-    #op.number_of_orientations = 2
-    op.use_old_population = True
-#    instrument.inst.set_goniometer(goniometer.TopazAmbientGoniometer())
-    (ga, a1, a2) = run_optimization( op, print_pop )
+#    print_pop(ga)
+#    print "Keep going!"
+#    op.add_trait('old_population', ga.getPopulation())
+#    #op.number_of_orientations = 2
+#    op.use_old_population = True
+##    instrument.inst.set_goniometer(goniometer.TopazAmbientGoniometer())
+#    (ga, a1, a2) = run_optimization( op, print_pop )
 
     print "----------best-----------", ga.bestIndividual()
     print "best coverage = ", ga.bestIndividual().coverage

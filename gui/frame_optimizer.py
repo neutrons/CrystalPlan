@@ -158,6 +158,9 @@ class OptimizerController():
         self.start_time = 0
         self.last_population = None
         self.generations = []
+        self.last_plot_time = time.time()-10
+        #Frequency of plotting
+        self.plot_time_interval = 1
 
     #--------------------------------------------------------------------
     def update(self):
@@ -261,6 +264,7 @@ class OptimizerController():
     def plot_data(self):
         """Plot whatever the data currently is"""
         self.frame.plotControl.draw(self.generations)
+        self.last_plot_time = time.time()
 
 
     #--------------------------------------------------------------------
@@ -280,7 +284,10 @@ class OptimizerController():
             label = "FAILED - Reached the max. # of generations without enough coverage!"
 
         self.run_thread = None
+        self.add_data(ga)
+        #Make sure GUI updates
         wx.CallAfter(self.frame.staticTextComplete.SetLabel, label)
+        wx.CallAfter(self.plot_data)
         wx.CallAfter(self.update)
 
         #Save the population
@@ -312,22 +319,14 @@ class OptimizerController():
         self.currentGeneration = ga.currentGeneration
         #Log the stats too
         self.add_data(ga)
-
         
         #Adjust settings while going on
-        if op.max_generations > 0: ga.setGenerations(op.max_generations)
-        ga.setMutationRate(op.mutation_rate)
-        ga.setPreMutationRate(op.pre_mutation_rate)
-        ga.setCrossoverRate(op.crossover_rate)
-        ga.setElitism(op.elitism)
-        ga.setElitismReplacement(op.elitism_replacement)
-        ga.setMultiProcessing(op.use_multiprocessing, full_copy=True)
-        
-        if self.currentGeneration >= self.params.max_generations:
-            print "Optimization complete!"
+        model.optimization.set_changeable_parameters(op, ga)
 
         #Update gui
-        wx.CallAfter(self.frame.plotControl.draw, self.generations)
+        if time.time()-self.last_plot_time > self.plot_time_interval:
+            #Enough time has passed, plot the graph
+            wx.CallAfter(self.plot_data)
         wx.CallAfter(self.update)
         return self._want_abort
 

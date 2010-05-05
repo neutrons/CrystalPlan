@@ -158,7 +158,7 @@ class GPopulation:
       self.statted = False
       self.stats   = Statistics()
 
-   def setMultiProcessing(self, flag=True, full_copy=False):
+   def setMultiProcessing(self, flag=True, full_copy=False, number_of_processes=None):
       """ Sets the flag to enable/disable the use of python multiprocessing module.
       Use this option when you have more than one core on your CPU and when your
       evaluation function is very slow.
@@ -168,6 +168,7 @@ class GPopulation:
       
       :param flag: True (default) or False
       :param full_copy: True or False (default)
+      :param number_of_processes: None = use the default, or specify the number
 
       .. warning:: Use this option only when your evaluation function is slow, se you
                    will get a good tradeoff between the process communication speed and the
@@ -177,7 +178,7 @@ class GPopulation:
          The `setMultiProcessing` method.
 
       """
-      self.multiProcessing = (flag, full_copy)
+      self.multiProcessing = (flag, full_copy, number_of_processes)
 #      if flag:
 #          print "Multiprocessing enabled; will use %d processors." % CPU_COUNT
    
@@ -365,7 +366,15 @@ class GPopulation:
       # We have multiprocessing
       if self.multiProcessing[0] and MULTI_PROCESSING:
          logging.debug("Evaluating the population using the multiprocessing method")
-         proc_pool = Pool()
+         #The # of processes
+         num_proc = self.multiProcessing[2]
+         if num_proc is None:
+            proc_pool = Pool()
+         elif num_proc > 0:
+            proc_pool = Pool(processes=num_proc)
+         else:
+            proc_pool = Pool()
+
 
          # Multiprocessing full_copy parameter
          if self.multiProcessing[1]:
@@ -377,6 +386,7 @@ class GPopulation:
             for individual, score in zip(self.internalPop, results):
                individual.score = score
       else:
+         #Direct evaluation (no multiprocessing)
          for ind in self.internalPop:
             ind.evaluate(**args)
 
