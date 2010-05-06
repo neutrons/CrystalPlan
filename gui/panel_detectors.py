@@ -219,9 +219,9 @@ class DetectorListController:
                     pass
                     #The 3D view is open, update that by closing and re-opening
                     wx.CallAfter(self.panel.frame3d.Close)
-                    #Open a new one!
-                    wx.CallAfter(self.panel.OnButton_view_detectorsButton, None)
-                    #self.panel.frame3d.update(reset_view=False)
+#                    #Open a new one!
+#                    wx.CallAfter(self.panel.OnButton_view_detectorsButton, None)
+#                    #self.panel.frame3d.update(reset_view=False)
 
             except:
                 #Go back to the old list
