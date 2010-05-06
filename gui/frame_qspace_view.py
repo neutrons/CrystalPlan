@@ -148,6 +148,7 @@ class QspaceViewController(HasTraits):
         self.form_is_closing = True
         #Remove the scene from engine
         self.engine.remove_scene(self.scene)
+        self.engine.stop()
         model.messages.unsubscribe(self.update_stats_panel)
         model.messages.unsubscribe(self.update_data_volume)
         model.messages.unsubscribe(self.update_data_points)
@@ -404,6 +405,14 @@ class QspaceViewController(HasTraits):
         self.mouse_point_data_src.data = self.make_single_point_data( (0,0,0))
         self.mouse_point_data_src.add_module(self.mouse_cube)
         self.mouse_cube.visible = False
+
+#        #--- Reciprocal axes 3D view ----
+#        c = model.experiment.exp.crystal #@type c Crystal
+#        (a,b,c) = (c.recip_a, c.recip_b, c.recip_c)
+#        offset = model.experiment.exp.inst.qlim
+#        self.scene.mlab.plot3d([offset, offset+a[0]], [offset, offset+a[1]], [offset, offset+a[2]], color=(1,0,0))
+#        self.scene.mlab.plot3d([offset, offset+b[0]], [offset, offset+b[1]], [offset, offset+b[2]], color=(0,1,0))
+#        self.scene.mlab.plot3d([offset, offset+c[0]], [offset, offset+c[1]], [offset, offset+c[2]], color=(0,0,1))
 
         #Re-enable drawing
         self.scene.disable_render = False

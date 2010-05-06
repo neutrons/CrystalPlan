@@ -409,8 +409,7 @@ class Instrument:
     def make_qspace(self):
         """Generate an evenly-spaced q-space map using the settings and limits 
         given in the object."""
-        print "Generating q-space matrix."
-        
+
         #Limit to q volume given the d_min
         qlim = self.qlim
 
@@ -424,8 +423,6 @@ class Instrument:
         (qx, qy, qz) = np.ogrid[-lims:lims, -lims:lims, -lims:lims]
         #So we do the radius calculation in units of "self.q_resolution"
         self.qspace_radius = np.sqrt( qx**2 + qy**2 + qz**2 ) * self.q_resolution
-
-        print "qspace has %d points" % self.qspace_radius.size
 
 
     #-------------------------------------------------------------------------------

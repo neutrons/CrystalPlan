@@ -22,6 +22,9 @@ try:
     from enthought.tvtk.pyface.scene_editor import SceneEditor
     from enthought.mayavi.tools.mlab_scene_model import MlabSceneModel
     from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
+    from enthought.mayavi.core.scene import Scene
+    from enthought.mayavi.api import Engine
+    from enthought.mayavi.tools.engine_manager import engine_manager
 except ImportError, e:
     print "PanelDetectors: ERROR IMPORTING MAYAVI - 3D WILL NOT WORK!"
 
@@ -34,13 +37,32 @@ import model
 #================================================================================================
 #================================================================================================
 class DetectorVisualization(HasTraits):
-    # Scene being displayed.
+    """3-D, real-space view of detector geometry."""
+#    # Scene being displayed.
+#    scene = Instance(MlabSceneModel, ())
+#
+#    # The layout of the panel created by Traits
+#    view = View(Item('scene', editor=SceneEditor(), resizable=True,
+#                    show_label=False), resizable=True)
+
+    #Make an engine just for this frame
+    #engine = engine_manager.new_engine() # Instance(Engine, args=())
+    engine = Instance(Engine, args=())
+
+    #Create the scene
     scene = Instance(MlabSceneModel, ())
 
-    # The layout of the panel created by Traits
-    view = View(Item('scene', editor=SceneEditor(), resizable=True,
-                    show_label=False), resizable=True)
+    def _scene_default(self):
+        """Default initializer for scene"""
+        self.engine.start()
+        scene = MlabSceneModel(engine=self.engine)
+        #self.engine.scenes.append(scene) #Make sure the engine manager nows about it
+        return scene
 
+    #3D view of the scene.
+    view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene), resizable=True,
+                    show_label=False), resizable=True)
+                    
     def __init__(self):
         # Do not forget to call the parent's __init__
         HasTraits.__init__(self)
@@ -51,10 +73,10 @@ class DetectorVisualization(HasTraits):
         col=color
         rad=None
         #Plot between each corner and connect back to 1st corner
-        lines(det.corners+[det.corners[0]], color=col, tube_radius=rad)
+        lines(det.corners+[det.corners[0]], color=col, tube_radius=rad, mlab=self.scene.mlab)
         #Find the middle and put text there
         center = det.pixels[:, det.xpixels/2,  det.ypixels/2]
-        text3d(center, det.name, font_size=15, color=col)
+        text3d(center, det.name, font_size=15, color=col, mlab=self.scene.mlab)
 
     #---------------------------------------------------------------------------------------------
     def display(self, reset_view=True):
@@ -63,6 +85,8 @@ class DetectorVisualization(HasTraits):
         mlab = self.scene.mlab
         self.scene.disable_render = True #Render without displaying, to speed it up.
         mlab.clf()
+        mlab.plot3d([0,1], [0,1], [0,1]) 
+    
         mlab.options.offscreen = False
         #Make a simple color map
         c = 0
@@ -81,10 +105,10 @@ class DetectorVisualization(HasTraits):
         #Add arrow indicating neutron beam direction
         length = max_distance * 1.25
         col = (1.0,0.0,0.0)
-        arrow( vector([0,0,-length]),  vector([0,0,+length]), head_size=length/10, color=col, tube_radius=length/100.)
-        text3d(vector([0,0,+length*1.1]), "Beam direction", font_size=18, color=(0,0,0))
-        arrow( vector([0,0,0]),  vector([0,+length,0]), head_size=length/12, color=(0,0,0), tube_radius=length/150.)
-        text3d(vector([0,+length*1.1,0]), "Up", font_size=16, color=(0,0,0))
+        arrow( vector([0,0,-length]),  vector([0,0,+length]), head_size=length/10, color=col, tube_radius=length/100., mlab=mlab)
+        text3d(vector([0,0,+length*1.1]), "Beam direction", font_size=18, color=(0,0,0), mlab=mlab)
+        arrow( vector([0,0,0]),  vector([0,+length,0]), head_size=length/12, color=(0,0,0), tube_radius=length/150., mlab=mlab)
+        text3d(vector([0,+length*1.1,0]), "Up", font_size=16, color=(0,0,0), mlab=mlab)
         mlab.orientation_axes()
         if reset_view:
             #Set the camera
@@ -92,6 +116,13 @@ class DetectorVisualization(HasTraits):
             mlab.roll(2.6)
 
         self.scene.disable_render = False
+
+    #-----------------------------------------------------------------------------------------------
+    def cleanup(self):
+        """Clean-up on closing the form"""
+        #Remove the scene from engine
+        self.engine.remove_scene(self.scene)
+        self.engine.stop()
 
 
 #================================================================================================
@@ -122,6 +153,7 @@ class DetectorView3D(wx.Frame):
         print "Detectors 3D view was", self.visualization.scene.mlab.view(), "with a roll of", self.visualization.scene.mlab.roll()
         #Clear the attribute from the parent
         self.GetParent().frame3d = None
+        self.visualization.cleanup()
         event.Skip()
 
 
@@ -184,8 +216,12 @@ class DetectorListController:
                 #Update displays
                 display_thread.handle_change_of_qspace()
                 if not self.panel.frame3d is None:
-                    #The 3D view is open, update that
-                    self.panel.frame3d.update(reset_view=False)
+                    pass
+                    #The 3D view is open, update that by closing and re-opening
+                    wx.CallAfter(self.panel.frame3d.Close)
+                    #Open a new one!
+                    wx.CallAfter(self.panel.OnButton_view_detectorsButton, None)
+                    #self.panel.frame3d.update(reset_view=False)
 
             except:
                 #Go back to the old list
@@ -456,9 +492,11 @@ class PanelDetectors(wx.Panel):
             #Create the 3D frame
             self.frame3d = DetectorView3D(self, wx.NewId())
         else:
+            #Raise to top
+            self.frame3d.Raise()
             #Just update
-            self.frame3d.update(reset_view=False)
-        event.Skip()
+            #self.frame3d.update(reset_view=False)
+        if not event is None: event.Skip()
         
     def OnChklistDetectorsChecklistbox(self, event):
         self.controller.changed()

@@ -11,14 +11,14 @@ from vtk.util.colors import antique_white
 import numpy as np
 
 #--- GUI Imports ---
-import enthought.mayavi.mlab as mlab
+import enthought.mayavi.mlab as mlab_module
 
 #--- Model Imports ---
 from model.numpy_utils import *
 
 
 #------------------------------------------------------------
-def lines(points,  plotobj=None, color=(0,0,0), head_size=0, **kwargs):
+def lines(points,  plotobj=None, color=(0,0,0), head_size=0, mlab=mlab_module, **kwargs):
     #Turn into arrays
     x=np.array([pt[0] for pt in points])
     y=np.array([pt[1] for pt in points])
@@ -41,7 +41,7 @@ def lines(points,  plotobj=None, color=(0,0,0), head_size=0, **kwargs):
         return plotobj
     
 #------------------------------------------------------------
-def arrow(start, stop, plotobj=None, color=(0,0,0), head_size=0, **kwargs):
+def arrow(start, stop, plotobj=None, color=(0,0,0), head_size=0, mlab=mlab_module, **kwargs):
     """Draws an arrow from start to stop (each are 3-element vectors).
     
     Parameters:
@@ -88,7 +88,7 @@ def plot3dpatch(vectors, color, alpha, plotobj=None):
         return plotobj
     
 #------------------------------------------------------------
-def plot3dpoints(vectors, scale_factor=10, plotobj=None, **kwargs):
+def plot3dpoints(vectors, scale_factor=10, plotobj=None, mlab=mlab_module, **kwargs):
     """Plots a matrix containing vertical XYZ vectors for each point."""
     if (vectors.ndim == 1):
         vectors = vectors.reshape(3, 1); #Force into column
@@ -101,7 +101,7 @@ def plot3dpoints(vectors, scale_factor=10, plotobj=None, **kwargs):
         return plotobj
     
 #------------------------------------------------------------
-def text3d(vector, text, font_size=20, vertical_justification="center", horizontal_justification="center", color=(1.,1.,1.), **kwargs):
+def text3d(vector, text, font_size=20, vertical_justification="center", horizontal_justification="center", color=(1.,1.,1.), mlab=mlab_module, **kwargs):
     """Place text in 3d using a vector as input.
     Parameters:
         vector: 3-vector with the x,y,z coords.
@@ -140,14 +140,3 @@ def draw_cartesian_axes(size=10, offset=np.array([0,0,0]), textwidth=0.006):
     mlab.text(offset[0], offset[1], z=(size + offset[2]), text='Z', width=textwidth)
 
 
-
-if __name__ == "__main__":
-    f = mlab.figure("Detectors", size=(600, 500))
-    mlab.clf
-    #Add arrow indicating neutron beam direction
-    length = 1000
-    arrow( vector([0,0,-length]),  vector([0,0,+length]), head_size=length/10, color=(1.0,0.0,0.0), tube_radius=length/40.)
-    text3d( vector([1,2,3]), "Test text", font_size=25)
-    mlab.orientation_axes()
-    mlab.title("Detectors in real space", size=0.3, height=0.98 )
-    mlab.show()

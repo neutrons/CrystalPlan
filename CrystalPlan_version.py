@@ -29,7 +29,9 @@ copyright = '(C) 2010'
 
 #Path to icons, relative to gui scripts
 icon_file = "icons/CrystalPlan_icon.png"
+icon_file_config = "icons/CrystalPlan_icon_config.png"
 icon_file_3d = "icons/CrystalPlan_icon_3d.png"
+icon_file_optimizer = "icons/CrystalPlan_icon_optimizer.png"
 
 if __name__ == "__main__":
     print package_name, version
