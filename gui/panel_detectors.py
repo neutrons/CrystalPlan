@@ -150,7 +150,7 @@ class DetectorView3D(wx.Frame):
 
     #---------------------------------------------------------------------------------------------
     def OnClose(self, event):
-        print "Detectors 3D view was", self.visualization.scene.mlab.view(), "with a roll of", self.visualization.scene.mlab.roll()
+        #print "Detectors 3D view was", self.visualization.scene.mlab.view(), "with a roll of", self.visualization.scene.mlab.roll()
         #Clear the attribute from the parent
         self.GetParent().frame3d = None
         self.visualization.cleanup()

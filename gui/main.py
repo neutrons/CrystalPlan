@@ -4,9 +4,6 @@ Includes GUI launcher, logger, error handler."""
 
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov
 # Version: $Id: CrystalPlan.py 1127 2010-04-01 19:28:43Z 8oz $
-#print "CrystalPlan.gui.launch_gui is being imported. __name__ is", __name__
-#print "CrystalPlan.gui.launch_gui __file__ is", __file__
-
 
 #--- General Imports ---
 from __future__ import with_statement
@@ -16,6 +13,7 @@ import traceback
 import datetime
 from optparse import OptionParser
 import wx
+
 
    
 
@@ -125,7 +123,6 @@ class CrystalPlanApp(wx.App):
 
 #-------------------------------------------------------------------------
 def launch_gui():
-    import CrystalPlan_version
     print "-------------- %s %s GUI is starting -----------------" % (CrystalPlan_version.package_name, CrystalPlan_version.version)
     
     #--- GUI Imports ---
@@ -202,9 +199,12 @@ if __name__=="__main__":
     #Manipulate the PYTHONPATH to put model directly in view of it
     #   This way, "import model" works.
     sys.path.insert(0, "..")
+    import CrystalPlan_version
 
     # --- Handle Command Line Arguments -----
-    parser = OptionParser()
+#    usage = "---- Welcome to " + CrystalPlan_version.package_name + " v." + CrystalPlan_version.version + " ----\n\nUsage: %prog [options] arg1 arg2"
+
+    parser = OptionParser(prog=CrystalPlan_version.package_name+".py", version="%s v.%s" % (CrystalPlan_version.package_name, CrystalPlan_version.version))
     parser.add_option("-t", "--test", dest="test",
                      action="store_true", default=False,
                      help="perform a suite of unit tests on the software")
