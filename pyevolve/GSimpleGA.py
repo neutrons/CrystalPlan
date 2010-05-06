@@ -694,6 +694,10 @@ class GSimpleGA:
       self.clear()
 
       if self.elitism:
+         #Avoid too much elitism
+         if self.nElitismReplacement >= len(self.internalPop):
+             self.nElitismReplacement = len(self.internalPop)-1
+
          logging.debug("Doing elitism.")
          if self.getMinimax() == Consts.minimaxType["maximize"]:
             #Replace the n-th worst new ones with the nth best old ones
@@ -834,6 +838,9 @@ class GSimpleGA:
       except KeyboardInterrupt:
          logging.debug("CTRL-C detected, finishing evolution.")
          if freq_stats: print "\n\tA break was detected, you have interrupted the evolution !\n"
+
+      #Finished. Clean up the multiprocessing pool
+      self.getPopulation().cleanupMultiProcessing()
 
       if freq_stats != 0:
          self.printStats()

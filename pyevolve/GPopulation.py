@@ -188,6 +188,9 @@ class GPopulation:
    #---------------------------------------------------------------------------------
    def initializeMultiProcessing(self):
         """Initialize the multiprocessing interface. Create the process pool."""
+        #Close the pool if it exists (we'll be creating a new one)
+        self.cleanupMultiProcessing()
+
         if self.multiProcessing[0]:
             t1 = time.time()
             #Create the process pool with the # of processes
@@ -199,7 +202,13 @@ class GPopulation:
             else:
                 self.proc_pool = Pool()
             print "Multiprocessing initialized in %03.3f sec; will use %d processors." % ( (time.time()-t1), num_proc )
-   
+
+   #---------------------------------------------------------------------------------
+   def cleanupMultiProcessing(self):
+       """Clean up process pools."""
+       if not self.proc_pool is None:
+            self.proc_pool.close()
+
    def setMinimax(self, minimax):
       """ Sets the population minimax
 

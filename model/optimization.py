@@ -40,17 +40,24 @@ class OptimizationParameters(HasTraits):
     desired_coverage = Float(85.0, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
     use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection coverage.")
     auto_increment = Bool(False, label='Auto increment # of orientations?', desc="that if the optimization does not converge in the # of generations, add one to the # of sample orientations and try again.")
+    avoid_edges = Bool(True, desc="to try to keep reflections away from the detector edges.")
+    edge_x_mm = Float(5.0, label="X-edge in mm", desc="how far away from the edges reflections should be (in x, so how far from the vertical edges)")
+    edge_y_mm = Float(5.0, label="X-edge in mm", desc="how far away from the edges reflections should be (in y, so how far from the horizontal edges)")
 
-    population = Int(100, desc="the number of individuals to evolve.")
-    max_generations = Int(10, desc="the maximum number of generations to evolve before giving up.")
+
+    population = Int(10, desc="the number of individuals to evolve.")
+    max_generations = Int(1000, desc="the maximum number of generations to evolve before giving up.")
     pre_mutation_rate = Float(0.8, label='Worst-gene mutation rate', desc="that the n-th worst sample orientations will be mutated prior to mating.")
+    worst_gene_location_randomizer = Float(0.4, label='Randomizer of worst-gene location', desc='When picking the worst gene to randomize, randomize the selection by this much so that perhaps the 2nd-worst gene gets changed instead.')
     mutation_rate = Float(0.02, desc="the probability of randomized mutation per gene.")
-    crossover_rate = Float(0.05, desc="the probability of cross-over.")
+    mutate_by_nudging = Bool(True, desc='that mutations of a gene "nudge" its position over by a random angle. If unchecked, the mutation is that the position is completely randomized.')
+    nudge_amount = Float(3.0, label='Nudge amount (deg)', desc='the width of the normal distribution of nudging that will be done on the angles.')
+    crossover_rate = Float(0.03, desc="the probability of cross-over.")
     use_multiprocessing = Bool(True, desc="to use multiprocessing (multiple processors) to speed up calculation.")
     number_of_processors = Int(4, desc="the number of processors to use, if multiprocessing is enabled. Enter <=0 to use all the processors available.")
     use_old_population = Bool(False)
     elitism = Bool(True, desc="to use elitism, which means to keep the best individuals from the previous generation.")
-    elitism_replacement = Int(2, desc="the Elitism replacement number - how many of the best individuals from the previous generation to keep.")
+    elitism_replacement = Int(1, desc="the Elitism replacement number - how many of the best individuals from the previous generation to keep.")
 
 
     view = View(
@@ -58,6 +65,9 @@ class OptimizationParameters(HasTraits):
             Item('number_of_orientations'),
             Item('desired_coverage'),
             Item('use_symmetry'),
+            Item('avoid_edges'),
+            Item('edge_x_mm'),
+            Item('edge_y_mm'),
             Item('auto_increment'),
             label='Optimization Settings'
         ),
@@ -65,7 +75,10 @@ class OptimizationParameters(HasTraits):
             Item('population'),
             Item('max_generations'),
             Item('pre_mutation_rate'),
+            Item('worst_gene_location_randomizer'),
             Item('mutation_rate'),
+            Item('mutate_by_nudging'),
+            Item('nudge_amount', enabled_when="mutate_by_nudging"),
             Item('crossover_rate'),
             Item('elitism'),
             Item('elitism_replacement'),
@@ -108,10 +121,18 @@ class GeneAngles(object):
         instr = instrument.inst
         #Match the # of angle
         self.angles = []
-        #@type anginfo AngleInfo
+        #@type ai AngleInfo
         for ai in instr.angles:
             #Pick a random angle and add it
             self.angles.append( ai.get_random() )
+
+    #---------------------------------------------------------------
+    def nudge(self, amount):
+        """Randomly nudge the position by the provided amount (in degrees)"""
+        if amount <= 0: return
+        for i in xrange(len(self.angles)):
+            self.angles[i] += np.random.normal(scale=np.deg2rad(amount))
+
 
 
 # ===========================================================================================
@@ -206,22 +227,44 @@ def ChromosomeInitializatorUseOldPopulation(genome, **args):
 
 # ===========================================================================================
 def ChromosomeMutatorRandomize(genome, **args):
-    """ Mutator for a chromosome. Changes both angles to random values."""
+    """ Mutator for a chromosome. Changes one gene to random values."""
     if args["pmut"] <= 0.0: return 0 #No mutants?
     listSize = len(genome)
     mutations = args["pmut"] * (listSize)
+    global op #@type op OptimizationParameters
 
     if mutations < 1.0:
         mutations = 0
         for it in xrange(listSize):
             if pyevolve.Util.randomFlipCoin(args["pmut"]):
-                genome[it].mutate()
+                if op.mutate_by_nudging:
+                    genome[it].nudge(op.nudge_amount)
+                else:
+                    genome[it].mutate()
+
                 mutations += 1
     else:
         for it in xrange(int(round(mutations))):
             which_gene = random.randint(0, listSize-1)
-            genome[which_gene].mutate()
+            if op.mutate_by_nudging:
+                genome[which_gene].nudge(op.nudge_amount)
+            else:
+                genome[which_gene].mutate()
     return int(mutations)
+
+
+# ===========================================================================================
+def ChromosomeMutatorRandomizeAll(genome, **args):
+    """ Mutator for a chromosome. Completely randomizes
+    the individual."""
+    pmut = args["pmut"]
+    if pmut <= 0.0: return 0 #No mutants ever
+    #Completely mutate only this % of the population
+    if pyevolve.Util.randomFlipCoin(pmut):
+        for i in xrange(len(genome)):
+            genome[i].mutate()
+        return 1
+    return 0
 
 
 # ===========================================================================================
@@ -245,10 +288,24 @@ def ChromosomeMutatorRandomizeWorst(genome, **args):
         num_mutations = len(genome)
 
     #Okay, now we need to look at each orientation to see which one is most redundant
+    if num_mutations == 1:
+        #--- Just one mutation ---
+        global op #@type op OptimizationParameters
+        if op.worst_gene_location_randomizer > 0:
+            #Possibly move the single mutation around
+            offset = int(np.round(np.abs(np.random.normal(scale=op.worst_gene_location_randomizer))))
+            if offset >= len(genome):
+                offset = len(genome)-1
+        else:
+            offset = 0
 
-    #This is the index of the n-th entry in the # of unique measurements (the worst one)
-    worst_genes = [x[1] for x in genome.unique_measurements[0:num_mutations]]
-#    print "mutating", worst_genes
+        worst_genes = [genome.unique_measurements[offset][1]]
+
+    else:
+        #--- Just do the n-th worst ones ----
+
+        #This is the index of the n-th entry in the # of unique measurements (the worst one)
+        worst_genes = [x[1] for x in genome.unique_measurements[0:num_mutations]]
 
     #We randomize these bad genes
     for bad_gene in worst_genes:
@@ -321,14 +378,26 @@ def eval_func(genome, verbose=False):
     
     #@type exp Experiment
     exp = experiment.exp
-    #Calculate
+    #Calculate (this calculates the stats)
     exp.recalculate_reflections(positions, calculation_callback=None)
 
-    #Return the measured fraction
-    if op.use_symmetry:
-        coverage = exp.reflection_stats_with_symmetry.measured * 1.0 / exp.reflection_stats_with_symmetry.total
+    #Calculate the stats with edge avoidance
+    if op.avoid_edges:
+        exp.calculate_reflection_coverage_stats_adjusted(op.edge_x_mm, op.edge_y_mm)
+        #Use this fraction
+        if op.use_symmetry:
+            coverage = exp.reflection_stats_adjusted_with_symmetry.measured * 1.0 / exp.reflection_stats_adjusted_with_symmetry.total
+        else:
+            coverage = exp.reflection_stats_adjusted.measured * 1.0 / exp.reflection_stats_adjusted.total
+
     else:
-        coverage = exp.reflection_stats.measured * 1.0 / exp.reflection_stats.total
+        #No edge avoidance
+
+        #Return the measured fraction
+        if op.use_symmetry:
+            coverage = exp.reflection_stats_with_symmetry.measured * 1.0 / exp.reflection_stats_with_symmetry.total
+        else:
+            coverage = exp.reflection_stats.measured * 1.0 / exp.reflection_stats.total
 
 
     #----- Now we determine the least useful measurements ------
@@ -370,6 +439,7 @@ def eval_func(genome, verbose=False):
 
     if verbose:
         print  "Fitness: had %3d positions, score was %7.3f" % (len(positions), coverage)
+
     #Score is equal to the coverage
     score = coverage
     invalid_positions = len(genome)-len(positions)
@@ -403,14 +473,14 @@ def set_changeable_parameters(optim_params, ga):
     #@type ga GSimpleGA
 
     #Set the GA parameters from the configuration variable
-    ga.setMutationRate(optim_params.mutation_rate)
-    ga.setPreMutationRate(optim_params.pre_mutation_rate)
-    ga.setCrossoverRate(optim_params.crossover_rate)
+    if optim_params.mutation_rate >= 0: ga.setMutationRate(optim_params.mutation_rate)
+    if optim_params.pre_mutation_rate >= 0: ga.setPreMutationRate(optim_params.pre_mutation_rate)
+    if optim_params.crossover_rate >= 0: ga.setCrossoverRate(optim_params.crossover_rate)
     #Set the multiprocessing. full_copy=True because we change the individual!
     ga.setMultiProcessing(optim_params.use_multiprocessing, full_copy=True, number_of_processes=optim_params.number_of_processors)
     if optim_params.max_generations > 0: ga.setGenerations(optim_params.max_generations)
     ga.setElitism(optim_params.elitism)
-    ga.setElitismReplacement(optim_params.elitism_replacement)
+    if optim_params.elitism_replacement > 0: ga.setElitismReplacement(optim_params.elitism_replacement)
 
 
 #-----------------------------------------------------------------------------------------------

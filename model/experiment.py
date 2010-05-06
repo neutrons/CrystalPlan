@@ -387,6 +387,8 @@ class ReflectionStats:
     measured = 0
     #Measured at least twice
     redundant = 0
+    def __str__(self):
+        return "Total %d, measured %d, redundant %d." % (self.total, self.measured, self.redundant)
 
 
 #========================================================================================================
@@ -463,6 +465,9 @@ class Experiment:
     #Statistics for reflections, with and without symmetry
     reflection_stats = ReflectionStats()
     reflection_stats_with_symmetry = ReflectionStats()
+    #Adjusted statistics, e.g. with edges.
+    reflection_stats_adjusted = ReflectionStats()
+    reflection_stats_adjusted_with_symmetry = ReflectionStats()
 
 
     #For output
@@ -1501,7 +1506,7 @@ class Experiment:
 
 
     #-------------------------------------------------------------------------------
-    def calculate_reflection_coverage_stats(self):
+    def calculate_reflection_coverage_stats(self, edge_avoidance=False, edge_x=0, edge_y=0):
         """Counts the number of reflections that have been measured, with or without considering
         crystal symmetry.
         """
@@ -1515,6 +1520,81 @@ class Experiment:
         self.reflection_stats_with_symmetry.total = np.sum(mask)
         self.reflection_stats_with_symmetry.measured = np.sum(self.reflections_times_measured_with_equivalents[mask,:] > 0)
         self.reflection_stats_with_symmetry.redundant = np.sum(self.reflections_times_measured_with_equivalents[mask,:] > 1)
+        #Stats using edge avoidance
+        if edge_avoidance:
+            detectors = self.inst.detectors
+
+            #Total to add up
+            rsa = 0
+            rsaws = 0
+
+            self.reflection_stats_adjusted.total = len(self.reflections)
+            #@type refl Reflection
+            for refl in self.reflections:
+                mav = []
+                for meas in refl.measurements:
+                    (poscov_id, detector_num, horizontal, vertical, wavelength, distance) = meas
+                    mav.append( detectors[detector_num].edge_avoidance(horizontal, vertical, edge_x, edge_y) )
+                #Sum it
+                mysum = np.sum(mav > 0.99)
+                refl.measurement_adjusted_sum = mysum
+                rsa += (mysum > 0)
+
+                refl.measurement_adjusted_value = mav
+
+            #Now handle symmetry
+            mask = self.primary_reflections_mask
+            for refl in self.reflections:
+                if refl.is_primary:
+                    for equiv in refl.equivalent:
+                        rsaws += (equiv.measurement_adjusted_sum > 0)
+
+            #Save 'em
+            self.reflection_stats_adjusted.measured = rsa
+            self.reflection_stats_adjusted_with_symmetry.measured = rsaws
+
+        return None
+
+    #-------------------------------------------------------------------------------
+    def calculate_reflection_coverage_stats_adjusted(self, edge_x=0, edge_y=0):
+        """Adjusts the coverage stats to take into account edge avoidance.
+        """
+        if self.inst is None: return
+        detectors = self.inst.detectors
+
+        #Total to add up
+        rsa = 0
+        rsaws = 0
+
+        self.reflection_stats_adjusted.total = self.reflection_stats.total
+        self.reflection_stats_adjusted_with_symmetry.total = self.reflection_stats_with_symmetry.total
+        #@type refl Reflection
+        for refl in self.reflections:
+            mav = []
+            mysum = 0
+
+            if len(refl.measurements) > 0:
+                for meas in refl.measurements:
+                    (poscov_id, detector_num, horizontal, vertical, wavelength, distance) = meas
+                    mav.append( detectors[detector_num].edge_avoidance(horizontal, vertical, edge_x, edge_y) )
+                #Sum it
+                mysum = np.sum(np.array(mav) > 0.99)
+                
+            refl.measurement_adjusted_sum = mysum
+            rsa += (mysum > 0)
+            refl.measurement_adjusted_value = mav
+
+        #Now handle symmetry
+        mask = self.primary_reflections_mask
+        for refl in self.reflections:
+            if refl.is_primary:
+                for equiv in refl.equivalent:
+                    rsaws += (equiv.measurement_adjusted_sum > 0)
+
+        #Save 'em
+        self.reflection_stats_adjusted.measured = rsa
+        self.reflection_stats_adjusted_with_symmetry.measured = rsaws
+
         return None
 
             
@@ -1937,6 +2017,15 @@ class TestExperiment(unittest.TestCase):
         self._check_get_equivalent_reflections( (1,2,3), [ (-1,-2,-3) ])
         self._check_get_equivalent_reflections( (0,0,0), [ ])
 
+    def test_reflection_stats(self):
+        """Test each of the 11 Laue classes to make sure the reflections work."""
+        self.setup_calculated_reflections()
+        #@type e Experiment
+        e = self.exp
+        e.calculate_reflection_coverage_stats_adjusted(edge_x=5, edge_y=5)
+        print e.reflection_stats
+        print e.reflection_stats_adjusted
+
 
     def test_find_primary_reflections(self):
         # @type e Experiment
@@ -1952,11 +2041,11 @@ class TestExperiment(unittest.TestCase):
         e.find_primary_reflections()
 
 if __name__ == "__main__":
-    unittest.main()
+#    unittest.main()
     
-#    tst = TestExperiment('test_recalculate_reflections')
-#    tst.setUp()
-#    tst.test_recalculate_reflections()
+    tst = TestExperiment('test_reflection_stats')
+    tst.setUp()
+    tst.test_reflection_stats()
 
     
 #    import instrument

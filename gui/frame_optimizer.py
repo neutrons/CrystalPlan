@@ -168,10 +168,14 @@ class OptimizerController():
         frm = self.frame #@type frm FrameOptimizer
         if frm is None:
             return
+        if self.params.avoid_edges:
+            edges = " (excluding edges)"
+        else:
+            edges = ""
         #Coverage stats
-        frm.staticTextCoverage.SetLabel("Best Coverage: %7.2f %%" % (self.best_coverage*100))
+        frm.staticTextCoverage.SetLabel("Best Coverage%s: %7.2f %%" % (edges, self.best_coverage*100))
         frm.gaugeCoverage.SetValue(self.best_coverage*100)
-        frm.staticTextAverage.SetLabel("Average Coverage: %7.2f %%" % (self.average_coverage*100))
+        frm.staticTextAverage.SetLabel("Average Coverage%s: %7.2f %%" % (edges, self.average_coverage*100))
         frm.gaugeAverage.SetValue(self.average_coverage*100)
         #The generation counter
         maxgen = self.params.max_generations
@@ -466,7 +470,7 @@ class FrameOptimizer(wx.Frame):
         wx.Frame.__init__(self, id=wxID_FRAMEOPTIMIZER, name=u'FrameOptimizer',
               parent=prnt, pos=wx.Point(976, 171), size=wx.Size(715, 599),
               style=wx.DEFAULT_FRAME_STYLE, title=u'Coverage Automatic Optimizer')
-        self.SetClientSize(wx.Size(900, 599))
+        self.SetClientSize(wx.Size(900, 800))
         self.Bind(wx.EVT_CLOSE, self.controller.close_form)
         self.SetIcon(prnt.GetIcon())
 

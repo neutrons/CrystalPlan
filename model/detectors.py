@@ -131,6 +131,36 @@ class FlatDetector(Detector):
             bool_array |= ((h >= 0) & (h <= self.width)) & ((v >= 0) & (v <= self.height))
         return bool_array
 
+    #-------------------------------------------------------------------------------
+    def edge_avoidance(self, h, v, edge_x, edge_y):
+        """Returns a value from 0.0 to 1.0 where 1.0 = away from edge and 0 = just at the edge.
+        Assumes h,v are actually on the detector otherwise.
+
+        Parameters:
+            h,v: horizontal and vertical position on detector. 0 = center
+            edge_x, edge_y: edge size, in mm, on either side of x and y.
+        """
+        value = 1.0
+        if edge_x > 0:
+            edge_x = 1.0 * edge_x
+            wid = self.width/2-edge_x
+            if h > wid:
+                value -= (h-wid)/edge_x
+            if h < -wid:
+                value -= (-h-wid)/edge_x
+
+        if edge_y > 0:
+            edge_y = 1.0 * edge_y
+            hei = self.height/2-edge_y
+            if v > hei:
+                value -= (v-hei)/edge_y
+            if v < -hei:
+                value -= (-v-hei)/edge_y
+        #Return the value, clipping to 0
+        if value < 0:
+            return 0
+        else:
+            return value
 
     #-------------------------------------------------------------------------------
     def detector_coord(self, az, elev):
@@ -809,7 +839,7 @@ class TestHitsFlatDetector(unittest.TestCase):
         assert not np.all(hits_it), "Misses detector, wl is too large."
 
     def test_get_pixel_direction(self):
-        det = self.det
+        det = self.det #@type det Detector
         #Higher tolerance because it has to round to pixel positions
         dir = det.get_pixel_direction(0.0, 0.0)
         assert np.allclose(dir.flatten(), np.array([0,0,1]), atol=1e-2), "Dead center"
@@ -818,7 +848,15 @@ class TestHitsFlatDetector(unittest.TestCase):
         dir = det.get_pixel_direction(-50.0, -50.0)
         assert np.allclose(dir.flatten(), np.array([-0.124,-0.124,0.984]), atol=1e-2), "Left-bottom"
         
-
+    def test_edge_avoidance(self):
+        det = self.det #@type det Detector
+        assert np.allclose(det.edge_avoidance(45, 0, 10, 10), 0.5), "edge avoidance tests."
+        assert np.allclose(det.edge_avoidance(-48, 0, 10, 10), 0.2), "edge avoidance tests."
+        assert np.allclose(det.edge_avoidance(0, 45, 10, 10), 0.5), "edge avoidance tests."
+        assert np.allclose(det.edge_avoidance(0, -48, 10, 10), 0.2), "edge avoidance tests."
+        assert np.allclose(det.edge_avoidance(22, 33, 10, 10), 1.0), "edge avoidance tests."
+        assert np.allclose(det.edge_avoidance(40, -40, 10, 10), 1.0), "edge avoidance tests."
+        assert np.allclose(det.edge_avoidance(60, -80, 10, 10), 0.0), "edge avoidance tests."
 
 
 #==================================================================

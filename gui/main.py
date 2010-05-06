@@ -15,19 +15,8 @@ import os
 import traceback
 import datetime
 from optparse import OptionParser
-
-if __name__=="__main__":
-    #Manipulate the PYTHONPATH to put model directly in view of it
-    #   This way, "import model" works.
-    sys.path.insert(0, "..")
-
-#--- GUI Imports ---
-import frame_main
-import frame_qspace_view
-import display_thread
 import wx
-import model
-import CrystalPlan_version
+
    
 
 
@@ -123,6 +112,8 @@ def excepthook(type, value, tb, thread_information="Main Loop"):
 class CrystalPlanApp(wx.App):
     def OnInit(self):
         #Create the main GUI frame
+        import frame_main
+        import frame_qspace_view
         self.main = frame_main.create(None)
         self.main.Show()
         #Set it on top
@@ -133,9 +124,15 @@ class CrystalPlanApp(wx.App):
 
 
 #-------------------------------------------------------------------------
-#if __name__ == '__main__':
 def launch_gui():
+    import CrystalPlan_version
     print "-------------- %s %s GUI is starting -----------------" % (CrystalPlan_version.package_name, CrystalPlan_version.version)
+    
+    #--- GUI Imports ---
+    import display_thread
+    import wx
+    import model
+
 
     #Create a StdOut wrapper
     global out_wrapper
@@ -200,8 +197,12 @@ def launch_gui():
 
 
 
-
+#---------------- MAIN -------------------------------------------
 if __name__=="__main__":
+    #Manipulate the PYTHONPATH to put model directly in view of it
+    #   This way, "import model" works.
+    sys.path.insert(0, "..")
+
     # --- Handle Command Line Arguments -----
     parser = OptionParser()
     parser.add_option("-t", "--test", dest="test",
@@ -216,3 +217,6 @@ if __name__=="__main__":
     else:
         #Start the GUI
         launch_gui()
+
+
+

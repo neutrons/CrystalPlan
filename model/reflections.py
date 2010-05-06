@@ -37,7 +37,7 @@ class Reflection():
 
         #List holds the measurements.
         #   value: a list of tuples.
-        #       each tuple holds poscovid, det, h,v,wl
+        #       each tuple holds  (poscov_id, detector_num, horizontal, vertical, wavelength, distance)
         self.measurements = list()
 
         #Divergence (half-width) in radians of the scattered beam
@@ -49,13 +49,17 @@ class Reflection():
         #Link to the actual primary reflection, if this is a secondary one.
         self.primary = None
 
-        #List of equivalent reflections (from symmetry); only set for primary reflections
+        #List of equivalent reflections (from symmetry); only set for primary reflections.
+        #   Includes the container object (aka. I am an equivalent of myself)
         self.equivalent = []
 
         #This is a temp. value used in a calculation
         self.considered = False
 
-        #self.q_vector = np.dot(reciprocal_lattice, column(self.hkl))
+        #List of float measurement values (ranging normally from 0.0 to 1.0)
+        #   used for adjusted coverage statistics taking into account
+        #   edges, for example
+        self.measurement_adjusted_value = None
 
 
     #----------------------------------------------------
