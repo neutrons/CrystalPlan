@@ -12,6 +12,7 @@ import wx.grid
 #--- GUI Imports ---
 import gui_utils
 import display_thread
+import frame_optimizer
 
 #--- Model Imports ---
 import model
@@ -354,6 +355,10 @@ class PanelExperiment(wx.Panel):
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(self.buttonSaveToCSV, 0, border=0, flag=0)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddStretchSpacer(1)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.buttonOptimizer, 0, border=0, flag=0)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
 
     def _init_coll_boxSizerAll_Items(self, parent):
         # generated method, don't edit
@@ -371,7 +376,7 @@ class PanelExperiment(wx.Panel):
         parent.AddWindow(self.staticTextEstimatedTime, 0, border=12, flag=wx.EXPAND  | wx.LEFT | wx.RIGHT)
         #parent.AddSizer(self.boxSizerEstimatedTime, 0, border=0, flag=wx.EXPAND)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddSizer(self.boxSizerSave, 0, border=0, flag=0)
+        parent.AddSizer(self.boxSizerSave, 0, border=0, flag=wx.EXPAND)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
 
     def _init_sizers(self):
@@ -494,6 +499,12 @@ class PanelExperiment(wx.Panel):
         self.buttonSaveToCSV.Bind(wx.EVT_BUTTON, self.OnButtonSaveToCSVButton,
               id=wxID_PANELEXPERIMENTBUTTONSAVETOCSV)
         self.buttonSaveToCSV.SetToolTipString("Choose a path to save the list of sample orientations to a .CSV file compatible with PyDas (SNS data acquisition system python scripting).")
+
+        self.buttonOptimizer = wx.Button(id=wx.NewId(), label=u'Automatic Experiment Optimizer', name=u'buttonOptimizer', parent=self,
+              pos=wx.Point(0, 804), size=wx.Size(250, 29), style=0)
+        self.buttonOptimizer.Bind(wx.EVT_BUTTON, self.OnButtonOptimizer)
+        self.buttonOptimizer.SetToolTipString("Open the Experiment Plan Automatic Optimizer window.")
+
         self.buttonRefreshList = wx.Button(id=wxID_PANELEXPERIMENTBUTTONREFRESHLIST,
               label=u'Refresh List', name=u'buttonRefreshList', parent=self,
               pos=wx.Point(240, 33), size=wx.Size(100, 29), style=0)
@@ -584,6 +595,12 @@ class PanelExperiment(wx.Panel):
         gui_utils.dialog_to_save_experiment_to_CSV(self)
         event.Skip()
 
+    def OnButtonOptimizer(self, event):
+        frm = frame_optimizer.get_instance(parent=self)
+        frm.Show()
+        frm.Raise()
+        event.Skip()
+
     def OnGridExpGridEditorCreated(self, event):
         event.Skip()
 
@@ -605,13 +622,13 @@ if __name__ == "__main__":
     model.instrument.inst.make_qspace()
     #Initialize the instrument and experiment
     model.experiment.exp = model.experiment.Experiment(model.instrument.inst)
-    import numpy as np
-    for i in np.deg2rad(np.arange(0, 36, 12)):
-        model.instrument.inst.simulate_position(list([i,i,i]))
-    pd = dict()
-    for pos in model.instrument.inst.positions:
-        pd[ id(pos) ] = True
-    display_thread.NextParams[model.experiment.PARAM_POSITIONS] = model.experiment.ParamPositions(pd)
+#    import numpy as np
+#    for i in np.deg2rad(np.arange(0, 36, 12)):
+#        model.instrument.inst.simulate_position(list([i,i,i]))
+#    pd = dict()
+#    for pos in model.instrument.inst.positions:
+#        pd[ id(pos) ] = True
+#    display_thread.NextParams[model.experiment.PARAM_POSITIONS] = model.experiment.ParamPositions(pd)
     import gui_utils
     (app, pnl) = gui_utils.test_my_gui(PanelExperiment)
     app.frame.SetClientSize(wx.Size(700,500))

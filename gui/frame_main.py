@@ -34,9 +34,6 @@ import frame_optimizer
 import model
 
 
-def create(parent):
-    return FrameMain(parent)
-
 [wxID_FRAMEMAIN, wxID_FRAMEMAINnotebook, wxID_FRAMEMAINPANEL1,
  wxID_FRAMEMAINPANEL2, wxID_FRAMEMAINSPLITTER_MAIN,
  wxID_FRAMEMAINSTATICTEXT1, wxID_FRAMEMAINSTATUSBAR_MAIN,
@@ -212,8 +209,9 @@ class FrameMain(wx.Frame):
 
 
     def OnMenuOptimizePositions(self, event):
-        frm = frame_optimizer.FrameOptimizer(parent=self)
+        frm = frame_optimizer.get_instance(parent=self)
         frm.Show()
+        frm.Raise()
         event.Skip()
 
     def OnMenu(self, event):

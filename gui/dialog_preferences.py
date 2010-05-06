@@ -6,6 +6,7 @@
 
 #--- General Imports ---
 import wx
+import CrystalPlan_version
 
 #--- GUI Imports ---
 import config_gui
@@ -65,6 +66,8 @@ class DialogPreferences(wx.Dialog):
               size=wx.Size(631, 703), style=wx.DEFAULT_DIALOG_STYLE,
               title=u'Change Preferences')
         self.SetClientSize(wx.Size(500, 400))
+        self.SetIcon( wx.Icon(CrystalPlan_version.icon_file_config, wx.BITMAP_TYPE_PNG) )
+
 
         self.buttonOK = wx.Button(id=wxID_DIALOGPREFERENCESBUTTONOK,
               label=u'OK', name=u'buttonOK', parent=self, pos=wx.Point(0, 0),

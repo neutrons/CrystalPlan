@@ -114,7 +114,7 @@ class CrystalPlanApp(wx.App):
         #Create the main GUI frame
         import frame_main
         import frame_qspace_view
-        self.main = frame_main.create(None)
+        self.main = frame_main.FrameMain(None)
         self.main.Show()
         #Set it on top
         self.SetTopWindow(self.main)

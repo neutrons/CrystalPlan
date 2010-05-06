@@ -13,13 +13,32 @@ import display_thread
 #--- Model Imports ----
 import model
 from model.optimization import OptimizationParameters
-
+import CrystalPlan_version
 
 if __name__=="__main__":
     #Manipulate the PYTHONPATH to put model directly in view of it
     import sys
     sys.path.insert(0, "..")
     
+
+
+#-------------------------------------------------------------------------------
+#------ SINGLETON --------------------------------------------------------------
+#-------------------------------------------------------------------------------
+_instance = None
+
+def create(parent):
+    global _instance
+    _instance = FrameOptimizer(parent)
+    return _instance
+
+def get_instance(parent):
+    """Returns the singleton instance of this frame (window)."""
+    global _instance
+    if _instance is None:
+        return create(parent)
+    else:
+        return _instance
 
 #================================================================================================
 #================================================================================================
@@ -375,9 +394,6 @@ class OptimizerController():
 #================================================================================================
 #================================================================================================
 #================================================================================================
-def create(parent):
-    return FrameOptimizer(parent)
-
 [wxID_FRAMEOPTIMIZER, wxID_FRAMEOPTIMIZERbuttonKeepGoing,
  wxID_FRAMEOPTIMIZERBUTTONAPPLY, wxID_FRAMEOPTIMIZERBUTTONSTART, 
  wxID_FRAMEOPTIMIZERBUTTONSTOP, wxID_FRAMEOPTIMIZERGAUGECOVERAGE, 
@@ -472,7 +488,7 @@ class FrameOptimizer(wx.Frame):
               style=wx.DEFAULT_FRAME_STYLE, title=u'Coverage Automatic Optimizer')
         self.SetClientSize(wx.Size(900, 800))
         self.Bind(wx.EVT_CLOSE, self.controller.close_form)
-        self.SetIcon(prnt.GetIcon())
+        self.SetIcon( wx.Icon(CrystalPlan_version.icon_file_optimizer, wx.BITMAP_TYPE_PNG) )
 
         self.splitterMain = wx.SplitterWindow(id=wxID_FRAMEOPTIMIZERSPLITTERMAIN,
               name=u'splitterMain', parent=self, pos=wx.Point(8, 8),
