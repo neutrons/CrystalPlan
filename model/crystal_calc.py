@@ -317,144 +317,101 @@ def get_hkl_from_q(q, reciprocal_lattice):
     return np.dot(invB, q)
 
 
+#
+##========================================================================================================
+#def getq_inelastic(az, elevation, wl_input, wl, q_rot_matrix):
+#    """Find the q-vector corresponding to the azimuth, elevation and wavelength of the detector pixel.
+#    Optimized for speed by using inline C code. Provides a ~45% time reduction for coverage calculation.
+#
+#    Paramters:
+#        az, elevation: azimuth, elevation angle of pixel. Scalar only.
+#        wl: wavelength considered.
+#        q_rot_matrix: The q-rotation matrix; how the q-vector has to be rotated.
+#            This corresponds to the opposite angles of the sample orientation,
+#            so (-phi, -chi, -omega).
+#
+#    Returns:
+#        q: q-vector, a single column
+#    """
+#
+#    support = """
+#    #include <math.h>
+#    """
+#    #Don't use the headers or anything
+#    code = getq_inelastic_code
+#    #Ensure the right data types!
+#    az = float(az)
+#    elevation = float(elevation)
+#    wl = float(wl)
+#    wl_input = float(wl_input)
+#    rot_matrix = q_rot_matrix
+#    #type_converters = scipy.weave.converters.blitz,
+#    q = weave.inline(code,['wl_input', 'wl', 'elevation', 'az', 'pi', 'rot_matrix'],compiler='gcc', support_code = support,libraries = ['m'])
+#    q = column([q[0],q[1],q[2]])
+#
+#    return q
+#
+##========================================================================================================
+#def getq_inelastic_python(azimuth, elevation, wl_input, wl, rot_matrix):
+#    """Find the q-vector corresponding to the azimuth, elevation and wavelength of the detector pixel.
+#    Uses only python and numpy code.
+#
+#    Paramters:
+#        azimuth, elevation: azimuth, elevation angle of pixel(s). Can be an array, should be only 1-D though.
+#            Shapes of az and elev need to match.
+#        wl_input: wavelength of the incoming neutron
+#        wl: wavelength detected considered; can be scalar or array matching az and elev.
+#        rot_matrix: The rotation matrix corresponding to the sample orientation (phi, chi, omega)
+#
+#    Returns:
+#        q: q-vector, either a single column or a 3xn array depending on input size.
+#    """
+#
+#    #The scattered beam emanates from the centre of this spher.
+#    #Find the intersection of the scattered beam and the sphere, in XYZ
+#    beam = column(az_elev_direction(azimuth, elevation)) / wl
+#
+#    #And here is the incident beam direction: Along the z-axis, positive
+#    incident = np.array([0, 0, 1]).reshape(3,1) / wl_input
+#
+#    #The wave vector difference between the two (final-incident) is the q vector
+#    q = 2*pi * (beam - incident)
+#
+#    #Now we switch to the coordinate system of the crystal.
+#    #The scattered beam direction (the detector location) is rotated relative to the crystal
+#    #   because the sample is rotated.
+#    #So is the incident beam direction.
+#    #Therefore, the q-vector measured is simply rotated by the supplied rotation matrix (which has reversed angles)
+#
+#    q = np.dot(rot_matrix, q)
+#
+#    return q
 
 #========================================================================================================
-#Code for the getq_inelastic command, in C
-getq_inelastic_code_header = """py::tuple getq_inelastic(double wl_input, double wl, double az, double elevation, double pi, double* rot_matrix)
-{
-    py::tuple return_val(3);
-"""
-getq_inelastic_code = """
-    double r_ewald, r2, x, y, z;
-    // The scattered beam emanates from the centre of this spher.
-    // Find the intersection of the scattered beam and the sphere, in XYZ
-    // We start with an Ewald sphere of radius 1/wavelength
-    r_ewald = 1/wl;
-
-    //Assuming azimuth of zero points to z positive = same direction as incident radiation.
-    r2 = r_ewald*cos(elevation);
-    z=cos(az) * r2;
-    x=sin(az) * r2;
-
-    // Assuming elevation angle is 0 when horizontal, positive to y positive:
-    y=sin(elevation) * r_ewald;
-
-    //And here is the incident beam direction: Along the z-axis
-    double incident_z = 1 / wl_input;
-
-    //The vector difference between the two is the q vector
-    float qx, qy, qz;
-    qx = 2 * pi * x;
-    qy = 2 * pi * y;
-    qz = 2 * pi * (z - incident_z);
-
-    //#Now we switch to the coordinate system of the crystal.
-    //#The scattered beam direction (the detector location) is rotated relative to the crystal because the sample is rotated.
-    //#So is the incident beam direction.
-    //#Therefore, the q-vector measured is simply rotated
-
-    //Here we perform the rotation by doing a matrix multiplication.
-    py::tuple q(3);
-    q[0]=qx * rot_matrix[0+0] + qy * rot_matrix[0+1] + qz * rot_matrix[0+2];
-    q[1]=qx * rot_matrix[3+0] + qy * rot_matrix[3+1] + qz * rot_matrix[3+2];
-    q[2]=qx * rot_matrix[6+0] + qy * rot_matrix[6+1] + qz * rot_matrix[6+2];
-    return_val = q;
-    """
-getq_inelastic_code_footer = "return return_val; }"
-
-#========================================================================================================
-def getq_inelastic(az, elevation, wl_input, wl, q_rot_matrix):
-    """Find the q-vector corresponding to the azimuth, elevation and wavelength of the detector pixel.
-    Optimized for speed by using inline C code. Provides a ~45% time reduction for coverage calculation.
-
-    Paramters:
-        az, elevation: azimuth, elevation angle of pixel. Scalar only.
-        wl: wavelength considered.
-        q_rot_matrix: The q-rotation matrix; how the q-vector has to be rotated.
-            This corresponds to the opposite angles of the sample orientation,
-            so (-phi, -chi, -omega).
-
-    Returns:
-        q: q-vector, a single column
-    """
-
-    support = """
-    #include <math.h>
-    """
-    #Don't use the headers or anything
-    code = getq_inelastic_code
-    #Ensure the right data types!
-    az = float(az)
-    elevation = float(elevation)
-    wl = float(wl)
-    wl_input = float(wl_input)
-    rot_matrix = q_rot_matrix
-    #type_converters = scipy.weave.converters.blitz,
-    q = weave.inline(code,['wl_input', 'wl', 'elevation', 'az', 'pi', 'rot_matrix'],compiler='gcc', support_code = support,libraries = ['m'])
-    q = column([q[0],q[1],q[2]])
-
-    return q
-
-#========================================================================================================
-def getq_inelastic_python(azimuth, elevation, wl_input, wl, rot_matrix):
+def getq_python(azimuth, elevation, wl_output, rot_matrix, wl_input=None):
     """Find the q-vector corresponding to the azimuth, elevation and wavelength of the detector pixel.
     Uses only python and numpy code.
 
     Paramters:
         azimuth, elevation: azimuth, elevation angle of pixel(s). Can be an array, should be only 1-D though.
             Shapes of az and elev need to match.
-        wl_input: wavelength of the incoming neutron
-        wl: wavelength detected considered; can be scalar or array matching az and elev.
+        wl_output: output (scattered) wavelength considered; can be scalar or array matching az and elev.
         rot_matrix: The rotation matrix corresponding to the sample orientation (phi, chi, omega)
+        wl_input: input (incident) wavelength; if not specified, defaults to wl_output
 
     Returns:
         q: q-vector, either a single column or a 3xn array depending on input size.
     """
+    #The Ewald sphere has 1/wl radius
+    if wl_input is None:
+        wl_input = wl_output
 
     #The scattered beam emanates from the centre of this spher.
     #Find the intersection of the scattered beam and the sphere, in XYZ
-    beam = column(az_elev_direction(azimuth, elevation)) / wl
+    beam = column(az_elev_direction(azimuth, elevation)) / wl_output
 
     #And here is the incident beam direction: Along the z-axis, positive
-    incident = np.array([0, 0, 1]).reshape(3,1) / wl_input
-
-    #The wave vector difference between the two (final-incident) is the q vector
-    q = 2*pi * (beam - incident)
-
-    #Now we switch to the coordinate system of the crystal.
-    #The scattered beam direction (the detector location) is rotated relative to the crystal
-    #   because the sample is rotated.
-    #So is the incident beam direction.
-    #Therefore, the q-vector measured is simply rotated by the supplied rotation matrix (which has reversed angles)
-
-    q = np.dot(rot_matrix, q)
-
-    return q
-
-#========================================================================================================
-def getq_python(azimuth, elevation, wl, rot_matrix):
-    """Find the q-vector corresponding to the azimuth, elevation and wavelength of the detector pixel.
-    Uses only python and numpy code.
-
-    Paramters:
-        azimuth, elevation: azimuth, elevation angle of pixel(s). Can be an array, should be only 1-D though.
-            Shapes of az and elev need to match.
-        wl: wavelength considered; can be scalar or array matching az and elev.
-        rot_matrix: The rotation matrix corresponding to the sample orientation (phi, chi, omega)
-
-    Returns:
-        q: q-vector, either a single column or a 3xn array depending on input size.
-    """
-
-    #We start with an Ewald sphere of radius 1/wavelength
-    r_ewald = 1/wl
-
-    #The scattered beam emanates from the centre of this spher.
-    #Find the intersection of the scattered beam and the sphere, in XYZ
-    beam = column(az_elev_direction(azimuth, elevation)) * r_ewald
-
-    #And here is the incident beam direction: Along the z-axis, positive
-    incident = np.array([0, 0, 1]).reshape(3,1) * r_ewald
+    incident = np.array([0, 0, 1.0]).reshape(3,1) / wl_input
 
     #The wave vector difference between the two is the q vector
     q = 2*pi * (beam - incident)
@@ -472,27 +429,37 @@ def getq_python(azimuth, elevation, wl, rot_matrix):
 
 #========================================================================================================
 #Code for the getq command, in C
-getq_code_header = """py::tuple getq(double wl, double az, double elevation, double pi, double* rot_matrix)
+
+#Header for elastic scattering (same wavelengths)
+getq_code_header = """py::tuple getq(double wl_output, double az, double elevation, double pi, double* rot_matrix)
+{
+    py::tuple return_val(3);
+    double wl_input = wl_output
+"""
+
+#Header for inelastic scattering
+getq_inelastic_code_header = """py::tuple getq(double wl_input, double wl_output, double az, double elevation, double pi, double* rot_matrix)
 {
     py::tuple return_val(3);
 """
+
+#Core code, common for both elastic and inelastic
 getq_code = """
-    double r_ewald, r2, x, y, z;
+    double r2, x, y, z;
     // The scattered beam emanates from the centre of this spher.
     // Find the intersection of the scattered beam and the sphere, in XYZ
     // We start with an Ewald sphere of radius 1/wavelength
-    r_ewald = 1/wl;
 
     //Assuming azimuth of zero points to z positive = same direction as incident radiation.
-    r2 = r_ewald*cos(elevation);
+    r2 = cos(elevation) / wl_output;
     z=cos(az) * r2;
     x=sin(az) * r2;
 
     // Assuming elevation angle is 0 when horizontal, positive to y positive:
-    y=sin(elevation) * r_ewald;
+    y=sin(elevation) / wl_output;
 
     //And here is the incident beam direction: Along the z-axis
-    double incident_z = r_ewald;
+    double incident_z = 1.0 / wl_input;
 
     //The vector difference between the two is the q vector
     float qx, qy, qz;
@@ -515,16 +482,17 @@ getq_code = """
 getq_code_footer = "return return_val; }"
 
 #========================================================================================================
-def getq(az, elevation, wl, q_rot_matrix):
+def getq(az, elevation, wl_output, q_rot_matrix, wl_input=None):
     """Find the q-vector corresponding to the azimuth, elevation and wavelength of the detector pixel.
     Optimized for speed by using inline C code. Provides a ~45% time reduction for coverage calculation.
 
     Paramters:
         az, elevation: azimuth, elevation angle of pixel. Scalar only.
-        wl: wavelength considered.
+        wl_output: output (scattered) wavelength considered; can be scalar or array matching az and elev.
         q_rot_matrix: The q-rotation matrix; how the q-vector has to be rotated.
             This corresponds to the opposite angles of the sample orientation,
             so (-phi, -chi, -omega).
+        wl_input: input (incident) wavelength; if not specified, defaults to wl_output
 
     Returns:
         q: q-vector, a single column
@@ -538,12 +506,13 @@ def getq(az, elevation, wl, q_rot_matrix):
     #Ensure the right data types!
     az = float(az)
     elevation = float(elevation)
-    wl = float(wl)
+    wl_output = float(wl_output)
+    if wl_input is None:
+        wl_input = wl_output
     rot_matrix = q_rot_matrix
     #type_converters = scipy.weave.converters.blitz,
-    q = weave.inline(code,['wl', 'elevation', 'az', 'pi', 'rot_matrix'],compiler='gcc', support_code = support,libraries = ['m'])
+    q = weave.inline(code,['wl_input', 'wl_output', 'elevation', 'az', 'pi', 'rot_matrix'],compiler='gcc', support_code = support,libraries = ['m'])
     q = column([q[0],q[1],q[2]])
-
     return q
 
 
@@ -732,9 +701,9 @@ class TestCrystalCalc(unittest.TestCase):
         wl = 2.32
         wl_input = 1.02
         rot_matrix = rotation_matrix(0.31, -0.23, 0.43)
-        q1 = getq_inelastic_python(az, elev, wl_input, wl, rot_matrix)
-        q2 = getq_inelastic(az, elev, wl_input, wl, rot_matrix)
-        assert np.allclose(q1, q2) , "Python and C getq_inelastic match within float error. %s (python); %s (C)" % (q1.flatten(), q2.flatten())
+        q1 = getq_python(az, elev, wl, rot_matrix, wl_input=wl_input)
+        q2 = getq(az, elev, wl, rot_matrix, wl_input=wl_input)
+        assert np.allclose(q1, q2) , "Python and C getq (inelastic) match within float error. %s (python); %s (C)" % (q1.flatten(), q2.flatten())
         #assert np.all(q1 == q2) , "Python and C getq match exactly."
 
 

@@ -27,7 +27,7 @@ import csv
 import numpy_utils
 from numpy_utils import column, rotation_matrix, vector_length, normalize_vector, index_evenly_spaced, az_elev_direction
 import crystal_calc
-from crystal_calc import getq, getq_python, getq_inelastic
+from crystal_calc import getq, getq_python
 import goniometer
 from goniometer import Goniometer, TopazInHouseGoniometer
 from detectors import Detector, FlatDetector
@@ -1129,9 +1129,9 @@ class InstrumentInelastic(Instrument):
             energy_constant = 3.31991e-42  #SI units = ???
 
             #Two nearby pixels
-            q0 = getq_inelastic(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], self.wl_input, self.wl_min, rot_matrix)
-            q_xmax = getq_inelastic(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], self.wl_input, self.wl_min, rot_matrix)
-            q_ymax = getq_inelastic(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], self.wl_input, self.wl_min, rot_matrix)
+            q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], self.wl_min, rot_matrix, wl_input=self.wl_input)
+            q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], self.wl_min, rot_matrix, wl_input=self.wl_input)
+            q_ymax = getq(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], self.wl_min, rot_matrix, wl_input=self.wl_input)
 
             #Make sure they aren't too long
             q0 = shrink_q_vector(q0)
@@ -1162,7 +1162,7 @@ class InstrumentInelastic(Instrument):
                 elevation_angle = det.elevation_angle
                 #Set up several functions used in the code
                 support = "#include <math.h>\n"
-                support += crystal_calc.getq_inelastic_code_header + crystal_calc.getq_inelastic_code + crystal_calc.getq_inelastic_code_footer
+                support += crystal_calc.getq_inelastic_code_header + crystal_calc.getq_code + crystal_calc.getq_code_footer
                 support += self._code_vector_length
                 support += self._code_shrink_q_vector
                 #Dimensions of the array
@@ -1193,12 +1193,9 @@ class InstrumentInelastic(Instrument):
                         theta = np.arccos(az_elev_direction(az, elev)[2])
                         cos_2_theta = cos(2*theta)
 
-#                        for wl in np.linspace(self.wl_min, self.wl_max, 150):
-#                                q = getq_inelastic(az, elev, self.wl_input, wl, rot_matrix)
-
                         #Now we find the reciprocal vector r=1/d which corresponds to this point on the ewald sphere.
-                        q_min = getq_inelastic(az, elev, self.wl_input, self.wl_min, rot_matrix)
-                        q_max = getq_inelastic(az, elev, self.wl_input, self.wl_max, rot_matrix)
+                        q_min = getq(az, elev, self.wl_min, rot_matrix, wl_input=self.wl_input)
+                        q_max = getq(az, elev, self.wl_max, rot_matrix, wl_input=self.wl_input)
                         #Cap to qlim
                         q_min = shrink_q_vector(q_min)
                         q_max = shrink_q_vector(q_max)
@@ -1554,7 +1551,7 @@ if __name__ == "__main__":
 #    tst.setUp()
 #    tst.test_simulate_and_total_more_detectors()
 
-#    unittest.main()
+    unittest.main()
 
 #    test_setup()
 #    test_hits_detector()
