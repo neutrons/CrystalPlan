@@ -145,7 +145,7 @@ def launch_gui():
     model.goniometer.initialize_goniometers()
 
     #Ok, create the instrument
-    model.instrument.inst = model.instrument.Instrument(model.config.cfg.default_detector_filename)
+    model.instrument.inst = model.instrument.InstrumentInelastic(model.config.cfg.default_detector_filename)
     model.instrument.inst.make_qspace()
 
     #Initialize the instrument and experiment
