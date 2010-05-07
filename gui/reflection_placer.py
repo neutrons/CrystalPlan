@@ -417,7 +417,7 @@ class ReflectionPlacer(HasTraits):
         #Angles in radians, as a list
         angles = np.deg2rad(self.angles_deg.flatten()).tolist()
         #Do the calculation
-        poscov = model.instrument.inst.simulate_position(angles, sample_U_matrix=model.experiment.exp.crystal.get_u_matrix(), use_multiprocessing=False, quick_calc=False)
+        poscov = model.instrument.inst.simulate_position(angles, sample_U_matrix=model.experiment.exp.crystal.get_u_matrix(), use_multiprocessing=False)
         #Add it to the list of selected items
         display_thread.select_additional_position_coverage(poscov, update_gui=True)
 

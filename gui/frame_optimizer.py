@@ -377,7 +377,7 @@ class OptimizerController():
         for pos_cov_empty in positions:
             if not pos_cov_empty is None:
                 #Do the calculation
-                poscov = model.instrument.inst.simulate_position(pos_cov_empty.angles, sample_U_matrix=pos_cov_empty.sample_U_matrix, use_multiprocessing=False, quick_calc=False)
+                poscov = model.instrument.inst.simulate_position(pos_cov_empty.angles, sample_U_matrix=pos_cov_empty.sample_U_matrix, use_multiprocessing=False)
                 out_positions.append(poscov)
 
         #Add it to the list of selected items

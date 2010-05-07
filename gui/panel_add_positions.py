@@ -29,14 +29,13 @@ except ImportError, e:
 
 [wxID_PANELADDPOSITIONS, wxID_PANELADDPOSITIONSBUTTONCALCULATE, 
  wxID_PANELADDPOSITIONSBUTTONCANCEL, 
- wxID_PANELADDPOSITIONScheckQuickCalculation,
  wxID_PANELADDPOSITIONSCHECKIGNOREGONIO, 
  wxID_PANELADDPOSITIONSCHECKMULTIPROCESSING, 
  wxID_PANELADDPOSITIONSGAUGEPROGRESS, wxID_PANELADDPOSITIONSSTATICTEXTHELP, 
  wxID_PANELADDPOSITIONSSTATICTEXTPROGRESS, 
  wxID_PANELADDPOSITIONSSTATICTEXTTITLE, 
  wxID_PANELADDPOSITIONSSTATICTEXTWARNINGS, wxID_PANELADDPOSITIONSTEXTWARNINGS, 
-] = [wx.NewId() for _init_ctrls in range(12)]
+] = [wx.NewId() for _init_ctrls in range(11)]
 
 
 
@@ -56,19 +55,15 @@ class CalculationThread(Thread):
     #Set to true to use multiple CPUs
     use_multiprocessing = False
     
-    #Special debug option to go quick
-    quick_calc = False
-    
     #list of angles to calculate
     positions = list()
 
-    def __init__(self, positions_list, use_multiprocessing=False, quick_calc=False):
+    def __init__(self, positions_list, use_multiprocessing=False):
         """Init Worker Thread Class."""
         Thread.__init__(self)
         self._want_abort = 0
         self.positions = positions_list
         self.use_multiprocessing = use_multiprocessing
-        self.quick_calc = quick_calc
         #Create the list of results
         self.poscov_list = list()
         # This starts the thread running on creation
@@ -84,7 +79,7 @@ class CalculationThread(Thread):
                 #This performs the calculation
                 newpos = model.instrument.inst.simulate_position(angles,
                     model.experiment.exp.crystal.get_u_matrix(),
-                    use_multiprocessing=self.use_multiprocessing, quick_calc=self.quick_calc)
+                    use_multiprocessing=self.use_multiprocessing)
                 self.poscov_list.append(newpos)
             except (KeyboardInterrupt, SystemExit):
                 #Allow breaking the program
@@ -304,8 +299,7 @@ class AddPositionsController():
         self.panel.buttonCancel.Enable(True)
         self.panel.gaugeProgress.SetRange( len(self.valid) )
         #This will start it!
-        self.calculationThread = CalculationThread(self.valid, self.panel.checkMultiprocessing.GetValue(), 
-                                    self.panel.checkQuickCalculation.GetValue())
+        self.calculationThread = CalculationThread(self.valid, self.panel.checkMultiprocessing.GetValue())
         
     #-------------------------------------------------------------------------------
     def abort(self):
@@ -364,7 +358,6 @@ class PanelAddPositions(wx.Panel):
         # generated method, don't edit
 
         parent.AddWindow(self.checkMultiprocessing, 0, border=0, flag=0)
-        parent.AddWindow(self.checkQuickCalculation, 0, border=0, flag=0)
 
     def _init_sizers(self):
         # generated method, don't edit
@@ -444,13 +437,6 @@ class PanelAddPositions(wx.Panel):
         self.checkMultiprocessing.Bind(wx.EVT_CHECKBOX,
               self.OnCheckMultiprocessingCheckbox,
               id=wxID_PANELADDPOSITIONSCHECKMULTIPROCESSING)
-
-        self.checkQuickCalculation = wx.CheckBox(id=wxID_PANELADDPOSITIONScheckQuickCalculation,
-              label=u'Quick Calculation (for debugging)',
-              name=u'checkQuickCalculation', parent=self, pos=wx.Point(222,
-              397), size=wx.Size(260, 22), style=0)
-        self.checkQuickCalculation.SetValue(False)
-        self.checkQuickCalculation.Hide()
 
         self.checkIgnoreGonio = wx.CheckBox(id=wxID_PANELADDPOSITIONSCHECKIGNOREGONIO,
               label=u'Ignore goniometer limits (allow all angles)',
