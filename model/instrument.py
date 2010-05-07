@@ -156,6 +156,32 @@ class Instrument:
     verbose = True
 
 
+    #========================================================================================================
+    def __init__ (self, filename=None, params=dict()):
+        """Create an instrument. Will load the geometry from a supplied CSV file."""
+        #List of all installed detectors
+        self.detectors = []
+
+        if filename is None:
+            pass
+        else:
+            self.load_detectors_csv_file(filename)
+
+        #Now set the params
+        self.set_parameters(params)
+
+        #Goniometer
+        self.set_goniometer( goniometer.TopazAmbientGoniometer(), False )
+
+        #This 3D array holds the q-radius (i.e. |q| ) at all points of the grid. Indices are x,y,z
+        #   It is used to quickly do slices.
+        self.qspace_radius = None
+
+        #List of the calculated PositionCoverage's
+        self.positions = list()
+
+
+
 #    #---------------------------------------------------------------------------------------------
 #    def _load_nxs_file(self, filename):
 #        """Load the detector geometry from a supplied NXS file."""
@@ -218,31 +244,6 @@ class Instrument:
             #And handle the error normally.
             raise
 
-
-
-    #========================================================================================================
-    def __init__ (self, filename=None, params=dict()):
-        """Create an instrument. Will load the geometry from a supplied CSV file."""
-        #List of all installed detectors
-        self.detectors = []
-
-        if filename is None:
-            pass
-        else:
-            self.load_detectors_csv_file(filename)
-
-        #Now set the params
-        self.set_parameters(params)
-
-        #Goniometer
-        self.set_goniometer( goniometer.TopazAmbientGoniometer(), False )
-
-        #This 3D array holds the q-radius (i.e. |q| ) at all points of the grid. Indices are x,y,z
-        #   It is used to quickly do slices.
-        self.qspace_radius = None
-
-        #List of the calculated PositionCoverage's
-        self.positions = list()
 
 
 #    #========================================================================================================
@@ -314,7 +315,7 @@ class Instrument:
             new_sample_U_matrix = poscov.sample_U_matrix
         #Calculate
         poscov.coverage = self.calculate_coverage(self.detectors, poscov.angles,
-                            sample_U_matrix=new_sample_U_matrix, quick_calc=False)
+                            sample_U_matrix=new_sample_U_matrix)
         #And make sure to save the U matrix (changed or not)
         poscov.sample_U_matrix = new_sample_U_matrix
         
@@ -577,17 +578,16 @@ class Instrument:
 
 
     #========================================================================================================
-    def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), quick_calc=False, use_inline_c=True):
+    def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), use_inline_c=True):
         """This method finds the coverage of all detectors in a full 3D matrix by drawing
         straight lines from the min. wavelength to the max. wavelength. This is, so far, the most
         efficient way I have found to calculate it.
         Optimized for speed using inline C code.
-        
+
         Parameters:
             det_list: list of all the detectors (objects) to calculate.
             angles: sample orientation angles, in radians (usually), as a list.
             sample_U_matrix: U matrix of the sample mount angles.
-            quick_calc: Set to True to do only the first 10 detectors, for speed.
 
         Returns:
             coverage: the q-space 3D array of coverage. Each point is a 64-bit-mask identifying each
@@ -633,9 +633,6 @@ class Instrument:
             if det is None:
                 count = count+1
                 continue
-                
-            #Option to speed up.
-            if quick_calc and (count > 9): break
 
             #Output and statusbar messages, if it's been long enough
             if (time.time() - last_time) > 0.33:
@@ -787,7 +784,7 @@ class Instrument:
         return self.positions[num]
 
     #========================================================================================================
-    def simulate_position(self, angles, sample_U_matrix=np.identity(3), use_multiprocessing=False, quick_calc=False):
+    def simulate_position(self, angles, sample_U_matrix=np.identity(3), use_multiprocessing=False):
         """Function to simulate coverage for a given sample orientation, and save the results in the
         list of positions in the instrument.
 
@@ -806,7 +803,7 @@ class Instrument:
         messages.send_message(messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating %s%s..." % (angles_string,ump))
 
         t1 = time.time()
-        coverage = self.calculate_coverage(self.detectors, angles, sample_U_matrix=sample_U_matrix, quick_calc=quick_calc)
+        coverage = self.calculate_coverage(self.detectors, angles, sample_U_matrix=sample_U_matrix)
         print "intrument.simulate_position done in %s sec." % (time.time()-t1)
 
         #Create a PositionCoverage object that holds both the position and the coverage
@@ -953,6 +950,199 @@ class Instrument:
 
         return coverage
 
+
+
+#========================================================================================================
+#========================================================================================================
+#========================================================================================================
+class InstrumentInelastic(Instrument):
+    """Inelastic scattering instrument; a subclass of Instrument.
+    - Inelastic instruments are assumed to have a monochromatic input beam, and
+        we consider scattering events with energy changes.
+    - The wl_min and wl_max fields indicate the limits that the detectors can measure.
+    - We build a 3D array representing reciprocal space. Each element will contain a list
+        of the sample's energy change for that Q.
+    """
+
+    #Input neutron wavelength.
+    wl_input = 1.0
+
+    #-------------------------------------------------------------------------------------------
+    def __init__ (self, filename=None, params=dict()):
+        """Create an inelastic instrument. Will load the geometry from a supplied CSV file."""
+        Instrument.__init__(self, filename, params)
+
+
+
+
+    #========================================================================================================
+    def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), use_inline_c=True):
+        """This method finds the coverage of all detectors in a full 3D matrix by drawing
+        straight lines from the min. wavelength to the max. wavelength. This is, so far, the most
+        efficient way I have found to calculate it.
+        Optimized for speed using inline C code.
+
+        Parameters:
+            det_list: ignores!
+            angles: sample orientation angles, in radians (usually), as a list.
+            sample_U_matrix: U matrix of the sample mount angles.
+
+        Returns:
+            coverage: the q-space 3D array of coverage. Each point is a 64-bit-mask identifying each
+                detector.
+        """
+
+        def shrink_q_vector(q):
+            """Helper function returns a shortened q-vector, capped
+            to self.qlim but with the same direction."""
+            q_length = vector_length(q)
+            if q_length > self.qlim:
+                return (q / q_length) * self.qlim
+            else:
+                return q
+
+        if not isinstance(det_list, list):
+            raise ArgumentError("Did not supply a list as det_list.")
+        if not (len(angles) == len(self.angles)):
+            raise ArgumentError("You supplied a list of angles of a length that does not match what the instrument is setup for.")
+
+        #For passing out messages
+        angles_string = self.make_angles_string(angles)
+
+        #Calculate the q-rotation matrix
+        rot_matrix = self.goniometer.make_q_rot_matrix(angles)
+        #Multiply by the inverse of the sample's U matrix.
+        # qR = R * U^-1
+        #   so that we undo the goniometer angle rotation 1st, then the sample mounting rotation
+        #   = the opposite order of the rotations in the first case.
+        rot_matrix = np.dot(np.linalg.inv(sample_U_matrix), rot_matrix)
+
+        #For updating
+        last_time = time.time()
+
+        #Start with zeros
+        number_of_ints = self.get_coverage_number_of_ints()
+
+        coverage = self.make_blank_qspace(np.uint32, number_of_ints=number_of_ints)
+        count = 0
+        sys.stdout.write( "For angles [%s], calculating coverage of detectors... " % angles_string)
+        for det in det_list:
+            #Make sure the detector object is valid
+            if det is None:
+                count = count+1
+                continue
+
+            #Output and statusbar messages, if it's been long enough
+            if (time.time() - last_time) > 0.33:
+                last_time = time.time()
+                sys.stdout.write(det.name + ", ")
+                sys.stdout.flush()
+                if count % 10 == 0: messages.send_message(messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
+
+            #The binary flag to use here.
+            if count < 31:
+                set_value1 = (2**count)
+                set_value2 = (0)
+            else:
+                set_value1 = (0)
+                set_value2 = (2**(count-31))
+            count = count+1
+
+            #Two nearby pixels
+            q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], self.wl_min, rot_matrix)
+            q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], self.wl_min, rot_matrix)
+            q_ymax = getq(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], self.wl_min, rot_matrix)
+
+            #Make sure they aren't too long
+            q0 = shrink_q_vector(q0)
+            q_xmax = shrink_q_vector(q_xmax)
+            q_ymax = shrink_q_vector(q_ymax)
+
+            #Project them to all the same length (whichever is the longest)
+            length = max( vector_length(q_xmax),  vector_length(q_ymax),  vector_length(q0) )
+            q0 = normalize_vector(q0, length)
+            q_xmax = normalize_vector(q_xmax, length)
+            q_ymax = normalize_vector(q_ymax, length)
+
+            #The pixels to look at (dont look at all of them)
+            nx = (vector_length(q_xmax - q0) / self.q_resolution) * 1.5
+            ny = (vector_length(q_ymax - q0) / self.q_resolution) * 1.5
+
+            #So this is the list of the pixels in the detectors that we pick to calculate where they are in q-space
+            #   (convert to int and take only unique values; convert back to list).
+            xlist = [x for x in set(np.linspace(0, det.xpixels-1, nx, endpoint=True).astype(int))]
+            xlist.sort()
+            ylist = [x for x in set(np.linspace(0, det.ypixels-1, ny, endpoint=True).astype(int))]
+            ylist.sort()
+
+            if use_inline_c and not config.cfg.force_pure_python:
+                #------- Inline C ---------
+                #Get some variables ready
+                azimuthal_angle = det.azimuthal_angle
+                elevation_angle = det.elevation_angle
+                #Set up several functions used in the code
+                support = "#include <math.h>\n"
+                support += crystal_calc.getq_code_header + crystal_calc.getq_code + crystal_calc.getq_code_footer
+                support += self._code_vector_length
+                support += self._code_shrink_q_vector
+                #Dimensions of the array
+                s = coverage.shape
+                stride = s[0]
+                max_index = s[0]*s[1]*s[2] #largest index into the array +1
+                #Make the list of local vars to use.
+                varlist = ['xlist', 'ylist', 'azimuthal_angle', 'elevation_angle']
+                varlist += ['pi', 'rot_matrix']
+                varlist += ['set_value1', 'set_value2', 'number_of_ints']
+                varlist += ['coverage', 'stride', 'max_index']
+                #Dump these  in the locals namespace
+                attribute_list = ['wl_min', 'wl_max', 'qlim', 'q_resolution']
+                for var in attribute_list: locals()[var] = getattr(self, var)
+                varlist += attribute_list
+                #Run the C code (see between function declarations for the actual code).
+                weave.inline(self._code_calculate_coverage, varlist, compiler='gcc', support_code=support) # , libraries = ['m'])
+
+            else:
+                #-------- Pure Python ---------
+                for ix in xlist:
+                    for iy in ylist:
+                        #The angles we find are the azimuth and elevation angle of the scattered beam.
+                        az = det.azimuthal_angle[iy, ix]
+                        elev = det.elevation_angle[iy, ix]
+
+                        #Now we find the reciprocal vector r=1/d which corresponds to this point on the ewald sphere.
+                        q_min = getq(az, elev, self.wl_min, rot_matrix)
+                        q_max = getq(az, elev, self.wl_max, rot_matrix)
+                        #Cap to qlim
+                        q_min = shrink_q_vector(q_min)
+                        q_max = shrink_q_vector(q_max)
+                        #Length to walk through
+                        q_diff = q_max-q_min
+
+                        #Calculate an optimal # of points to use in the q direction.
+                        numfrac = int(1.25 * vector_length(q_diff) / self.q_resolution)
+                        if numfrac > 0:
+                            #If we get numfrac==0, that means nothing can be detected.
+                            for frac in np.arange(0.0, 1.0, 1.0/numfrac):
+                                #This is the intermediate q
+                                q = q_min + frac*q_diff
+                                #Find the indices in q-space that correspond
+                                iqx = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[0])
+                                if iqx is None: continue
+                                iqy = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[1])
+                                if iqy is None: continue
+                                iqz = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[2])
+                                if iqz is None: continue
+                                #All indices are valid, hurrah!
+                                coverage[iqx, iqy, iqz, 0] |= set_value1
+                                if number_of_ints == 2:
+                                    coverage[iqx, iqy, iqz, 1] |= set_value2
+
+        print " done!"
+
+        return coverage
+
+
+
     
 #==============================================================================
 inst = Instrument
@@ -1021,7 +1211,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         angles = [0.1, 0.2, 0.3]
         self.assertRaises(ArgumentError, tst_inst.calculate_coverage, [], [1, 2])
         self.assertRaises(ArgumentError, tst_inst.calculate_coverage, None, [1, 2, 3, 4])
-        ret = tst_inst.calculate_coverage([None], angles, quick_calc=False)
+        ret = tst_inst.calculate_coverage([None], angles)
         assert not np.any(ret), "calculate_coverage returns 0-initialized array for no detectors."
         #Make a mostly empty list
         det_list = [None for x in xrange(48)]
@@ -1033,7 +1223,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         for use_inline_c in [True, False]:
             #Calculate it (using C)
             msg = ["(python only)", "(inline C"][use_inline_c]
-            ret = tst_inst.calculate_coverage(det_list, angles, quick_calc=False, use_inline_c=use_inline_c)
+            ret = tst_inst.calculate_coverage(det_list, angles, use_inline_c=use_inline_c)
             assert np.any(ret == 1), "Coverage %s has some bits equal to 1." % msg
             assert np.any(ret == 2), "Coverage %s has some bits equal to 2." % msg
             assert not np.any(ret == 4), "Coverage %s has no bits equal to 4." % msg
@@ -1045,7 +1235,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         #assert abs(np.sum(ret > 0) - np.sum(c_ret > 0)) < 10, "Number of points found (C vs Python) match within 10. C: %d,  "
         assert len(x) < 20, "Coverage calculated by C and python match within 20 differences. We found %s differences" % len(x)
         #Do a full list at 0
-        ret = tst_inst.calculate_coverage(tst_inst.detectors, [0, 0, 0], quick_calc=False, use_inline_c=True)
+        ret = tst_inst.calculate_coverage(tst_inst.detectors, [0, 0, 0], use_inline_c=True)
         found = np.sum(ret > 0)
         wanted = 55870
         if more_det: wanted = 167077
@@ -1065,7 +1255,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         assert len(invalid) == 0, "evaluate_position_list invalid entries."
         for angles in valid:
             print "test: simulating angles", angles
-            tst_inst.simulate_position(angles, use_multiprocessing=False, quick_calc=False)
+            tst_inst.simulate_position(angles, use_multiprocessing=False)
         assert len(tst_inst.positions)==4, "There should be 4 positions saved. There are %d" % len(tst_inst.positions)
         total = 0
         for (index, poscov) in enumerate(tst_inst.positions):
@@ -1103,7 +1293,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         tst_inst.positions = []
         assert len(self.tst_inst.detectors) == 48, "Correct # of detectors for test_simulate_and_total_more_detectors"
         angles = [0,0,0]
-        tst_inst.simulate_position(angles, use_multiprocessing=False, quick_calc=False)
+        tst_inst.simulate_position(angles, use_multiprocessing=False)
         assert len(tst_inst.positions)==1, "There should be 1 position saved. There are %d" % len(tst_inst.positions)
         #Total coverage of all detectors
         cov = tst_inst.total_coverage([True]*48, tst_inst.positions)

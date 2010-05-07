@@ -317,6 +317,41 @@ def get_hkl_from_q(q, reciprocal_lattice):
     return np.dot(invB, q)
 
 
+#========================================================================================================
+def getq_inelastic(azimuth, elevation, wl_input, wl, rot_matrix):
+    """Find the q-vector corresponding to the azimuth, elevation and wavelength of the detector pixel.
+    Uses only python and numpy code.
+
+    Paramters:
+        azimuth, elevation: azimuth, elevation angle of pixel(s). Can be an array, should be only 1-D though.
+            Shapes of az and elev need to match.
+        wl_input: wavelength of the incoming neutron
+        wl: wavelength detected considered; can be scalar or array matching az and elev.
+        rot_matrix: The rotation matrix corresponding to the sample orientation (phi, chi, omega)
+
+    Returns:
+        q: q-vector, either a single column or a 3xn array depending on input size.
+    """
+
+    #The scattered beam emanates from the centre of this spher.
+    #Find the intersection of the scattered beam and the sphere, in XYZ
+    beam = column(az_elev_direction(azimuth, elevation)) / wl
+
+    #And here is the incident beam direction: Along the z-axis, positive
+    incident = np.array([0, 0, 1]).reshape(3,1) / wl_input
+
+    #The wave vector difference between the two is the q vector
+    q = 2*pi * (beam - incident)
+
+    #Now we switch to the coordinate system of the crystal.
+    #The scattered beam direction (the detector location) is rotated relative to the crystal
+    #   because the sample is rotated.
+    #So is the incident beam direction.
+    #Therefore, the q-vector measured is simply rotated by the supplied rotation matrix (which has reversed angles)
+
+    q = np.dot(rot_matrix, q)
+
+    return q
 
 #========================================================================================================
 def getq_python(azimuth, elevation, wl, rot_matrix):
