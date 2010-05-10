@@ -17,6 +17,12 @@ import frame_optimizer
 #--- Model Imports ---
 import model
 
+#--- Traits Imports ---
+from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
+from enthought.traits.ui.api import View,Item,Label,Heading, Spring, Handler, Group
+from enthought.traits.ui.menu import OKButton, CancelButton
+from enthought.traits.ui.editors import EnumEditor
+
 
 [wxID_PANELEXPERIMENT, wxID_PANELEXPERIMENTBUTTONDELETEALL, 
  wxID_PANELEXPERIMENTBUTTONDELETEHIGHLIGHTED, 
@@ -274,6 +280,20 @@ class ExperimentGridController():
         if not self.inside_set_checkUseAll:
             display_thread.select_additional_position_coverage(model.instrument.inst.positions, update_gui=True, select_items=value)
 
+    #----------------------------------------------------------------------------------------
+    def set_criterion(self, selection, criterion, value):
+        """Set the stopping criteria for the selected rows.
+        Parameters:
+            selection: list of rows.
+            criterion: string (friendly) name of the criterion
+            value: float, value to stop at.
+        """
+        for row in selection:
+            model.instrument.inst.positions[row].criterion = model.experiment.get_stopping_criterion_from_friendly_name(criterion)
+            model.instrument.inst.positions[row].criterion_value = value
+        self.update_grid()
+
+
 
     #----------------------------------------------------------------------------------------
     def select_several(self, row_list, value):
@@ -325,8 +345,24 @@ class ExperimentGridController():
         self.update_grid()
 
 
+#========================================================================================
+class StoppingCriterionParams(HasTraits):
+    """Small class to make a quick GUI for the stopping parameters."""
+    criterion_value = Float(60.0, desc="the value corresponding to the specified criterion.")
+    criterion_list = ["1"]
+    
+    def get_view(self):
+        return View(
+            Item('stopping_criterion', editor=EnumEditor(name="criterion_list")),
+            Item('criterion_value'), buttons=[OKButton, CancelButton] )
+
+    def __init__(self):
+        self.criterion_list = model.experiment.get_stopping_criteria_names()
+        self.add_trait("stopping_criterion", Enum( self.criterion_list ) )
+        self.stopping_criterion = self.criterion_list[0]
 
 
+#========================================================================================
 class PanelExperiment(wx.Panel):
     def _init_coll_boxSizerDelete_Items(self, parent):
         # generated method, don't edit
@@ -337,6 +373,9 @@ class PanelExperiment(wx.Panel):
               flag=wx.LEFT | wx.RIGHT)
         parent.AddWindow(self.buttonDeleteUnused, 0, border=4,
               flag=wx.LEFT | wx.RIGHT)
+        parent.AddStretchSpacer(1)
+        parent.AddWindow(self.buttonRefreshList, 0, border=0, flag=0)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
 
     def _init_coll_boxSizerEstimatedTime_Items(self, parent):
         # generated method, don't edit
@@ -356,11 +395,9 @@ class PanelExperiment(wx.Panel):
         parent.AddWindow(self.buttonUseHighlighted, 0, border=0,
               flag=wx.ALIGN_CENTER_VERTICAL)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.buttonDontUseHighlighted, 0, border=0,
-              flag=wx.ALIGN_CENTER_VERTICAL)
-        parent.AddStretchSpacer(1)
-        parent.AddWindow(self.buttonRefreshList, 0, border=0, flag=0)
+        parent.AddWindow(self.buttonDontUseHighlighted, 0, border=0, flag=wx.ALIGN_CENTER_VERTICAL)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.buttonChangeStopping, 0, border=0, flag=wx.ALIGN_CENTER_VERTICAL)
 
     def _init_coll_boxSizerSave_Items(self, parent):
         # generated method, don't edit
@@ -453,16 +490,6 @@ class PanelExperiment(wx.Panel):
               id=wxID_PANELEXPERIMENTcheckUseAll)
         self.checkUseAll.SetToolTipString("Check the box to use all the sample orientations in the list; uncheck it to clear the list.")
 
-#        self.checkSelectHighlighted = wx.CheckBox(id=wxID_PANELEXPERIMENTCHECKSELECTHIGHLIGHTED,
-#              label=u'Use Highlighted', name=u'checkSelectHighlighted',
-#              parent=self, pos=wx.Point(103, 36), size=wx.Size(137, 22),
-#              style=0)
-#        self.checkSelectHighlighted.SetValue(True)
-#        self.checkSelectHighlighted.Bind(wx.EVT_CHECKBOX,
-#              self.OnCheckSelectHighlightedCheckbox,
-#              id=wxID_PANELEXPERIMENTCHECKSELECTHIGHLIGHTED)
-
-
         self.staticTextHighlighted = wx.StaticText(label=u'Highlighted Rows:',
               name=u'staticTextHighlighted', parent=self, pos=wx.Point(0, 8),
               style=0)
@@ -521,6 +548,12 @@ class PanelExperiment(wx.Panel):
               self.OnButtonRefreshListButton,
               id=wxID_PANELEXPERIMENTBUTTONREFRESHLIST)
 
+        self.buttonChangeStopping = wx.Button(id=wx.NewId(),
+              label=u'Change Stopping Criteria', name=u'buttonChangeStopping', parent=self,
+              pos=wx.Point(240, 33), style=0)
+        self.buttonChangeStopping.Bind(wx.EVT_BUTTON, self.OnButtonChangeStopping)
+        self.buttonChangeStopping.SetToolTipString("Change the stopping criteria and value for all selected rows.")
+              
         self._init_sizers()
 
     def __init__(self, parent):
@@ -602,6 +635,25 @@ class PanelExperiment(wx.Panel):
                 self.controller.delete_several(row_list)
                 #Selected rows become screwy after deletion
                 self.gridExp.ClearSelection()
+
+    def OnButtonChangeStopping(self, event):
+        selection = self.get_selected_rows()
+        if len(selection) <= 0:
+            wx.MessageBox("No rows are highlighted! Highlight some before clicking.", "No rows highlighted.", style=wx.OK | wx.ICON_EXCLAMATION)
+        else:
+            #Prompt for the stopping criterion.
+            crit = StoppingCriterionParams()
+            poscov = model.instrument.inst.positions[ selection[0] ] #@type poscov PositionCoverage
+            #Default value
+            if not poscov is None:
+                crit.stopping_criterion = model.experiment.get_stopping_criterion_friendly_name(poscov.criterion)
+                crit.criterion_value = poscov.criterion_value
+                
+            res = crit.configure_traits(kind="modal", view=crit.get_view())
+            if res:
+                #Clicked ok.
+                self.controller.set_criterion(selection, crit.stopping_criterion, crit.criterion_value)
+        event.Skip()
 
 
     def OnButtonSaveToCSVButton(self, event):
