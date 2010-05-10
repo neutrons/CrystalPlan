@@ -10,6 +10,7 @@ import gui_utils
 import wx
 from threading import Thread
 import sys
+import time
 
 #--- GUI Imports ---
 import display_thread
@@ -71,11 +72,20 @@ class CalculationThread(Thread):
 
     def run(self):
         """Actually perform the calculation"""
+        t_last = time.time()
         for i in range( len(self.positions) ):
             try:
                 #These are the angles to calculate
                 angles = self.positions[i]
-                model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, i)
+
+                #GUI update only if it has been long enough
+                if (time.time() - t_last) > 0.2:
+                    model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, i)
+                    t_last = time.time()
+                    
+                #Update position list in GUI, but less often
+                model.messages.send_message_optional(self, model.messages.MSG_POSITION_LIST_CHANGED, delay=1.5)
+
                 #This performs the calculation
                 newpos = model.instrument.inst.simulate_position(angles,
                     model.experiment.exp.crystal.get_u_matrix(),
@@ -94,6 +104,8 @@ class CalculationThread(Thread):
                 break
                 
         #Ok, we either finished or aborted.
+        model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, i)
+        model.messages.send_message( model.messages.MSG_POSITION_LIST_CHANGED)
         model.messages.send_message( MSG_POSITION_CALCULATION_DONE, self.poscov_list)
 
     def abort(self):

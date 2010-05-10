@@ -185,7 +185,7 @@ class Instrument:
         #List of the calculated PositionCoverage's
         self.positions = list()
 
-        #Other stuff
+        #Other stuff, mostly used by GUIs
         self.last_sort_ascending = False
         self.last_sort_angle_num = -1
 
@@ -664,7 +664,6 @@ class Instrument:
         #   = the opposite order of the rotations in the first case.
         rot_matrix = np.dot(np.linalg.inv(sample_U_matrix), rot_matrix)
 
-        #For updating
         last_time = time.time()
 
         #Start with zeros
@@ -680,11 +679,11 @@ class Instrument:
                 continue
 
             #Output and statusbar messages, if it's been long enough
+            messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
             if (time.time() - last_time) > 0.33:
                 last_time = time.time()
                 sys.stdout.write(det.name + ", ")
                 sys.stdout.flush()
-                if count % 10 == 0: messages.send_message(messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
 
             #The binary flag to use here.
             if count < 31:
@@ -841,13 +840,14 @@ class Instrument:
         Returns:
             pos: The PositionCoverage object that was just calculated.
         """
-        print "simulate_position angles", angles, type(angles)
         angles_string = self.make_angles_string(angles)
 
         ump = ""
         if use_multiprocessing: ump = " using multiprocessing"
-        messages.send_message(messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating %s%s..." % (angles_string,ump))
 
+        #Send messages, but not too frequently.
+        messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating %s%s..." % (angles_string,ump))
+            
         t1 = time.time()
         coverage = self.calculate_coverage(self.detectors, angles, sample_U_matrix=sample_U_matrix)
         print "intrument.simulate_position done in %s sec." % (time.time()-t1)
@@ -857,10 +857,8 @@ class Instrument:
 
         #Add it to the list.
         self.positions.append(pos)
-        #Send out a message (for the GUI) saying that something was added to the list of positions.
-        messages.send_message(messages.MSG_POSITION_LIST_CHANGED)
         #Statusbar update
-        messages.send_message(messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculation of %s complete." % angles_string)
+        messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculation of %s complete." % angles_string)
 
         return pos
 
@@ -1182,11 +1180,11 @@ class InstrumentInelastic(Instrument):
                 continue
 
             #Output and statusbar messages, if it's been long enough
+            messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
             if (time.time() - last_time) > 0.33:
                 last_time = time.time()
                 sys.stdout.write(det.name + ", ")
                 sys.stdout.flush()
-                if count % 10 == 0: messages.send_message(messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
 
             #The input wavevector (along +z)
             wl_input = self.wl_input

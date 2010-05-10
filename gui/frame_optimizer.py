@@ -1,4 +1,11 @@
 #Boa:Frame:FrameOptimizer
+"""
+FrameOptimizer: frame with GUI for automatically creating an experiment plan
+by optimizing coverage using a genetic algorithm.
+"""
+
+# Author: Janik Zikovsky, zikovskyjl@ornl.gov
+# Version: $Id: panel_goniometer.py 1143 2010-04-07 20:57:45Z 8oz $
 
 import wx
 import time
@@ -8,7 +15,9 @@ import matplotlib
 matplotlib.interactive( True )
 matplotlib.use( 'WXAgg' )
 
+#--- GUI Imports ----
 import display_thread
+import gui_utils
 
 #--- Model Imports ----
 import model
@@ -375,16 +384,15 @@ class OptimizerController():
         #Make sure to clear the parameters too, by giving it an empty dict() object.
         display_thread.clear_positions_selected()
 
-        #Now add the new results
-        out_positions = []
-        for pos_cov_empty in positions:
-            if not pos_cov_empty is None:
-                #Do the calculation
-                poscov = model.instrument.inst.simulate_position(pos_cov_empty.angles, sample_U_matrix=pos_cov_empty.sample_U_matrix, use_multiprocessing=False)
-                out_positions.append(poscov)
+        #This function does the calc. and shows a progress bar. Can be aborted too.
+        gui_utils.do_calculation_with_progress_bar(positions)
 
+        #GUI update
+        model.messages.send_message(model.messages.MSG_POSITION_LIST_CHANGED)
+        
         #Add it to the list of selected items
-        display_thread.select_position_coverage(out_positions, update_gui=True)
+        display_thread.select_position_coverage(model.instrument.inst.positions, update_gui=True)
+
         if not event is None: event.Skip()
 
         
@@ -488,7 +496,7 @@ class FrameOptimizer(wx.Frame):
         # generated method, don't edit
         wx.Frame.__init__(self, id=wxID_FRAMEOPTIMIZER, name=u'FrameOptimizer',
               parent=prnt, pos=wx.Point(976, 171), size=wx.Size(715, 599),
-              style=wx.DEFAULT_FRAME_STYLE, title=u'Coverage Automatic Optimizer')
+              style=wx.DEFAULT_FRAME_STYLE, title=u'Automatic Coverage Optimizer')
         self.SetClientSize(wx.Size(900, 800))
         self.Bind(wx.EVT_CLOSE, self.controller.close_form)
         self.SetIcon( wx.Icon(CrystalPlan_version.icon_file_optimizer, wx.BITMAP_TYPE_PNG) )

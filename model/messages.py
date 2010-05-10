@@ -9,7 +9,7 @@ Enables model code to send messages back to the GUI, when needed.
 import wx
 from wx.lib.pubsub import Publisher as pub
 from threading import Thread
-
+import time
 
 
 #========================================================================================================
@@ -52,6 +52,20 @@ class FunctionCall:
 def send_message(message_id, data=None):
     """Thread-safe replacement for pubsub sendMessage."""
     wx.CallAfter(pub.sendMessage, topic=message_id, data=data)
+
+#----------------------------------------------------------------------
+def send_message_optional(object, message_id, data=None, delay=0.33):
+    """Sends a message but only if a sufficient time has elapsed since the last
+    time any message was sent from that object.
+    Parameters:
+        object: any persistant instance of an object. It will have an attribute added to it.
+        message_id: unique ID for the message, usually a string.
+        data: any data object.
+        delay: in seconds, the closest in time two messages will be sent to the same object.
+    """
+    if not hasattr(object, '_last_message_send_time') or (time.time()-object._last_message_send_time > delay):
+        wx.CallAfter(pub.sendMessage, topic=message_id, data=data)
+        object._last_message_send_time = time.time()
 
 
 #----------------------------------------------------------------------

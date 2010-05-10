@@ -430,7 +430,7 @@ class PanelExperiment(wx.Panel):
         self.gridExp.Bind(wx.grid.EVT_GRID_EDITOR_CREATED, self.OnGridExpGridEditorCreated)
         self.gridExp.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.OnGridExpGridLabelLeftClick)
         self.gridExp.Bind(wx.grid.EVT_GRID_LABEL_LEFT_DCLICK, self.OnGridExpGridLabelLeftDClick)
-        self.gridExp.SetToolTipString("Double-click on a column header to sort by that angle.")
+        self.gridExp.SetToolTipString("Double-click on an angle column header to sort the list by that angle.")
 
         self.staticTextHelp = wx.StaticText(id=wxID_PANELEXPERIMENTSTATICTEXTHELP,
               label=u'Select the sample orientations you wish to use in the experiment, and the criterion for data acquisition at each orientation.',
@@ -509,8 +509,8 @@ class PanelExperiment(wx.Panel):
               id=wxID_PANELEXPERIMENTBUTTONSAVETOCSV)
         self.buttonSaveToCSV.SetToolTipString("Choose a path to save the list of sample orientations to a .CSV file compatible with PyDas (SNS data acquisition system python scripting).")
 
-        self.buttonOptimizer = wx.Button(id=wx.NewId(), label=u'Automatic Experiment Optimizer', name=u'buttonOptimizer', parent=self,
-              pos=wx.Point(0, 804), size=wx.Size(250, 29), style=0)
+        self.buttonOptimizer = wx.Button(id=wx.NewId(), label=u'Automatic Coverage Optimizer...', name=u'buttonOptimizer', parent=self,
+              pos=wx.Point(0, 804), size=wx.Size(270, 29), style=0)
         self.buttonOptimizer.Bind(wx.EVT_BUTTON, self.OnButtonOptimizer)
         self.buttonOptimizer.SetToolTipString("Open the Experiment Plan Automatic Optimizer window.")
 

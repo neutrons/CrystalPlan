@@ -81,9 +81,10 @@ def do_recalculation_with_progress_bar(new_sample_U_matrix=None):
     max = len(model.instrument.inst.positions)+1
 
     prog_dlg = wx.ProgressDialog( "Recalculating all sample orientations.",        "Calculation progress:",
-        max, style = wx.PD_CAN_ABORT | wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
+        max, style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
                      wx.PD_ESTIMATED_TIME | wx.PD_REMAINING_TIME | wx.PD_AUTO_HIDE)
-
+    #Make it wider
+    prog_dlg.SetSize((500, prog_dlg.GetSize()[1]))
     #Initial show
     count = 0
     prog_dlg.Update(count)
@@ -96,8 +97,7 @@ def do_recalculation_with_progress_bar(new_sample_U_matrix=None):
             model.instrument.inst.recalculate(poscov, new_sample_U_matrix=new_sample_U_matrix)
             #Check in the dialog
             count += 1
-            (keep_going) = prog_dlg.Update(count, "Calculating orientation %s of %s..." % (i+1, len(model.instrument.inst.positions)))
-            if not keep_going: break
+            (keep_going, skip) = prog_dlg.Update(count, "Recalculating orientation %s of %s..." % (i+1, len(model.instrument.inst.positions)))
         except:
             #We destroy the dialog so it doesn't get stuck.
             prog_dlg.Destroy()
@@ -109,6 +109,51 @@ def do_recalculation_with_progress_bar(new_sample_U_matrix=None):
 
     #Clean up dialog
     prog_dlg.Destroy()
+
+
+# ===========================================================================================
+def do_calculation_with_progress_bar(poscov_list):
+    """Perform a calculation of reciprocal space coverage. Show a progress bar.
+
+    Parameters:
+        poscov_list: list of PositionCoverage objects where the angles are set,
+            but the coverage array is not.
+
+    """
+    #Steps in calculation
+    max = len(poscov_list)+1
+
+    prog_dlg = wx.ProgressDialog( "Calculating sample orientations.",        "Calculation progress:",
+        max, style = wx.PD_CAN_ABORT | wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
+                     wx.PD_ESTIMATED_TIME | wx.PD_REMAINING_TIME | wx.PD_AUTO_HIDE)
+    #Make it wider
+    prog_dlg.SetSize((500, prog_dlg.GetSize()[1]))
+    #Initial show
+    count = 0
+    prog_dlg.Update(count)
+
+    keep_going = True
+    for pos_cov_empty in poscov_list:
+        if not pos_cov_empty is None:
+            try:
+                #Do the calculation
+                poscov = model.instrument.inst.simulate_position(pos_cov_empty.angles, sample_U_matrix=pos_cov_empty.sample_U_matrix, use_multiprocessing=False)
+                #Check in the dialog
+                count += 1
+                (keep_going, skip) = prog_dlg.Update(count, "Calculating orientation %s of %s..." % (count, len(poscov_list)))
+                if not keep_going: break
+            except:
+                #We destroy the dialog so it doesn't get stuck.
+                prog_dlg.Destroy()
+                # We re-raise the exception
+                # We are in the main loop, so the sys.excepthook will catch it and display a dialog.
+                raise
+
+    #Should we recalculate reflections here?
+
+    #Clean up dialog
+    prog_dlg.Destroy()
+
 
 
 

@@ -75,7 +75,7 @@ class FrameMain(wx.Frame):
 
     def _init_menuOptimize(self, parent):
         id = wx.NewId()
-        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Optimize Positions...\tCtrl+O')
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Automatic Coverage Optimizer...\tCtrl+O')
         self.Bind(wx.EVT_MENU, self.OnMenuOptimizePositions, id=id)
 
 
