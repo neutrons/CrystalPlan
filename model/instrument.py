@@ -977,6 +977,8 @@ class InstrumentInelastic(Instrument):
     # C-code for calculate_coverage
 
     _code_calculate_coverage = """
+            double kfz, kf_squared, E;
+            
             //Loop through pixels using the list given before.
             for (int iix = 0; iix < xlist.length(); iix++)
             {
@@ -997,8 +999,15 @@ class InstrumentInelastic(Instrument):
                     shrink_q_vector(q_min, qlim);
                     shrink_q_vector(q_max, qlim);
 
+                    //Vector difference max-min
+                    py::tuple q_diff(3);
+                    for (int i=0; i<3; i++)
+                    {
+                        q_diff[i] = double(q_max[i]) - double(q_min[i]);
+                    }
+
                     //Find out how long of a line that is
-                    double q_length = (vector_length(q_max) - vector_length(q_min));
+                    double q_length = vector_length(q_diff);
                     if (q_length<0) q_length = -q_length;
 
                     //How many steps will we take. The multiplication factor here is a fudge to make sure it covers fully.
@@ -1009,6 +1018,9 @@ class InstrumentInelastic(Instrument):
                     if (numfrac > 0)
                     {
                         //There is something to measure.
+
+                        // Scattering angle. Find the pixel direction, take the Z component = cos(theta)
+                        double cos_2_theta = cos(2*acos(cos(az) * cos(elev)));
 
                         //Size in q-space of each step
                         double dx, dy, dz;
@@ -1045,7 +1057,17 @@ class InstrumentInelastic(Instrument):
                                     iqz = round((qz - lim_min) / q_resolution);
                                     if ((iqz >=0) && (iqz < stride))
                                     {
-                                        COVERAGE3(iqx,iqy,iqz) = 1.0; // #!!!!
+                                        //Calculate the sample energy gain
+                                        // But we need to get back the z component of kf
+                                        kfz = (ki - qz) / cos_2_theta;
+
+                                        // Okay, now calculate kf^2
+                                        kf_squared = qx*qx + qy*qy + kfz*kfz;
+
+                                        // Get the energy. Some kind of units here = ???
+                                        E = energy_constant * (ki_squared - kf_squared);
+
+                                        COVERAGE3(iqx,iqy,iqz) = E; 
                                     }
                                 }
                             }
@@ -1103,7 +1125,7 @@ class InstrumentInelastic(Instrument):
         #For updating
         last_time = time.time()
 
-        #Start with +inf everywhere
+        #Start with +(Large Number) everywhere
         coverage = self.make_blank_qspace(np.float) + 1e6
         
         count = 0
@@ -1121,7 +1143,8 @@ class InstrumentInelastic(Instrument):
                 if count % 10 == 0: messages.send_message(messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
 
             #The input wavevector (along +z)
-            ki = 2*np.pi / self.wl_input
+            wl_input = self.wl_input
+            ki = 2*np.pi / wl_input
             ki_squared = ki**2
 
             #A constant for calculating energy
@@ -1129,9 +1152,9 @@ class InstrumentInelastic(Instrument):
             energy_constant = 3.31991e-42  #SI units = ???
 
             #Two nearby pixels
-            q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], self.wl_min, rot_matrix, wl_input=self.wl_input)
-            q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], self.wl_min, rot_matrix, wl_input=self.wl_input)
-            q_ymax = getq(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], self.wl_min, rot_matrix, wl_input=self.wl_input)
+            q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], self.wl_min, rot_matrix, wl_input=wl_input)
+            q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], self.wl_min, rot_matrix, wl_input=wl_input)
+            q_ymax = getq(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], self.wl_min, rot_matrix, wl_input=wl_input)
 
             #Make sure they aren't too long
             q0 = shrink_q_vector(q0)
@@ -1170,11 +1193,11 @@ class InstrumentInelastic(Instrument):
                 stride = s[0]
                 max_index = s[0]*s[1]*s[2] #largest index into the array +1
                 #Make the list of local vars to use.
-                varlist = ['xlist', 'ylist', 'azimuthal_angle', 'elevation_angle']
-                varlist += ['pi', 'rot_matrix']
+                varlist = ['wl_input', 'xlist', 'ylist', 'azimuthal_angle', 'elevation_angle']
+                varlist += ['pi', 'rot_matrix', 'energy_constant', 'ki_squared', 'ki']
                 varlist += ['coverage', 'stride', 'max_index']
                 #Dump these  in the locals namespace
-                attribute_list = ['wl_input', 'wl_min', 'wl_max', 'qlim', 'q_resolution']
+                attribute_list = ['wl_min', 'wl_max', 'qlim', 'q_resolution']
                 for var in attribute_list: locals()[var] = getattr(self, var)
                 varlist += attribute_list
                 #Run the C code (see between function declarations for the actual code).
@@ -1351,6 +1374,7 @@ import unittest
 class TestInelasticInstrument(unittest.TestCase):
     """Unit test for the InstrumentInelastic class."""
     def setUp(self):
+        config.cfg.force_pure_python = False
         self.tst_inst = InstrumentInelastic("../instruments/TOPAZ_detectors_2010.csv")
         ti = self.tst_inst #@type ti InstrumentInelastic
         ti.set_goniometer(goniometer.Goniometer())
@@ -1366,10 +1390,11 @@ class TestInelasticInstrument(unittest.TestCase):
         assert hasattr(ti, 'wl_input'), "wl_input field exists."
         angles = [0., 0., 0.]
         cov_python = ti.calculate_coverage(ti.detectors[:1], angles, use_inline_c=False)
-        cov_C = ti.calculate_coverage(ti.detectors[:1], angles, use_inline_c=False)
+        cov_C = ti.calculate_coverage(ti.detectors[:1], angles, use_inline_c=True)
         tot_python = np.sum( cov_python < 1e6)
         tot_C = np.sum( cov_C < 1e6)
         assert tot_python==tot_C, "Same # covered found with C and python. %d vs %d" % (tot_C, tot_python)
+        assert np.allclose(cov_C, cov_python), "Energy values found with C and python are close within float error." 
         #print np.sum( cov < np.inf)
         #print cov[ cov < np.inf ]
 
@@ -1551,7 +1576,7 @@ if __name__ == "__main__":
 #    tst.setUp()
 #    tst.test_simulate_and_total_more_detectors()
 
-    unittest.main()
+#    unittest.main()
 
 #    test_setup()
 #    test_hits_detector()
