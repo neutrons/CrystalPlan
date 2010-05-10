@@ -122,7 +122,13 @@ class CrystalPlanApp(wx.App):
 
 
 #-------------------------------------------------------------------------
-def launch_gui():
+def launch_gui(inelastic):
+    """Launch the CrystalPlan GUI.
+
+    Parameters:
+        inelastic: boolean, to indicate whether the instrument is for inelastic scattering."""
+        
+    #Since imports take a while, print out this status line first.
     print "-------------- %s %s GUI is starting -----------------" % (CrystalPlan_version.package_name, CrystalPlan_version.version)
     
     #--- GUI Imports ---
@@ -145,7 +151,12 @@ def launch_gui():
     model.goniometer.initialize_goniometers()
 
     #Ok, create the instrument
-    model.instrument.inst = model.instrument.InstrumentInelastic(model.config.cfg.default_detector_filename)
+    if inelastic:
+        print "Initializing inelastic scattering instrument."
+        model.instrument.inst = model.instrument.InstrumentInelastic(model.config.cfg.default_detector_filename)
+    else:
+        print "Initializing elastic scattering instrument."
+        model.instrument.inst = model.instrument.Instrument(model.config.cfg.default_detector_filename)
     model.instrument.inst.make_qspace()
 
     #Initialize the instrument and experiment
@@ -208,6 +219,9 @@ if __name__=="__main__":
     parser.add_option("-t", "--test", dest="test",
                      action="store_true", default=False,
                      help="perform a suite of unit tests on the software")
+    parser.add_option("-i", "--inelastic", dest="inelastic",
+                     action="store_true", default=False,
+                     help="simulate an inelastic scattering instrument")
     (options, args) = parser.parse_args()
 
     if options.test:
@@ -216,7 +230,7 @@ if __name__=="__main__":
         os.system("python test_all.py")
     else:
         #Start the GUI
-        launch_gui()
+        launch_gui(inelastic=options.inelastic)
 
 
 

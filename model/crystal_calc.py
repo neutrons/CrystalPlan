@@ -438,7 +438,7 @@ getq_code_header = """py::tuple getq(double wl_output, double az, double elevati
 """
 
 #Header for inelastic scattering
-getq_inelastic_code_header = """py::tuple getq(double wl_input, double wl_output, double az, double elevation, double pi, double* rot_matrix)
+getq_inelastic_code_header = """py::tuple getq_inelastic(double wl_input, double wl_output, double az, double elevation, double pi, double* rot_matrix)
 {
     py::tuple return_val(3);
 """
