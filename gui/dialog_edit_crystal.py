@@ -124,7 +124,7 @@ class DialogEditCrystal(wx.Dialog):
               parent=prnt, pos=wx.Point(702, 235), size=wx.Size(475, 600),
               style= wx.RESIZE_BORDER | wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX,
               title=u'Edit Crystal Parameters')
-        self.SetClientSize(wx.Size(500, 600))
+        self.SetClientSize(wx.Size(500, 800))
 
         self.buttonOK = wx.Button(
               label=u'Ok', name=u'buttonOK', parent=self,

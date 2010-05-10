@@ -251,6 +251,19 @@ class ExperimentGridController():
             #Toggle the selection state
             display_thread.select_additional_position_coverage(poscov, update_gui=True, select_items=(not was_selected))
 
+    #----------------------------------------------------------------------------------------
+    def label_dclick(self, event):
+        """Called when double-clicked a label"""
+        row = event.GetRow()
+        col = event.GetCol()
+        if row == -1:
+            #Clicked on the header
+            #Index in the list of angles that was clicked
+            angle_num = col - 1
+            model.instrument.inst.sort_positions_by(angle_num)
+            #Update
+            self.update_grid()
+
 
             
 
@@ -410,18 +423,14 @@ class PanelExperiment(wx.Panel):
         self.gridExp = wx.grid.Grid(id=wxID_PANELEXPERIMENTGRIDEXP,
               name=u'gridExp', parent=self, pos=wx.Point(0, 70),
               size=wx.Size(1, 1), style=0)
-        self.gridExp.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK,
-              self.OnGridExpGridCellLeftClick)
-        self.gridExp.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK,
-              self.OnGridExpGridCellLeftDoubleClick)
-        self.gridExp.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK,
-              self.OnGridExpGridCellRightClick)
-        self.gridExp.Bind(wx.grid.EVT_GRID_CELL_CHANGE,
-              self.OnGridExpGridCellChange)
-        self.gridExp.Bind(wx.grid.EVT_GRID_EDITOR_CREATED,
-              self.OnGridExpGridEditorCreated)
-        self.gridExp.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
-              self.OnGridExpGridLabelLeftClick)
+        self.gridExp.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnGridExpGridCellLeftClick)
+        self.gridExp.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridExpGridCellLeftDoubleClick)
+        self.gridExp.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnGridExpGridCellRightClick)
+        self.gridExp.Bind(wx.grid.EVT_GRID_CELL_CHANGE, self.OnGridExpGridCellChange)
+        self.gridExp.Bind(wx.grid.EVT_GRID_EDITOR_CREATED, self.OnGridExpGridEditorCreated)
+        self.gridExp.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.OnGridExpGridLabelLeftClick)
+        self.gridExp.Bind(wx.grid.EVT_GRID_LABEL_LEFT_DCLICK, self.OnGridExpGridLabelLeftDClick)
+        self.gridExp.SetToolTipString("Double-click on a column header to sort by that angle.")
 
         self.staticTextHelp = wx.StaticText(id=wxID_PANELEXPERIMENTSTATICTEXTHELP,
               label=u'Select the sample orientations you wish to use in the experiment, and the criterion for data acquisition at each orientation.',
@@ -515,6 +524,10 @@ class PanelExperiment(wx.Panel):
         self._init_sizers()
 
     def __init__(self, parent):
+        #Some pre-controls initialization
+        self.prev_rowcol = [None, None]
+
+        #Do the controls
         self._init_ctrls(parent)
 
         #Set the controller
@@ -607,10 +620,13 @@ class PanelExperiment(wx.Panel):
     def OnGridExpGridLabelLeftClick(self, event):
         event.Skip()
 
+    def OnGridExpGridLabelLeftDClick(self, event):
+        self.controller.label_dclick(event)
+        event.Skip()
+
     def OnButtonRefreshListButton(self, event):
         self.controller.update_grid()
         event.Skip()
-
 
 
 

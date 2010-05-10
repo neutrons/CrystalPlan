@@ -75,7 +75,12 @@ class PositionCoverage:
     def __init__(self, angles, coverage, sample_U_matrix):
         """Constructor, initialize angles and coverage."""
         #Angles of the sample, (a list). Length needs to match instrument.angles
-        self.angles = angles
+        if isinstance(angles, np.ndarray):
+            #Convert to a list
+            self.angles = list(angles.flatten())
+        else:
+            self.angles = angles
+            
         #3D array with the coverage; indices are x,y,z
         self.coverage = coverage
         #3x3 matrix describing the sample mounting orientation.
@@ -179,6 +184,10 @@ class Instrument:
 
         #List of the calculated PositionCoverage's
         self.positions = list()
+
+        #Other stuff
+        self.last_sort_ascending = False
+        self.last_sort_angle_num = -1
 
 
 
@@ -299,6 +308,42 @@ class Instrument:
         
         #Start by recalculating the q-space array here.
         self.make_qspace()
+
+    #========================================================================================================
+    def sort_positions_by(self, angle_num):
+        """Sort the list of positions.
+
+        Parameters:
+            angle_num: index into self.angles of which angle to sort."""
+        #Valid index?
+        if angle_num < 0 or angle_num >= len(self.angles):
+            return
+
+        #Choose the direction of sort and save it for next time.
+        ascending = True
+        if self.last_sort_angle_num == angle_num:
+            ascending = not self.last_sort_ascending
+            self.last_sort_ascending = ascending
+        self.last_sort_angle_num = angle_num
+
+        #Find another angle to sort by
+        another_angle = 0
+        if angle_num == 0: another_angle = 1
+
+        #Sort by all the angles, with the selected one at top
+        decorated = []
+        for (i, poscov) in enumerate(self.positions):
+            sort_list = [poscov.angles[angle_num]]
+            if angle_num > 0: sort_list += poscov.angles[0:(angle_num-1)]
+            if angle_num < len(self.angles)-1: sort_list += poscov.angles[(angle_num+1):]
+            #Also add the original index to keep the sort stable.
+            sort_list += [i]
+            decorated.append( tuple(sort_list + [poscov]) )
+            
+        decorated.sort(reverse=(not ascending))
+        #Save it back in the array
+        self.positions[:] = [x[-1] for x in decorated]
+
 
 
     #========================================================================================================
@@ -796,6 +841,7 @@ class Instrument:
         Returns:
             pos: The PositionCoverage object that was just calculated.
         """
+        print "simulate_position angles", angles, type(angles)
         angles_string = self.make_angles_string(angles)
 
         ump = ""
@@ -1576,7 +1622,7 @@ if __name__ == "__main__":
 #    tst.setUp()
 #    tst.test_simulate_and_total_more_detectors()
 
-#    unittest.main()
+    unittest.main()
 
 #    test_setup()
 #    test_hits_detector()
