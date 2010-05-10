@@ -267,6 +267,9 @@ class OptimizerController():
         self._want_abort = True
         #Marker to avoid trying to change GUI
         self.frame = None
+        #For the singleton
+        global _instance
+        _instance = None
         if not event is None: event.Skip()
 
 
