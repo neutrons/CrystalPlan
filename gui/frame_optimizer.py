@@ -158,7 +158,9 @@ class OptimizationThread(threading.Thread):
 
     def run(self):
         #Just run the optimization
+        self.controller.params.optimization_running = True
         (ga, aborted, converged) = model.optimization.run_optimization(self.controller.params, self.controller.step_callback)
+        self.controller.params.optimization_running = False
         #Call the completion function.
         self.controller.complete( ga, aborted, converged )
             
@@ -177,6 +179,7 @@ class OptimizerController():
             frame: the FrameOptimizer instance."""
         self.frame = frame
         self.params = OptimizationParameters()
+        self.params.optimization_running = False
         self.best = None
         self.best_coverage = 0
         self.average_coverage = 0
@@ -524,8 +527,8 @@ class FrameOptimizer(wx.Frame):
         self.staticText1.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD, False, u'Sans'))
 
         self.staticTextHelp = wx.StaticText(id=wx.NewId(), name='staticText1',
-              label=u"""The GA attempts to maximize the percentage of measured reflections. Enter the goals and GA parameters above.
-DO NOT modify settings (such as goniometer choice, sample parameters, etc.) while optimization is running, as that will cause problems!!!
+              label=u"""The genetic algorithm attempts to maximize the percentage of measured reflections. Enter the goals and GA parameters above.
+DO NOT modify settings in the main window (such as goniometer choice, sample parameters, etc.) while optimization is running, as that will cause problems!!!
 Click Apply Results while optimizing to see the current best solution.""",
               parent=self.panelParams, pos=wx.Point(0, 8), style=0)
 
