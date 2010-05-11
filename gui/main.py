@@ -154,6 +154,7 @@ def launch_gui(inelastic):
     if inelastic:
         print "Initializing inelastic scattering instrument."
         model.instrument.inst = model.instrument.InstrumentInelastic(model.config.cfg.default_detector_filename)
+        model.instrument.inst.set_goniometer(model.goniometer.Goniometer())
     else:
         print "Initializing elastic scattering instrument."
         model.instrument.inst = model.instrument.Instrument(model.config.cfg.default_detector_filename)

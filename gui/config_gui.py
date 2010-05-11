@@ -13,6 +13,7 @@ class GuiConfig(HasTraits):
 
     max_3d_points = Int(400000, desc="the maximum # of points to show in the reciprocal space 3D view of single reflections.")
 
+    #inelastic_mode = Bool(False, desc="whether the software is running for an inelastic instrument.")
 
 
 #Shared between GUI elements, this is the configuration data.

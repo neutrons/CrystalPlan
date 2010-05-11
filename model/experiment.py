@@ -1602,8 +1602,8 @@ class Experiment:
     def get_coverage_stats_data(self):
         """Return the coverage stats as numpy arrays.
             Return: (coverage_q, coverage_data)
-                coverage_q: |q| of the point
-                coverage_data: list of arrays containging the coverage (once, twice, etc.) 
+                coverage_q: numpy array of |q| of the point
+                coverage_data: list of numpy arrays containging the coverage (once, twice, etc.)
         """
         coverage_data = list()
 

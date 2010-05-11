@@ -30,35 +30,6 @@ class SliceControl(wx.PyControl):
     Shows a graph of coverage, and has a movable slider bar to adjust the size of the slice.
     """
 
-    #do we use a slice?
-    use_slice = False
-    
-    #Start and end positions of the slicers.
-    slice_min = 0.5
-    slice_max = 1.5
-
-    #X/Y data to plot
-    data_x = None
-    data_y = list()
-
-    #Update the view in real time
-    realtime = False
-
-    #Current drag mode
-    _current_drag = 0
-    #Starting point of the drag, in plot X coordinates
-    _drag_start_x = 0
-    _drag_start_min = 0
-    _drag_start_max = 0
-
-    #For the timer
-    _last_slice = (0, 0)
-
-
-    #Method to call for events
-    _apply_slice_method = None
-
-
     #-------------------------------------------------------------------------------
     def __init__(self, parent, use_slice=False, apply_slice_method=None,
             id=wx.ID_ANY, pos=wx.DefaultPosition,
@@ -84,15 +55,40 @@ class SliceControl(wx.PyControl):
             name: Window name.
         """
         
-        #Some settings
+        #Using the slicer mode?
         self.use_slice = use_slice
+        #Method to call for events
         self._apply_slice_method = apply_slice_method
+        #Some defaults
+        self.scale_x = 1.0
+        self.scale_y = 1.0
 
-        # Ok, let's see why we have used wx.PyControl instead of wx.Control.
-        # Basically, wx.PyControl is just like its wxWidgets counterparts
-        # except that it allows some of the more common C++ virtual method
-        # to be overridden in Python derived class. For CustomCheckBox, we
-        # basically need to override DoGetBestSize and AcceptsFocusFromKeyboard
+        #Start and end positions of the slicers.
+        self.slice_min = 0.5
+        self.slice_max = 1.5
+
+        #X/Y data to plot
+        self.data_x = None
+        self.data_y = list()
+
+        #Update the view in real time
+        self.realtime = False
+
+        #Current drag mode
+        self._current_drag = 0
+        #Starting point of the drag, in plot X coordinates
+        self._drag_start_x = 0
+        self._drag_start_min = 0
+        self._drag_start_max = 0
+
+        #For the timer
+        self._last_slice = (0, 0)
+
+        #For energy slice type
+        self.energy_mode = False
+
+
+        #Init the base pyControl
         wx.PyControl.__init__(self, parent, id, pos, size, wx.TAB_TRAVERSAL, validator, name)
 
         # Bind the events related to our control: first of all, we use a
@@ -337,8 +333,10 @@ class SliceControl(wx.PyControl):
     #-------------------------------------------------------------------------------
     def CheckSlice(self):
         """Makes sure that the current values of slice_min and slice_max make sense."""
-        if self.slice_min < 0: self.slice_min = 0
         if not self.data_x is None:
+            if self.slice_min < self.data_x[0]: self.slice_min = self.data_x[0]
+            if self.slice_max < self.data_x[0]: self.slice_max = self.data_x[0]
+            if self.slice_min > self.data_x[-1]: self.slice_min = self.data_x[-1]
             if self.slice_max > self.data_x[-1]: self.slice_max = self.data_x[-1]
 
 
@@ -359,7 +357,7 @@ class SliceControl(wx.PyControl):
     #-------------------------------------------------------------------------------
     def GetX(self, x):
         """Returns the x pixel position for the given plot x position."""
-        return x*self.scale_x + self.plot_x_offset
+        return (x-self.data_x[0])*self.scale_x + self.plot_x_offset
 
     def GetY(self, y):
         """Returns the y pixel position for the given plot y position."""
@@ -431,14 +429,16 @@ class SliceControl(wx.PyControl):
 
         #Now draw the data
         x = self.data_x
+        xrange = 1.
+        yrange = 1.
         #Pen and brush colors
         pen_colors = ['black', 'dark green', 'orange', 'dark orange']
         brush_colors = ['cyan', 'light green', 'yellow', [235, 166, 5] ]
 
         if not (x is None):
             #Lets figure out how much to scale in x and y
-            xrange = x[-1] #Starts at 0
-            self.scale_x = self.plot_width / xrange
+            xrange = x[-1] - x[0]
+            self.scale_x = self.plot_width * 1. / xrange
 
             plot_num = 0
             for y in self.data_y:
@@ -478,29 +478,41 @@ class SliceControl(wx.PyControl):
         #Add some labels
         d_mode = config_gui.cfg.show_d_spacing
 
-        self.DrawTick(dc, 0, 0, '0', horizontal=False)
-        self.DrawTick(dc, 0, yrange, ("%d" % np.round(yrange)), horizontal=False)
-        dc.DrawLabel('%' , wx.Rect( self.GetX(0)-2, self.GetY(yrange/2)), alignment=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
+        #--- Vertical Axis ----
+        self.DrawTick(dc, self.data_x[0], 0, '0', horizontal=False)
+        self.DrawTick(dc, self.data_x[0], yrange, ("%d" % np.round(yrange)), horizontal=False)
+        dc.DrawLabel('%' , wx.Rect( self.GetX(self.data_x[0])-2, self.GetY(yrange/2)), alignment=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
 
         steps = 1
         steps = int(np.round( xrange / (self.plot_width/30) ))
         if steps > 5: steps = 10
         elif steps > 2: steps = 5
         if steps < 1: steps = 1
-        if d_mode:
-            #Show d-spacing
-            for x_label in range(0, int(xrange+1), steps):
-                if x_label > 0:
-                    label = ("%.1f" % (2*np.pi/(1.0*x_label)))
-                else:
-                    label = u"\u221E" #infinity
-                self.DrawTick(dc, x_label, 0, label, horizontal=True)
-            dc.DrawLabel('d' , wx.Rect( 2, height), alignment=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM )
-        else:
-            #Show q-values
-            for x_label in range(0, int(xrange+1), steps):
+
+        if self.energy_mode:
+            # --- Label the energy axis ---
+            dc.DrawLabel('E' , wx.Rect( 2, height), alignment=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM )
+            #Show energy ticks
+            for x_label in range(int(self.data_x[0]), int(self.data_x[-1]+1), steps):
                 self.DrawTick(dc, x_label, 0, ("%d" % x_label), horizontal=True)
-            dc.DrawLabel('q' , wx.Rect( 2, height), alignment=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM )
+
+        else:
+            # --- Q-space slice ---
+            if d_mode:
+                #Show d-spacing
+                for x_label in range(0, int(xrange+1), steps):
+                    if x_label > 0:
+                        label = ("%.1f" % (2*np.pi/(1.0*x_label)))
+                    else:
+                        label = u"\u221E" #infinity
+                    self.DrawTick(dc, x_label, 0, label, horizontal=True)
+                dc.DrawLabel('d' , wx.Rect( 2, height), alignment=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM )
+            else:
+                #Show q-values
+                for x_label in range(0, int(xrange+1), steps):
+                    self.DrawTick(dc, x_label, 0, ("%d" % x_label), horizontal=True)
+                #Label
+                dc.DrawLabel('q' , wx.Rect( 2, height), alignment=wx.ALIGN_LEFT|wx.ALIGN_BOTTOM )
 
 
 ##        dc.DrawText( ("%d" % np.round(yrange)) , self.GetX(0), self.GetY(yrange))
@@ -536,6 +548,26 @@ class SliceControl(wx.PyControl):
             data_y: list of numpy arrays with the y values. data_y[0] is measured once or more, data_y[1] is measured twice, etc."""
         self.data_x = data_x
         self.data_y = data_y
+        #Ensure the slice is still valid.
+        self.CheckSlice()
 
+
+
+
+if __name__ == '__main__':
+    import gui_utils
+    (app, sc) = gui_utils.test_my_gui(SliceControl)
+    sc.use_slice = True
+    sc.energy_mode = True
+    data_x = np.arange(-50, 50, 5)
+    print data_x
+    data_y = []
+    for i in xrange(4):
+        data_y.append( data_x*0 )
+    sc.SetData(data_x, data_y)
+    sc.Refresh()
+    
+    app.frame.SetClientSize(wx.Size(700,500))
+    app.MainLoop()
 
 

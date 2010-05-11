@@ -769,7 +769,14 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         #Init the base class
         LimitedGoniometer.__init__(self)
         #Make the angle info object
-        self.angles = [AngleInfo('Phi'), AngleInfo('Omega')]
+        self.angles = [
+            AngleInfo('Phi'),
+            AngleInfo('Omega'),
+            ]
+        if False:
+            self.angles.append(
+                AngleInfo('bandwidth', type="wavelength", units="ang", friendly_units="ang",
+                          conversion=1, friendly_range=[1.7, 10], random_range=[1.7, 10]) )
 
         #C code for the fitness of phi,chi, omega
         self.fitness_function_c_code = """
@@ -863,7 +870,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
 
     #---------------------------- GONIOMETER DEFAULT VALUES -----------------------
     #Default inhouse goniometer object file.
-    #Positions are in mm.
+    #Positions are all in mm.
 
     #Height of the SAMPLE plate above the sample position/beam height, when all legs
     # are at the zero position.
@@ -882,7 +889,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
     # with sides this long:
     mounting_side_length = 2.815*25.4
 
-    #Vector describing the position of the sample relative to the expected
+    #Vector describing the position of the sample relative to the expected, in mm
     #   sample position, when the sample rotation motor is zero-ed (see below).
     #   The sample sits on a pin, gonio.sample_plate_height BELOW the sample plate.
     relative_sample_position = column([0, 0, 0])
@@ -962,11 +969,11 @@ class TopazInHouseGoniometer(LimitedGoniometer):
 
         Parameters:
             angles: list of angles of the goniometer (phi, chi, omega), in radians.
-            return_reason: return the reason string?
+            return_reason: bool; return the reason string as a tuple
 
         Returns:
-            True if the angle provided can be reached.
-            optionally: reason, a string.
+            allowed: True if the angle provided can be reached.
+            [optionally] reason, a string. Return value is then a tuple
         """
         if len(angles) != 3:
             raise ValueError("In-house goniometer expects 3 angles (phi, chi, omega).")
@@ -986,10 +993,9 @@ class TopazInHouseGoniometer(LimitedGoniometer):
 #            #   in the same rotation matrix!
 #            allowed = check_these(phi-pi, -chi, omega-pi)
 
-        reason = ""
-        if not allowed:
-            reason = "Limit to leg positions"
         if return_reason:
+            reason = ""
+            if not allowed: reason = "Limit to leg positions"
             return (allowed, reason)
         else:
             return allowed
@@ -1075,13 +1081,15 @@ class TopazInHouseGoniometer(LimitedGoniometer):
 
         #------------------ APPLY TRANSFORMS ----------------------
         #For the sample plate: we do not apply the motor_phi rotation.
-        #Do a translation of the position matrix
+        
+        #Do a translation of the position - we are moving the entire sample plate
+        #   This places the sample in the 0,0,0 position.
         sample_plate = get_translated_vectors(sample_plate_zero, translate_v)
 
-        #Now do a rotation
+        #Now do a rotation (phi,chi,omega)
         sample_plate = dot(rot_M_plate, sample_plate)
 
-        #The pin translates, then rotates with the motor, then rotates with the
+        #The pin rotates with the motor, then translates, then then rotates with the
         #sample plate.
         pin = dot(rot_M_motor, pin)
         pin = get_translated_vectors(pin, translate_v)
@@ -1163,9 +1171,9 @@ class TopazInHouseGoniometer(LimitedGoniometer):
            
         #Find the fixed plate position at the "0" point
         gonio_zero = copy.copy(self)
-        gonio_zero.relative_sample_position = column([0,0,0]) #Tell the sample to be centered well.
-        gonio_zero.getplatepos(0, 0, 0)
-        fixed_plate_zero = gonio_zero.fixed_plate
+        gonio_zero.relative_sample_position = column([0.0, 0.0, 0.0]) #Tell the sample to be centered well.
+        gonio_zero.getplatepos(0.0, 0.0, 0.0)
+        fixed_plate_zero = np.copy(gonio_zero.fixed_plate)
         #This defines the center of the following matrices
         self.fixed_plate_zero = fixed_plate_zero
         
@@ -1174,18 +1182,30 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         self.leg_safe_zaxis = np.copy(self.leg_safe_xaxis)
 
         #Create the "safe zone" array, initialized to False
-        self.leg_safe_zone = np.zeros( (3, self.leg_safe_xaxis.size, self.leg_safe_zaxis.size), dtype=np.int ) #bool?
+        self.leg_safe_zone = np.zeros( (3, self.leg_safe_xaxis.size, self.leg_safe_zaxis.size), dtype=bool ) 
 
         #Now make a reasonable approximation
-        real_travel = 12.5
+        real_travel_x = 12.5
+        real_travel_z = real_travel_x
         for leg in range(3):
             for i_x in range(self.leg_safe_xaxis.size):
                 x = self.leg_safe_xaxis[i_x]
-                if abs(x)<real_travel:
+                if abs(x)<real_travel_x:
                     for i_z in range(self.leg_safe_zaxis.size):
                         z = self.leg_safe_zaxis[i_z]
-                        if abs(z)<real_travel:
+                        if abs(z)<real_travel_z:
                             self.leg_safe_zone[leg, i_x, i_z] = True
+        #Upper left corner of leg A (0)
+        center = int(len(self.leg_safe_xaxis)/2)
+#        self.leg_safe_zone[0, center:, center:] = False
+#        self.leg_safe_zone[1, 0:center, center:] = False
+        self.leg_safe_zone[0, :, :] = False
+        self.leg_safe_zone[0, :center, :center] = True
+        self.leg_safe_zone[1, :, :] = False
+        self.leg_safe_zone[1, center:, 0:center] = True
+
+        self.leg_safe_zone[2, :, :center] = False
+
 
 #        #Test: add a dumb hole in middle!
 #        real_travel = 3
@@ -1203,19 +1223,19 @@ class TopazInHouseGoniometer(LimitedGoniometer):
             pylab.figure(0)
             pylab.hold(True)
             for leg in range(3):
-                pylab.pcolor(self.leg_safe_xaxis+fixed_plate_zero[COORD_X, leg], self.leg_safe_zaxis+fixed_plate_zero[COORD_Z, leg], self.leg_safe_zone[leg, :, :])
+                pylab.pcolor(self.leg_safe_xaxis+fixed_plate_zero[COORD_X, leg], self.leg_safe_zaxis+fixed_plate_zero[COORD_Z, leg], self.leg_safe_zone[leg, :, :].transpose())
             pylab.xlabel("x")
             pylab.ylabel("z")
             pylab.title("Allowable XZ leg positions for the 3 legs.")
             pylab.draw()
             pylab.axis('equal')
-            time.sleep(1)
-            pylab.show()
+            #pylab.show()
 
     #===============================================================================================
     def check_limits(self):
         """Check that the leg positions in self.fixed_plate are within the limits previously
         calculated using self.calculate_leg_xy_limits().
+        
             This sets the self.leg_fault array of booleans to True for each leg outside of its allowed
         range."""
 
@@ -1565,19 +1585,23 @@ class TopazInHouseGoniometer(LimitedGoniometer):
 #================================================================================================
 #================================================================================================
 #================================================================================================
+
+
+
 #================================================================================================
 def test_plotting_and_others():
     #Create a sample goniometer
-    g = Goniometer()
-    print g.are_angles_allowed(0,0,0)
+    g = TopazInHouseGoniometer()
+    #print g.are_angles_allowed(0,0,0)
 
     g.relative_sample_position = column([0, 0, 0.5])
     g.getplatepos(0,0.0,0.0)
-    g.calculate_leg_xy_limits(visualize=True)
+    g.calculate_leg_xy_limits(visualize=False)
 
     g.getplatepos(np.deg2rad(20), np.deg2rad(7), np.deg2rad(10))
-    g.plot_goniometer(first_plot=True)
-    mlab.show()
+    return 
+    #g.plot_goniometer(first_plot=True)
+    #mlab.show()
 
 ##    g.calculate_allowable_angles(0.015, visualize=2)
 #    g.are_angles_allowed(0,0,0)
@@ -1613,6 +1637,55 @@ def test_angle_finding():
 
 
 
+#===============================================================================================
+def sample_pin_position_range():
+    """Ways to test the range of XYZ motion of the sample pin, with different
+    leg movement limits."""
+    #Create a sample goniometer
+    g = TopazInHouseGoniometer()
+
+    #Initialize the leg limits
+    g.relative_sample_position = column([0.0, 0.0, 0.0])
+    g.getplatepos(0.0, 0.0, 0.0)
+    g.calculate_leg_xy_limits(visualize=True)
+
+#    if True:
+#        pylab.show()
+#        return
+
+    n = 17
+    positions = np.linspace(-8, 8, n) #Range calculated in mm
+    allowed = np.zeros( (n,n,n) )
+    for (ix, x) in enumerate(positions):
+        print "Calculating x", x
+        for (iy, y) in enumerate(positions):
+            for (iz, z) in enumerate(positions):
+                #Set up
+                g.relative_sample_position = column([x, y, z])
+                allowed[ix,iy,iz] = g.are_angles_allowed([0., 0., 0.], return_reason=False)
+
+    #Do a plot
+
+    pylab.figure(1, figsize=[15,15])
+    pylab.title("Allowable XZ sample positions")
+    for (iy, y) in enumerate(positions):
+        print "At y of", y, ", # of points = ", np.sum( allowed[:, iy,:])
+        if iy < 16:
+            pylab.subplot(4,4,iy+1)
+            pylab.pcolor(positions, positions, allowed[:, iy, :].transpose(), norm=pylab.Normalize(0, 1))
+            pylab.xlabel("x")
+            pylab.ylabel("z")
+            pylab.title("y = %.3f mm" % y)
+            pylab.draw()
+            pylab.axis('equal')
+    pylab.show()
+    #pylab.
+
+
+
+
+
+#===============================================================================================
 # Global list of all available goniometers
 goniometers = []
 
@@ -1630,4 +1703,4 @@ def get_goniometers_names():
 #===============================================================================================
 if __name__ == "__main__":
     initialize_goniometers()
-    test_angle_finding()
+    sample_pin_position_range()

@@ -28,6 +28,12 @@ def is_mac():
     return sys.platform=="darwin"
 
 #------------------------------------------------------------------
+def inelastic_mode():
+    """Return true if the instrument being simulated is for
+    inelastic scattering."""
+    return isinstance(model.instrument.inst, model.instrument.InstrumentInelastic)
+
+#------------------------------------------------------------------
 def print_large_number(n,width=0,delim=',',decimal='.'):
     # Copyright 2007 Regents of the University of California
     # Written by David Isaacson at the University of California, Davis

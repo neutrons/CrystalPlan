@@ -141,7 +141,7 @@ class Instrument:
 
 
     #Minimum detectable wavelength in Angstroms
-    wl_min = .5
+    wl_min = .9
     #And max
     wl_max = 4
 
@@ -1039,20 +1039,22 @@ class InstrumentInelastic(Instrument):
                     //Get the two limits.
                     py::tuple q_min = getq_inelastic(wl_input, wl_min, az, elev, pi, rot_matrix);
                     py::tuple q_max = getq_inelastic(wl_input, wl_max, az, elev, pi, rot_matrix);
+                    
                     //Limit them to the modeled size
                     shrink_q_vector(q_min, qlim);
                     shrink_q_vector(q_max, qlim);
 
                     //Vector difference max-min
-                    py::tuple q_diff(3);
+                    double q_diff[3] = {0.,0.,0.};
+                    double q_length = 0.0;
                     for (int i=0; i<3; i++)
                     {
+                        // We change the sign, because for inelastic, Q = ki-kf, rather than the opposite sign for elastic
                         q_diff[i] = double(q_max[i]) - double(q_min[i]);
+                        q_length += q_diff[i]*q_diff[i];
                     }
-
                     //Find out how long of a line that is
-                    double q_length = vector_length(q_diff);
-                    if (q_length<0) q_length = -q_length;
+                    q_length = sqrt(q_length);
 
                     //How many steps will we take. The multiplication factor here is a fudge to make sure it covers fully.
                     int numfrac = (1.25 * q_length) / (q_resolution);
@@ -1063,19 +1065,15 @@ class InstrumentInelastic(Instrument):
                     {
                         //There is something to measure.
 
-                        // Scattering angle. Find the pixel direction, take the Z component = cos(theta)
-                        double cos_2_theta = cos(2*acos(cos(az) * cos(elev)));
-
                         //Size in q-space of each step
                         double dx, dy, dz;
-                        dx = (double(q_max[0]) - double(q_min[0])) / numfrac;
-                        dy = (double(q_max[1]) - double(q_min[1])) / numfrac;
-                        dz = (double(q_max[2]) - double(q_min[2])) / numfrac;
+                        dx = q_diff[0] / numfrac;
+                        dy = q_diff[1] / numfrac;
+                        dz = q_diff[2] / numfrac;
 
                         long index;
                         double qx, qy, qz;
                         long iqx, iqy, iqz;
-                        // unsigned int* coverage_int = (unsigned int*) coverage;
 
                         double lim_min = -qlim;
                         double lim_max = +qlim;
@@ -1101,15 +1099,16 @@ class InstrumentInelastic(Instrument):
                                     iqz = round((qz - lim_min) / q_resolution);
                                     if ((iqz >=0) && (iqz < stride))
                                     {
-                                        //Calculate the sample energy gain
+                                        //Calculate the neutron energy gain
                                         // But we need to get back the z component of kf
-                                        kfz = (ki - qz) / cos_2_theta;
+                                        // We kept Q = kf - ki
+                                        kfz = (ki + qz);
 
                                         // Okay, now calculate kf^2
                                         kf_squared = qx*qx + qy*qy + kfz*kfz;
 
-                                        // Get the energy. Some kind of units here = ???
-                                        E = energy_constant * (ki_squared - kf_squared);
+                                        // Get the energy. The constant sets the units (to meV)
+                                        E = energy_constant * (kf_squared - ki_squared);
 
                                         COVERAGE3(iqx,iqy,iqz) = E; 
                                     }
@@ -1137,7 +1136,7 @@ class InstrumentInelastic(Instrument):
 
         Returns:
             coverage: the q-space 3D array of coverage. Each point is a float holding
-                the sample energy gain (in eV) at that q.
+                the neutron energy gain (in eV) at that q.
                 If the voxel was not measured, it holds +inf.
         """
 
@@ -1166,6 +1165,22 @@ class InstrumentInelastic(Instrument):
         #   = the opposite order of the rotations in the first case.
         rot_matrix = np.dot(np.linalg.inv(sample_U_matrix), rot_matrix)
 
+
+        #The input wavevector (along +z)
+        wl_input = self.wl_input
+        ki = 2*np.pi / wl_input
+        ki_squared = ki**2
+
+        #A constant for calculating energy
+        #(h_bar^2 / (2*m) )
+        # also, k = 2pi/lambda, with lambda in angstroms
+        # and to convert from A^-2 to m^-2, you have to x 1e20
+        # and to convert from Joules to eV, you / 1.602177e-19
+        # Finally we convert from eV to meV
+        energy_constant = 1.6599e-42 * 1e20  / 1.602177e-19 * 1000 #Resulting unit = meV
+
+        input_energy = energy_constant * ki_squared
+
         #For updating
         last_time = time.time()
 
@@ -1186,14 +1201,6 @@ class InstrumentInelastic(Instrument):
                 sys.stdout.write(det.name + ", ")
                 sys.stdout.flush()
 
-            #The input wavevector (along +z)
-            wl_input = self.wl_input
-            ki = 2*np.pi / wl_input
-            ki_squared = ki**2
-
-            #A constant for calculating energy
-            #(h_bar^2 / (2*m) )
-            energy_constant = 3.31991e-42  #SI units = ???
 
             #Two nearby pixels
             q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], self.wl_min, rot_matrix, wl_input=wl_input)
@@ -1247,6 +1254,8 @@ class InstrumentInelastic(Instrument):
                 #Run the C code (see between function declarations for the actual code).
                 weave.inline(self._code_calculate_coverage, varlist, compiler='gcc', support_code=support) # , libraries = ['m'])
 
+                print "C-code: neutron energy gain min", np.min(coverage), "; max", np.max(coverage[coverage <1e6])
+
             else:
 #            if True:
                 #-------- Pure Python ---------
@@ -1256,11 +1265,7 @@ class InstrumentInelastic(Instrument):
                         az = det.azimuthal_angle[iy, ix]
                         elev = det.elevation_angle[iy, ix]
 
-                        #Scattering angle. Find the pixel direction, take the Z component = cos(theta)
-                        theta = np.arccos(az_elev_direction(az, elev)[2])
-                        cos_2_theta = cos(2*theta)
-
-                        #Now we find the reciprocal vector r=1/d which corresponds to this point on the ewald sphere.
+                        #For inelastic, we want Q = ki-kf = momentum transfer from neutron TO sample
                         q_min = getq(az, elev, self.wl_min, rot_matrix, wl_input=self.wl_input)
                         q_max = getq(az, elev, self.wl_max, rot_matrix, wl_input=self.wl_input)
                         #Cap to qlim
@@ -1277,7 +1282,6 @@ class InstrumentInelastic(Instrument):
                                 #This is the intermediate q
                                 q = q_min + frac*q_diff
 
-
                                 #Find the indices in q-space that correspond
                                 iqx = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[0])
                                 if iqx is None: continue
@@ -1286,21 +1290,22 @@ class InstrumentInelastic(Instrument):
                                 iqz = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[2])
                                 if iqz is None: continue
                                 #All indices are valid, hurrah!
-                                #Now we calculate the energy gained by the sample.
-                                # E = h_bar * omega = (h_bar^2 / (2*m) )*(ki^2 - kf^2)
+                                #Now we calculate the energy gained by the NEUTRON.
+                                # E = h_bar * omega = (h_bar^2 / (2*m) )*(kf^2 - ki^2)
 
                                 #But we need to get back the z component of kf
-                                # kf_z = (ki - qz) / cos(2*theta)
-                                kfz = (ki - q[2]) / cos_2_theta
+                                #If Q = kf-ki (Busing Levy 1967 convention)
+                                kfz = (ki + q[2])
 
                                 #Okay, now calculate kf^2
                                 kf_squared = q[0]**2 + q[1]**2 + kfz**2
 
-                                #Get the energy. Some kind of units here = ???
-                                E = energy_constant * (ki_squared - kf_squared)
+                                #Get the energy. Units are in meV
+                                E = energy_constant * (kf_squared - ki_squared)
 
                                 #Set that energy in the array
                                 coverage[iqx, iqy, iqz] = E
+                print "Python-code: neutron energy gain min", np.min(coverage), "; max", np.max(coverage[coverage <1e6])
 
         print " done!"
 
@@ -1310,10 +1315,10 @@ class InstrumentInelastic(Instrument):
 
     #========================================================================================================
     def total_coverage(self, detectors_used, orientations_used, use_inline_c=True):
-        """Calculate the total coverage, with some options, as bool arrays:
+        """Calculate the total coverage for an inelastic instrument, with some options, as bool arrays:
 
         Parameters:
-            detectors_used: a bool list, giving which of the measured detectors are considered. if None, all are used.
+            detectors_used: IGNORED for inelastic instrument!
             orientations_used: a list of PositionCoverage objects to add up together.
                 If None, all the entries saved in the instrument are used.
             use_inline_c: bool, True to use inline C routine, false for pure Python.
@@ -1321,7 +1326,6 @@ class InstrumentInelastic(Instrument):
         Returns:
             coverage: a 3D array with the # of times each voxel was measured.
         """
-        #print "instrument.total_coverage( %s, %s)" % ( detectors_used, orientations_used)
         #print "instrument.total_coverage starting..."
 
         t1 = time.time()
@@ -1343,13 +1347,16 @@ class InstrumentInelastic(Instrument):
             #Add the coverage of the position used to the list
             coverage_list.append(pos_cov.coverage)
 
-        number_of_ints = self.get_coverage_number_of_ints()
+        #Slice in energy
+        E_max = 50
+        E_min = -50
 
         #Now we add up the coverages together
         if config.cfg.force_pure_python or not use_inline_c or True:
             #--- Pure Python Version ---
             for one_coverage in coverage_list:
-                coverage += (one_coverage[:,:,:] < 1e6)
+                #Add one to the voxels where the energy is within the given range.
+                coverage += (one_coverage[:,:,:] >= E_min) & (one_coverage[:,:,:] <= E_max)
 
         else:
             #--- Inline C version ---
@@ -1381,6 +1388,7 @@ class InstrumentInelastic(Instrument):
                             if (low < 1e6)
                             {
                                 COVERAGE3(ix,iy,iz)++;
+                                //COVERAGE3(ix,iy,iz) = low;
                             }
                         }// for iy
                     }
@@ -1424,8 +1432,8 @@ class TestInelasticInstrument(unittest.TestCase):
         ti.set_goniometer(goniometer.Goniometer())
         ti.d_min = 1.0
         ti.q_resolution = 0.5
-        ti.wl_min = 0.7
-        ti.wl_max = 3.6
+        ti.wl_min = 0.9
+        ti.wl_max = 10.0
         ti.wl_input = 1.0
         ti.make_qspace()
 
@@ -1620,7 +1628,7 @@ if __name__ == "__main__":
 #    tst.setUp()
 #    tst.test_simulate_and_total_more_detectors()
 
-    unittest.main()
+#    unittest.main()
 
 #    test_setup()
 #    test_hits_detector()
