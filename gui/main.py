@@ -158,6 +158,9 @@ def launch_gui(inelastic):
     else:
         print "Initializing elastic scattering instrument."
         model.instrument.inst = model.instrument.Instrument(model.config.cfg.default_detector_filename)
+        g = model.goniometer.TopazAmbientGoniometer(wavelength_control=True)
+        model.instrument.inst.set_goniometer(g)
+        
     model.instrument.inst.make_qspace()
 
     #Initialize the instrument and experiment

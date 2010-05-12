@@ -683,10 +683,15 @@ class Instrument:
                 set_value2 = (2**(count-31))
             count = count+1
 
+            #Find the wavelength range to use
+            (wl_min, wl_max) = self.goniometer.get_wavelength_range(angles)
+            if wl_min is None:
+                (wl_min, wl_max) = (self.wl_min, self.wl_max)
+
             #Two nearby pixels
-            q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], self.wl_min, rot_matrix)
-            q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], self.wl_min, rot_matrix)
-            q_ymax = getq(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], self.wl_min, rot_matrix)
+            q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], wl_min, rot_matrix)
+            q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], wl_min, rot_matrix)
+            q_ymax = getq(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], wl_min, rot_matrix)
 
             #Make sure they aren't too long
             q0 = shrink_q_vector(q0)
@@ -729,8 +734,9 @@ class Instrument:
                 varlist += ['pi', 'rot_matrix']
                 varlist += ['set_value1', 'set_value2', 'number_of_ints']
                 varlist += ['coverage', 'stride', 'max_index']
+                varlist += ['wl_min', 'wl_max']
                 #Dump these  in the locals namespace
-                attribute_list = ['wl_min', 'wl_max', 'qlim', 'q_resolution']
+                attribute_list = ['qlim', 'q_resolution']
                 for var in attribute_list: locals()[var] = getattr(self, var)
                 varlist += attribute_list
                 #Run the C code (see between function declarations for the actual code).
@@ -745,8 +751,8 @@ class Instrument:
                         elev = det.elevation_angle[iy, ix]
 
                         #Now we find the reciprocal vector r=1/d which corresponds to this point on the ewald sphere.
-                        q_min = getq(az, elev, self.wl_min, rot_matrix)
-                        q_max = getq(az, elev, self.wl_max, rot_matrix)
+                        q_min = getq(az, elev, wl_min, rot_matrix)
+                        q_max = getq(az, elev, wl_max, rot_matrix)
                         #Cap to qlim
                         q_min = shrink_q_vector(q_min)
                         q_max = shrink_q_vector(q_max)
@@ -1139,11 +1145,11 @@ class InstrumentInelastic(Instrument):
                                     }
                                 }
                             }
+                            
                         } //for i in numfrac
                     } //numfrac > 0 so we can draw the line
 
                 } //for iiy
-
             }
             """
             
@@ -1273,8 +1279,8 @@ class InstrumentInelastic(Instrument):
                 #Set up several functions used in the code
                 support = "#include <math.h>\n"
                 support += crystal_calc.getq_inelastic_code_header + crystal_calc.getq_inelastic_code + crystal_calc.getq_inelastic_code_footer
-                support += self._code_vector_length
-                support += self._code_shrink_q_vector
+                #support += self._code_vector_length
+                #support += self._code_shrink_q_vector
                 #Dimensions of the array
                 s = coverage.shape
                 stride = s[0]
@@ -1317,10 +1323,10 @@ class InstrumentInelastic(Instrument):
                         numfrac = int(1.25 * vector_length(q_diff) / self.q_resolution)
                         if numfrac > 0:
                             #If we get numfrac==0, that means nothing can be detected.
-                            for frac in np.arange(0.0, 1.0, 1.0/numfrac):
+                            for i in xrange(numfrac):
                                 #This is the intermediate q
-                                q = q_min + frac*q_diff
-                                q_unrot = q_min_unrot + frac*q_diff_unrot
+                                q = q_min + i*q_diff/numfrac
+                                q_unrot = q_min_unrot + i*q_diff_unrot/numfrac
 
                                 #Find the indices in q-space that correspond
                                 iqx = index_evenly_spaced(-self.qlim, len(self.qx_list), self.q_resolution, q[0])

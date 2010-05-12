@@ -153,7 +153,7 @@ class AngleInfo:
 #===============================================================================================
 #===============================================================================================
 #===============================================================================================
-class Goniometer:
+class Goniometer(object):
     """Base class for goniometers. Will be overridden by specific classes for different types
     of instruments."""
 
@@ -162,9 +162,20 @@ class Goniometer:
     description = "Simple universal goniometer with no restrictions on movement."
 
     #-------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, wavelength_control=False):
+        """Constructor.
+
+        Parameters:
+            wavelength_control : bool, have the goniometer control wavelength too."""
         #Make the angle info object
-        self.angles = [AngleInfo('Phi'), AngleInfo('Chi'), AngleInfo('Omega')]
+        self.gonio_angles = [AngleInfo('Phi'), AngleInfo('Chi'), AngleInfo('Omega')]
+        #Do we also change wavelengths?
+        self.wavelength_control = wavelength_control
+        if wavelength_control:
+            self.wl_angles = [
+                AngleInfo('bandwidth', type="wavelength", units="ang", friendly_units="ang",
+                          conversion=1, friendly_range=[1.7, 10], random_range=[1.7, 10]) 
+                ]
 
     #-------------------------------------------------------------------------
     def are_angles_allowed(self, angles, return_reason=False):
@@ -185,11 +196,20 @@ class Goniometer:
         else:
             return True
 
+
     #-------------------------------------------------------------------------
     def get_angles(self):
         """Return a list of AngleInfo objects describing the degrees of
         freedom of the goniometer."""
-        return self.angles
+        if self.wavelength_control:
+            return self.gonio_angles + self.wl_angles
+        else:
+            return self.gonio_angles
+
+    def set_angles(self, value):
+        raise NotImplementedError("Do not set the Goniometer.angles attribute directly!")
+
+    angles = property(get_angles, set_angles)
 
     #-------------------------------------------------------------------------
     def get_angles_description(self):
@@ -198,6 +218,22 @@ class Goniometer:
         for ang in self.angles:
             s += "%s\n" % ang
         return s
+
+
+    #-------------------------------------------------------------------------------
+    def get_wl_input(self):
+        return None
+    def get_wavelength_range(self, angles):
+        """Return (wl_min, wl_max) from the list of angles, or (None, None) if not specified.
+        """
+        if self.wavelength_control:
+            wl_center = angles[len(self.gonio_angles)]
+            wl_min = wl_center - 1.7
+            wl_max = wl_center + 1.7
+            return (wl_min, wl_max)
+        else:
+            return (None, None)
+
 
 
     #-------------------------------------------------------------------------------
@@ -385,8 +421,8 @@ class LimitedGoniometer(Goniometer):
     values. Holds general-purpose code for finding valid sample orientations."""
 
     #-------------------------------------------------------------------------
-    def __init__(self, *args, **kwargs):
-        Goniometer.__init__(self, *args, **kwargs)
+    def __init__(self, wavelength_control=False, *args, **kwargs):
+        Goniometer.__init__(self, wavelength_control, *args, **kwargs)
 
         #C code for the fitness of phi,chi, omega.
         # OVERWRITE THIS FOR SUBCLASSES!
@@ -764,19 +800,17 @@ class TopazAmbientGoniometer(LimitedGoniometer):
 
 
     #-------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, wavelength_control=False):
         """Constructor"""
         #Init the base class
-        LimitedGoniometer.__init__(self)
+        LimitedGoniometer.__init__(self, wavelength_control)
+        self.chi = np.pi/8 #+45 degrees
+
         #Make the angle info object
-        self.angles = [
+        self.gonio_angles = [
             AngleInfo('Phi'),
             AngleInfo('Omega'),
             ]
-        if False:
-            self.angles.append(
-                AngleInfo('bandwidth', type="wavelength", units="ang", friendly_units="ang",
-                          conversion=1, friendly_range=[1.7, 10], random_range=[1.7, 10]) )
 
         #C code for the fitness of phi,chi, omega
         self.fitness_function_c_code = """
@@ -799,8 +833,8 @@ class TopazAmbientGoniometer(LimitedGoniometer):
                 # of angles of this goniometer.
         """
         #For other instruments, this method may be different.
-        (phi, omega) = angles
-        chi = np.pi/4 #+45 degrees
+        (phi, omega) = angles[0:2]
+        chi = self.chi
 
         #In Q space, detector coverage rotates OPPOSITE to what the real space rotation is.
         #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
@@ -819,8 +853,8 @@ class TopazAmbientGoniometer(LimitedGoniometer):
             angles: should be a list of angle values, in unfriendly units, that matches the
                 # of angles of this goniometer.
         """
-        (phi, omega) = angles
-        chi = np.pi/4 #+45 degrees
+        (phi, omega) = angles[0:2]
+        chi = self.chi
         return numpy_utils.rotation_matrix(phi, chi, omega)
 
 
@@ -844,9 +878,9 @@ class TopazAmbientGoniometer(LimitedGoniometer):
             (phi, chi, omega) = best_angles
             #Chi needs to be 45 degrees! So we take it out
 
-            if not np.abs(chi - np.pi/4) < 0.1/57:
-                #Chi is not within +-0.1 degree of 45 degrees!
-                #print "Warning! Found angles", np.rad2deg(best_angles), " where chi is more than 1 degree off of 45."
+            if not np.abs(chi - self.chi) < 0.1/57:
+                #Chi is not within +-0.1 degree of the fixed chi value degrees!
+                #print "Warning! Found angles", np.rad2deg(best_angles), " where chi is more than 1 degree off of fixed value."
                 return None
             else:
                 #Okay, we found a decent chi
@@ -954,6 +988,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
     def __init__(self, *args, **kwargs):
         """Constructor."""
         LimitedGoniometer.__init__(self, *args, **kwargs)
+        
         #Make the arrays with the XY limits of leg movement
         self.calculate_leg_xy_limits(visualize=False)
         #Make the angle info object
@@ -1700,7 +1735,25 @@ def get_goniometers_names():
     return [gon.name for gon in goniometers]
 
 
+import unittest
+
+#==================================================================
+class TestGoniometers(unittest.TestCase):
+    """Unit test for the Goniometers"""
+    def setUp(self):
+        pass
+
+    def test_constructors(self):
+        g = Goniometer()
+        g = TopazAmbientGoniometer()
+        g = TopazInHouseGoniometer()
+
+    def test_constructors_wavelength_control(self):
+        g = Goniometer(wavelength_control=True)
+        assert len(g.angles)==4, "3 angles and 1 wavelength"
+
 #===============================================================================================
 if __name__ == "__main__":
-    initialize_goniometers()
-    sample_pin_position_range()
+    unittest.main()
+#    initialize_goniometers()
+#    sample_pin_position_range()
