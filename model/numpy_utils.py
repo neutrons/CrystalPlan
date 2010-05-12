@@ -227,20 +227,20 @@ def nearest_index(value_list, desired):
     return value_list.size-1
 
 #===============================================================================================
-def index_evenly_spaced(min, max, spacing, desired):
+def index_evenly_spaced(min, max_array_index, spacing, desired):
     """Calculate the index in an evenly spaced, monotonously increasing array.
         min: first value of array
-        max: max >= last value of the array
+        max_array_index: highest value the index into the array can be
         spacing: space between elements in array.
         desired: the value we are looking for.
 
     Returns: the index, or None if out of bounds."""
-    if desired < min:
-        return None
-    if desired > (max-spacing):
-        return None
 
     index = int(np.round( (desired-min)/spacing ))
+    if index < 0:
+        return None
+    if index >= max_array_index:
+        return None
     return index
 
 #===============================================================================================

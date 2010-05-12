@@ -471,17 +471,6 @@ class Instrument:
         self.qspace_radius = np.sqrt( qx**2 + qy**2 + qz**2 ) * self.q_resolution
 
 
-    #-------------------------------------------------------------------------------
-    def getq_indices(self, q):
-        """Return the indices in the coverage map matching the given q"""
-        #Find the indices in q-space that correspond
-        iqx = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[0])
-        iqy = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[1])
-        iqz = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[2])
-        return [iqx, iqy, iqz]
-
-
-
     #========================================================================================================
     # C-code for calculate_coverage
     _code_vector_length = """
@@ -772,11 +761,11 @@ class Instrument:
                                 #This is the intermediate q
                                 q = q_min + frac*q_diff
                                 #Find the indices in q-space that correspond
-                                iqx = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[0])
+                                iqx = index_evenly_spaced(-self.qlim, len(self.qx_list), self.q_resolution, q[0])
                                 if iqx is None: continue
-                                iqy = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[1])
+                                iqy = index_evenly_spaced(-self.qlim, len(self.qx_list), self.q_resolution, q[1])
                                 if iqy is None: continue
-                                iqz = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[2])
+                                iqz = index_evenly_spaced(-self.qlim, len(self.qx_list), self.q_resolution, q[2])
                                 if iqz is None: continue
                                 #All indices are valid, hurrah!
                                 coverage[iqx, iqy, iqz, 0] |= set_value1
@@ -1022,6 +1011,9 @@ class InstrumentInelastic(Instrument):
 
     _code_calculate_coverage = """
             double kfz, kf_squared, E;
+
+            double lim_min = -qlim;
+            double lim_max = +qlim;
             
             //Loop through pixels using the list given before.
             for (int iix = 0; iix < xlist.length(); iix++)
@@ -1037,29 +1029,60 @@ class InstrumentInelastic(Instrument):
                     elev = ELEVATION_ANGLE2(iy, ix);
 
                     //Get the two limits.
-                    py::tuple q_min = getq_inelastic(wl_input, wl_min, az, elev, pi, rot_matrix);
-                    py::tuple q_max = getq_inelastic(wl_input, wl_max, az, elev, pi, rot_matrix);
-                    
-                    //Limit them to the modeled size
-                    shrink_q_vector(q_min, qlim);
-                    shrink_q_vector(q_max, qlim);
+                    py::tuple q_max_both = getq_inelastic(wl_input, wl_min, az, elev, pi, rot_matrix);
+                    py::tuple q_min_both = getq_inelastic(wl_input, wl_max, az, elev, pi, rot_matrix);
+
+                    // Rotated qs
+                    double q_max[3], q_min[3], q_max_unrot[3], q_min_unrot[3];
+                    double q_max_length = 0;
+                    double q_min_length = 0;
+                    for (int i=0; i<3; i++)
+                    {
+                        q_max[i] = q_max_both[i];
+                        q_max_unrot[i] = q_max_both[i+3];
+                        q_max_length += q_max[i]*q_max[i];
+
+                        q_min[i] = q_min_both[i];
+                        q_min_unrot[i] = q_min_both[i+3];
+                        q_min_length += q_min[i]*q_min[i];
+                    }
+                    q_max_length = sqrt(q_max_length);
+                    q_min_length = sqrt(q_min_length);
+
+                    /*
+                        //Limit them to the modeled size -- SHRINK VECTOR ---
+                        double reduceby_max = 1.0;
+                        double reduceby_min = 1.0;
+                        if (q_max_length > qlim)
+                            { reduceby_max = q_max_length/qlim; }
+                        if (q_min_length > qlim)
+                            { reduceby_min = q_min_length/qlim; }
+                        for (int i=0; i<3; i++)
+                        {
+                            q_max[i] /= reduceby_max;
+                            q_min[i] /= reduceby_min;
+                            q_max_unrot[i] /= reduceby_max;
+                            q_min_unrot[i] /= reduceby_min;
+                        }
+                    */
 
                     //Vector difference max-min
-                    double q_diff[3] = {0.,0.,0.};
+                    double q_diff[3];
+                    double q_diff_unrot[3];
                     double q_length = 0.0;
                     for (int i=0; i<3; i++)
                     {
                         // We change the sign, because for inelastic, Q = ki-kf, rather than the opposite sign for elastic
-                        q_diff[i] = double(q_max[i]) - double(q_min[i]);
+                        q_diff[i] = q_max[i] - q_min[i];
+                        q_diff_unrot[i] = q_max_unrot[i] - q_min_unrot[i];
                         q_length += q_diff[i]*q_diff[i];
                     }
+                    
                     //Find out how long of a line that is
                     q_length = sqrt(q_length);
 
                     //How many steps will we take. The multiplication factor here is a fudge to make sure it covers fully.
-                    int numfrac = (1.25 * q_length) / (q_resolution);
-
-                    // if (numfrac == 0) printf("numfrac is %d, q_length %f, qmin and max are %f and %f, abs is %f \\n", numfrac, q_length, vector_length(q_min), vector_length(q_max),   (vector_length(q_max) - vector_length(q_min))  );
+                    long numfrac = (1.25 * q_length) / (q_resolution);
 
                     if (numfrac > 0)
                     {
@@ -1070,42 +1093,44 @@ class InstrumentInelastic(Instrument):
                         dx = q_diff[0] / numfrac;
                         dy = q_diff[1] / numfrac;
                         dz = q_diff[2] / numfrac;
+                        
+                        double dx_unrot, dy_unrot, dz_unrot;
+                        dx_unrot = q_diff_unrot[0] / numfrac;
+                        dy_unrot = q_diff_unrot[1] / numfrac;
+                        dz_unrot = q_diff_unrot[2] / numfrac;
 
                         long index;
                         double qx, qy, qz;
+                        double qx_unrot, qy_unrot, qz_unrot;
                         long iqx, iqy, iqz;
 
-                        double lim_min = -qlim;
-                        double lim_max = +qlim;
-
-                        double q_min_x = double(q_min[0]);
-                        double q_min_y = double(q_min[1]);
-                        double q_min_z = double(q_min[2]);
-
                         //Okay now we draw the line from q_min to q_max.
-                        long i;
+                        double i;
                         for (i=0; i<numfrac; i++)
                         {
                             //All of these qx checks might not be necessary anymore...?
-                            qx = q_min_x + i*dx;
-                            iqx = round((qx - lim_min) / q_resolution);
+                            qx = q_min[0] + i*dx;
+                            qx_unrot = q_min_unrot[0] + i*dx_unrot;
+                            iqx = long(round((qx - lim_min) / q_resolution));
                             if ((iqx >=0) && (iqx < stride))
                             {
-                                qy = q_min_y + i * dy;
-                                iqy = round((qy - lim_min) / q_resolution);
+                                qy = q_min[1] + i*dy;
+                                qy_unrot = q_min_unrot[1] + i*dy_unrot;
+                                iqy = long(round((qy - lim_min) / q_resolution));
                                 if ((iqy >=0) && (iqy < stride))
                                 {
-                                    qz = q_min_z + i * dz;
-                                    iqz = round((qz - lim_min) / q_resolution);
+                                    qz = q_min[2] + i*dz;
+                                    qz_unrot = q_min_unrot[2] + i*dz_unrot;
+                                    iqz = long(round((qz - lim_min) / q_resolution));
                                     if ((iqz >=0) && (iqz < stride))
                                     {
                                         //Calculate the neutron energy gain
                                         // But we need to get back the z component of kf
                                         // We kept Q = kf - ki
-                                        kfz = (ki + qz);
+                                        kfz = (ki + qz_unrot);
 
                                         // Okay, now calculate kf^2
-                                        kf_squared = qx*qx + qy*qy + kfz*kfz;
+                                        kf_squared = qx_unrot*qx_unrot + qy_unrot*qy_unrot + kfz*kfz;
 
                                         // Get the energy. The constant sets the units (to meV)
                                         E = energy_constant * (kf_squared - ki_squared);
@@ -1140,6 +1165,17 @@ class InstrumentInelastic(Instrument):
                 If the voxel was not measured, it holds +inf.
         """
 
+        #------
+        def shrink_two_q_vector(q, q2):
+            """Helper function returns a shortened q-vector, capped
+            to self.qlim but with the same direction."""
+            q_length = vector_length(q)
+            if q_length > self.qlim:
+                q2_length = vector_length(q2)
+                return ((q / q_length) * self.qlim, (q2 / q2_length) * self.qlim)
+            else:
+                return (q, q2)
+        #------
         def shrink_q_vector(q):
             """Helper function returns a shortened q-vector, capped
             to self.qlim but with the same direction."""
@@ -1236,7 +1272,7 @@ class InstrumentInelastic(Instrument):
                 elevation_angle = det.elevation_angle
                 #Set up several functions used in the code
                 support = "#include <math.h>\n"
-                support += crystal_calc.getq_inelastic_code_header + crystal_calc.getq_code + crystal_calc.getq_code_footer
+                support += crystal_calc.getq_inelastic_code_header + crystal_calc.getq_inelastic_code + crystal_calc.getq_inelastic_code_footer
                 support += self._code_vector_length
                 support += self._code_shrink_q_vector
                 #Dimensions of the array
@@ -1266,13 +1302,16 @@ class InstrumentInelastic(Instrument):
                         elev = det.elevation_angle[iy, ix]
 
                         #For inelastic, we want Q = ki-kf = momentum transfer from neutron TO sample
-                        q_min = getq(az, elev, self.wl_min, rot_matrix, wl_input=self.wl_input)
-                        q_max = getq(az, elev, self.wl_max, rot_matrix, wl_input=self.wl_input)
-                        #Cap to qlim
-                        q_min = shrink_q_vector(q_min)
-                        q_max = shrink_q_vector(q_max)
+                        (q_min, q_min_unrot) = getq(az, elev, self.wl_min, rot_matrix, wl_input=self.wl_input)
+                        (q_max, q_max_unrot) = getq(az, elev, self.wl_max, rot_matrix, wl_input=self.wl_input)
+
+#                        #Cap to qlim
+#                        (q_min, q_min_unrot) = shrink_two_q_vector(q_min, q_min_unrot)
+#                        (q_max, q_max_unrot) = shrink_two_q_vector(q_max, q_max_unrot)
+
                         #Length to walk through
                         q_diff = q_max-q_min
+                        q_diff_unrot = q_max_unrot - q_min_unrot
 
                         #Calculate an optimal # of points to use in the q direction.
                         numfrac = int(1.25 * vector_length(q_diff) / self.q_resolution)
@@ -1281,13 +1320,14 @@ class InstrumentInelastic(Instrument):
                             for frac in np.arange(0.0, 1.0, 1.0/numfrac):
                                 #This is the intermediate q
                                 q = q_min + frac*q_diff
+                                q_unrot = q_min_unrot + frac*q_diff_unrot
 
                                 #Find the indices in q-space that correspond
-                                iqx = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[0])
+                                iqx = index_evenly_spaced(-self.qlim, len(self.qx_list), self.q_resolution, q[0])
                                 if iqx is None: continue
-                                iqy = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[1])
+                                iqy = index_evenly_spaced(-self.qlim, len(self.qx_list), self.q_resolution, q[1])
                                 if iqy is None: continue
-                                iqz = index_evenly_spaced(-self.qlim, self.qlim, self.q_resolution, q[2])
+                                iqz = index_evenly_spaced(-self.qlim, len(self.qx_list), self.q_resolution, q[2])
                                 if iqz is None: continue
                                 #All indices are valid, hurrah!
                                 #Now we calculate the energy gained by the NEUTRON.
@@ -1295,10 +1335,10 @@ class InstrumentInelastic(Instrument):
 
                                 #But we need to get back the z component of kf
                                 #If Q = kf-ki (Busing Levy 1967 convention)
-                                kfz = (ki + q[2])
+                                kfz = (ki + q_unrot[2])
 
                                 #Okay, now calculate kf^2
-                                kf_squared = q[0]**2 + q[1]**2 + kfz**2
+                                kf_squared = q_unrot[0]**2 + q_unrot[1]**2 + kfz**2
 
                                 #Get the energy. Units are in meV
                                 E = energy_constant * (kf_squared - ki_squared)
@@ -1440,12 +1480,24 @@ class TestInelasticInstrument(unittest.TestCase):
         angles = [0., 0., 0.]
         cov_python = ti.calculate_coverage(ti.detectors[:1], angles, use_inline_c=False)
         cov_C = ti.calculate_coverage(ti.detectors[:1], angles, use_inline_c=True)
-        tot_python = np.sum( cov_python < 1e6)
-        tot_C = np.sum( cov_C < 1e6)
+        tot_python = np.sum( cov_python < 2e6)
+        tot_C = np.sum( cov_C < 2e6)
         assert tot_python==tot_C, "Same # covered found with C and python. %d vs %d" % (tot_C, tot_python)
-        assert np.allclose(cov_C, cov_python), "Energy values found with C and python are close within float error." 
-        #print np.sum( cov < np.inf)
-        #print cov[ cov < np.inf ]
+        diff =  cov_C - cov_python
+        print "sum of diff",np.sum(diff)
+        print "# diff",np.sum(abs(diff) > 1e-10)
+        print diff[abs(diff) > 1e-10]
+        assert np.allclose(cov_C, cov_python), "Energy values found with C and python are close within float error."
+        old_min = np.min(cov_C)
+
+        angles = [0.3, 1.20, -1.23]
+        cov_python = ti.calculate_coverage(ti.detectors[:1], angles, use_inline_c=False)
+        cov_C = ti.calculate_coverage(ti.detectors[:1], angles, use_inline_c=True)
+        tot_python = np.sum( cov_python < 2e6)
+        tot_C = np.sum( cov_C < 2e6)
+        assert tot_python==tot_C, "Same # covered found with C and python. %d vs %d" % (tot_C, tot_python)
+        assert np.allclose(cov_C, cov_python), "Energy values found with C and python are close within float error."
+        assert np.allclose(np.min(cov_C), old_min), "Same minima found after a rotation."
 
     def test_simulate_position(self):
         ti = self.tst_inst #@type ti InstrumentInelastic
