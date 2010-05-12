@@ -1314,7 +1314,7 @@ class InstrumentInelastic(Instrument):
 
 
     #========================================================================================================
-    def total_coverage(self, detectors_used, orientations_used, use_inline_c=True):
+    def total_coverage(self, detectors_used, orientations_used, use_inline_c=True, slice_min=-100.0, slice_max=100.0):
         """Calculate the total coverage for an inelastic instrument, with some options, as bool arrays:
 
         Parameters:
@@ -1322,6 +1322,7 @@ class InstrumentInelastic(Instrument):
             orientations_used: a list of PositionCoverage objects to add up together.
                 If None, all the entries saved in the instrument are used.
             use_inline_c: bool, True to use inline C routine, false for pure Python.
+            slice_min and slice_max: energy slice to take.
 
         Returns:
             coverage: a 3D array with the # of times each voxel was measured.
@@ -1347,16 +1348,12 @@ class InstrumentInelastic(Instrument):
             #Add the coverage of the position used to the list
             coverage_list.append(pos_cov.coverage)
 
-        #Slice in energy
-        E_max = 50
-        E_min = -50
-
         #Now we add up the coverages together
         if config.cfg.force_pure_python or not use_inline_c or True:
             #--- Pure Python Version ---
             for one_coverage in coverage_list:
                 #Add one to the voxels where the energy is within the given range.
-                coverage += (one_coverage[:,:,:] >= E_min) & (one_coverage[:,:,:] <= E_max)
+                coverage += (one_coverage[:,:,:] >= slice_min) & (one_coverage[:,:,:] <= slice_max)
 
         else:
             #--- Inline C version ---

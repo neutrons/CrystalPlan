@@ -47,9 +47,8 @@ class QspaceOptionsController:
 
     def apply_energy_slice(self, use_slice, slice_min, slice_max):
         """Apply a change of energy slicing parameters."""
-        print "apply_energy_slice TODO!", slice_min, slice_max
-        #Tell the experiment to recalculate the slice.
-#        display_thread.NextParams[model.experiment.PARAM_SLICE] = model.experiment.ParamSlice(use_slice, slice_min, slice_max)
+        #Tell the experiment to recalculate the ENERGY slice.
+        display_thread.NextParams[model.experiment.PARAM_ENERGY_SLICE] = model.experiment.ParamSlice(use_slice, slice_min, slice_max)
 
     def set_invert(self, inversion):
         """Sets whether the qspace coverage should invert."""
@@ -87,7 +86,7 @@ class QspaceOptionsController:
         if gui_utils.inelastic_mode():
             #Now do the energy slice data
             #TODO: Un-fake data
-            data_x = np.arange(-50, 50, 5)
+            data_x = np.arange(-50, 20, 1)
             #data_y = [(1.0, 0., 0., 0., 0.) for x in data_x]
             data_y = []
             for i in xrange(4):

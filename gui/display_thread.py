@@ -14,6 +14,7 @@ import numpy as np
 import sys
 
 #--- GUI Imports ---
+import gui_utils
 
 #--- Model Imports ---
 import model
@@ -114,6 +115,7 @@ def check_for_changes():
         det = ChangedParams[model.experiment.PARAM_DETECTORS]
         hemi = ChangedParams[model.experiment.PARAM_HEMISPHERE]
         invert = ChangedParams[model.experiment.PARAM_INVERT]
+        energy_slice = ChangedParams[model.experiment.PARAM_ENERGY_SLICE]
         slice = ChangedParams[model.experiment.PARAM_SLICE]
         display = ChangedParams[model.experiment.PARAM_DISPLAY]
         refls = ChangedParams[model.experiment.PARAM_REFLECTIONS]
@@ -140,29 +142,30 @@ def check_for_changes():
                     print "Recalculating trial position with angles ", np.rad2deg(poscov.angles)
                     poscov.coverage = model.experiment.exp.inst.calculate_coverage(model.experiment.exp.inst.detectors, poscov.angles, sample_U_matrix=poscov.sample_U_matrix)
 
-        #--- Reflections changing? ----
-        if not (refls is None) or not (det is None):
-            #The reflections need recalculating
-            model.experiment.exp.recalculate_reflections(pos)
-            reflections_changed = True
-            reflections_recalculated = True
-        elif not (ref_mask is None):
-            #Just the mask is changing
-            model.experiment.exp.calculate_reflections_mask()
-            reflections_changed = True
+        if not gui_utils.inelastic_mode():
+            #--- Reflections changing? ELASTIC MODE ONLY! ----
+            if not (refls is None) or not (det is None):
+                #The reflections need recalculating
+                model.experiment.exp.recalculate_reflections(pos)
+                reflections_changed = True
+                reflections_recalculated = True
+            elif not (ref_mask is None):
+                #Just the mask is changing
+                model.experiment.exp.calculate_reflections_mask()
+                reflections_changed = True
 
-        if not (ref_display is None):
-            #Just reflection display options
-            reflections_changed = True
+            if not (ref_display is None):
+                #Just reflection display options
+                reflections_changed = True
 
 
         #--- Changes to qspace (volume) calcs ----
-        if not (pos is None) or not (trypos is None) or not (det is None):
+        if not (pos is None) or not (trypos is None) or not (det is None) or not (energy_slice is None):
             #The whole calculation needs to be done
             model.experiment.exp.calculate_coverage()
             qspace_changed = True
             #The reflections weren't recalculated already?
-            if not reflections_recalculated:
+            if not reflections_recalculated and not gui_utils.inelastic_mode():
                 model.experiment.exp.recalculate_reflections(pos)
                 reflections_changed = True
                 reflections_recalculated = True

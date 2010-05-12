@@ -76,6 +76,7 @@ PARAM_POSITIONS = "PARAM_POSITIONS"
 PARAM_TRY_POSITION = "PARAM_TRY_POSITION"
 PARAM_DETECTORS = "PARAM_DETECTORS"
 PARAM_SLICE = "PARAM_SLICE"
+PARAM_ENERGY_SLICE = "PARAM_ENERGY_SLICE"
 PARAM_INVERT = "PARAM_INVERT"
 PARAM_HEMISPHERE = "PARAM_HEMISPHERE"
 PARAM_DISPLAY = "PARAM_DISPLAY"
@@ -85,7 +86,7 @@ PARAM_REFLECTION_HIGHLIGHTING = "PARAM_REFLECTION_HIGHLIGHTING"
 PARAM_REFLECTION_DISPLAY = "PARAM_REFLECTION_DISPLAY"
 
 #List of all valid parameters (see above)
-VALID_PARAMS = [PARAM_POSITIONS, PARAM_TRY_POSITION, PARAM_DETECTORS, PARAM_SLICE, PARAM_INVERT, PARAM_HEMISPHERE, PARAM_DISPLAY, PARAM_REFLECTIONS, PARAM_REFLECTION_MASKING, PARAM_REFLECTION_HIGHLIGHTING, PARAM_REFLECTION_DISPLAY]
+VALID_PARAMS = [PARAM_POSITIONS, PARAM_TRY_POSITION, PARAM_DETECTORS, PARAM_ENERGY_SLICE, PARAM_SLICE, PARAM_INVERT, PARAM_HEMISPHERE, PARAM_DISPLAY, PARAM_REFLECTIONS, PARAM_REFLECTION_MASKING, PARAM_REFLECTION_HIGHLIGHTING, PARAM_REFLECTION_DISPLAY]
 
 #-------------------------------------------------------------------------------
 class ParamsDict(dict):
@@ -1187,7 +1188,20 @@ class Experiment:
         positions_used = self.get_positions_used(pos_param)
 
         #Have the instrument calculate the total coverage.
-        self.qspace = self.inst.total_coverage(detectors, positions_used)
+        if isinstance(self.inst, instrument.InstrumentInelastic):
+            #---- Inelastic calculation ---
+            slice = self.params[PARAM_ENERGY_SLICE] #@type slice ParamSlice
+            if slice is None:
+                #Use default slice amounts
+                print "Warning for exp.calculate_coverage(): Energy slice parameter not set. Using defaults."
+                self.qspace = self.inst.total_coverage(detectors, positions_used)
+            else:
+                #Use the set parameter
+                print "Doing energy slice of", slice.slice_min, " to ", slice.slice_max
+                self.qspace = self.inst.total_coverage(detectors, positions_used, slice_min=slice.slice_min, slice_max=slice.slice_max)
+        else:
+            #---- Elastic calculation ----
+            self.qspace = self.inst.total_coverage(detectors, positions_used)
 
         #Continue processing sequentially
         self.hemisphere_coverage()

@@ -850,9 +850,7 @@ class FrameQspaceView(wx.Frame):
         self.SetIcon( wx.Icon(CrystalPlan_version.icon_file_3d, wx.BITMAP_TYPE_PNG) )
 
         #Create the qspace options panel
-        self.tabVolume = panel_qspace_options.PanelQspaceOptions(parent=self.notebookView, id=wx.NewId(),
-              name=u'tabVolume', pos=wx.Point(40, 16),
-              size=wx.Size(624, 120), style=wx.TAB_TRAVERSAL)
+        self.tabVolume = panel_qspace_options.PanelQspaceOptions(parent=self.notebookView)
         #Add it to the notebook
         self.notebookView.AddPage(self.tabVolume, 'Volume Coverage View', select=True)
 

@@ -484,8 +484,10 @@ class SliceControl(wx.PyControl):
         dc.DrawLabel('%' , wx.Rect( self.GetX(self.data_x[0])-2, self.GetY(yrange/2)), alignment=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL )
 
         steps = 1
-        steps = int(np.round( xrange / (self.plot_width/30) ))
-        if steps > 5: steps = 10
+        steps = int( 1.0+ xrange * 1. / (self.plot_width/40) ) #Around 40 pixel between ticks
+        if steps > 20: steps = 50
+        elif steps > 10: steps = 20
+        elif steps > 5: steps = 10
         elif steps > 2: steps = 5
         if steps < 1: steps = 1
 
@@ -559,7 +561,7 @@ if __name__ == '__main__':
     (app, sc) = gui_utils.test_my_gui(SliceControl)
     sc.use_slice = True
     sc.energy_mode = True
-    data_x = np.arange(-50, 50, 5)
+    data_x = np.arange(-50, 20, 5)
     print data_x
     data_y = []
     for i in xrange(4):
