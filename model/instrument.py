@@ -611,6 +611,15 @@ class Instrument:
         else:
             return 1
 
+    #========================================================================================================
+    def get_wavelength_range(self, angles):
+        """Return the wavelength range, either from goniometer settings, or from
+        instrument default."""
+        (wl_min, wl_max) = self.goniometer.get_wavelength_range(angles)
+        if wl_min is None:
+            (wl_min, wl_max) = (self.wl_min, self.wl_max)
+        return (wl_min, wl_max)
+
 
     #========================================================================================================
     def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), use_inline_c=True):
@@ -685,10 +694,8 @@ class Instrument:
             count = count+1
 
             #Find the wavelength range to use
-            (wl_min, wl_max) = self.goniometer.get_wavelength_range(angles)
-            if wl_min is None:
-                (wl_min, wl_max) = (self.wl_min, self.wl_max)
-
+            (wl_min, wl_max) = self.get_wavelength_range(angles)
+            
             #Two nearby pixels
             q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], wl_min, rot_matrix)
             q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], wl_min, rot_matrix)
@@ -1224,6 +1231,9 @@ class InstrumentInelastic(Instrument):
 
         input_energy = energy_constant * ki_squared
 
+        #Find the wavelength range to use
+        (wl_min, wl_max) = self.get_wavelength_range(angles)
+
         #For updating
         last_time = time.time()
 
@@ -1246,9 +1256,9 @@ class InstrumentInelastic(Instrument):
 
 
             #Two nearby pixels
-            q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], self.wl_min, rot_matrix, wl_input=wl_input)
-            q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], self.wl_min, rot_matrix, wl_input=wl_input)
-            q_ymax = getq(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], self.wl_min, rot_matrix, wl_input=wl_input)
+            q0 = getq(det.azimuthal_angle[0, 0], det.elevation_angle[0, 0], wl_min, rot_matrix, wl_input=wl_input)
+            q_xmax = getq(det.azimuthal_angle[0, -1], det.elevation_angle[0, -1], wl_min, rot_matrix, wl_input=wl_input)
+            q_ymax = getq(det.azimuthal_angle[-1, 0], det.elevation_angle[-1, 0], wl_min, rot_matrix, wl_input=wl_input)
 
             #Make sure they aren't too long
             q0 = shrink_q_vector(q0)

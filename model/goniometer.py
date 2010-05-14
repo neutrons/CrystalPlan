@@ -194,7 +194,7 @@ class Goniometer(HasTraits):
         self.wavelength_bandwidth = 3.2
         #Create the angle info for it, but don't necessarily use it.
         self.wl_angles = [
-            AngleInfo('WL Center', type="wavelength", units="ang", friendly_units="ang",
+            AngleInfo('WL_Center', type="wavelength", units="ang", friendly_units="ang",
                       conversion=1, friendly_range=[1.0, 10], random_range=[1.7, 10],
                       das_units="ang", das_conversion=1.0)
             ]

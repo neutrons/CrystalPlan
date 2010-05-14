@@ -885,11 +885,14 @@ class Experiment:
                 #Calculate the scattered beam direction and inverse wavelength.
                 beam = crystal_calc.get_scattered_beam( self.reflections_hkl, rot_matrix, ub_matrix)
 
+                #Find the wavelength range
+                (wl_min, wl_max) = self.inst.get_wavelength_range(poscov.angles)
+
                 for (detector_num, det) in enumerate(self.inst.detectors):
                     #Do the parameters say to use this detector?
                     if det_bool[detector_num]:
                         #Compute the scattered beam position in the coordinates of the detector.
-                        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam, self.inst.wl_min, self.inst.wl_max)
+                        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam, wl_min, wl_max)
                         #These are only the ones that did hit the detector
                         indices = np.nonzero(hits_it)[0]
                         for i in indices:
