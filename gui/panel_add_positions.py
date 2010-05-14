@@ -11,6 +11,8 @@ import wx
 from threading import Thread
 import sys
 import time
+import numpy
+from numpy import arange, linspace, pi
 
 #--- GUI Imports ---
 import display_thread
@@ -217,18 +219,22 @@ class AddPositionsController():
         if not event is None: event.Skip()
         
     #-------------------------------------------------------------------------------
-    def make_list(self, input):
-        """Evaluate a string to make a numpy array. Converst from degrees to radians"""
-        import numpy
-        from numpy import arange, linspace, pi
+    def make_list(self, input, anginfo):
+        """Evaluate a string to make a numpy array. Converts units.
+        Parameters:
+            input: string with the angles as string, in friendly units.
+            anginfo: the AngleInfo object corresponding to it. Will perform unit
+                conversion
+        """
+        #@type anginfo AngleInfo
         try:
             array = eval( 'numpy.array([' + input + '])' )
             #Make sure it is a 1D array by reshaping
             array = array.reshape( array.size )
-            #Convert to radians
-            array = numpy.deg2rad(array)
-            #Set to juste a zero if empty
+            #Set to just a zero if empty
             if len(array)==0: array = numpy.array([0])
+            #Convert to radians or whatever the internal unit is
+            array = anginfo.friendly_to_internal(array)
         except Exception, e:
             return ("Error reading '" + input + "': " + str(e) + "\n", None)
         else:
@@ -240,7 +246,7 @@ class AddPositionsController():
         import numpy
         s = ""
         for (i, arr) in enumerate(list):
-            s += str(numpy.rad2deg( arr ) )
+            s += model.instrument.inst.make_angles_string(arr)
             if not extra_strings is None:
                  s += " (%s)" % extra_strings[i]
             s += "\n"
@@ -253,8 +259,8 @@ class AddPositionsController():
         """
         errors = ""
         angles_values = list()
-        for list_str in angles_lists:
-            (err, new_values) = self.make_list(list_str)
+        for (list_str, anginfo) in zip(angles_lists, model.instrument.inst.angles):
+            (err, new_values) = self.make_list(list_str, anginfo)
             errors = errors + err
             angles_values.append(new_values)
             

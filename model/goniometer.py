@@ -27,6 +27,13 @@ from scipy import weave
 import numpy_utils
 from numpy_utils import column, vector_length, rotation_matrix, get_translated_vectors, nearest_index
 
+#--- Traits Imports ---
+from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
+from enthought.traits.ui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor, ListEditor
+from enthought.traits.ui.menu import OKButton, CancelButton,RevertButton
+from enthought.traits.ui.menu import Menu, Action, Separator
+
+
 #---- For plotting ----
 if __name__=="__main__":
     import enthought.mayavi.mlab as mlab
@@ -81,31 +88,26 @@ def csv_line(input_list):
 #========================================================================================================
 #========================================================================================================
 #========================================================================================================
-class AngleInfo:
+class AngleInfo(object):
     """Class holds some relevant information about an angle used in the sample orientation."""
-    #Name of the angle
-    name = "Angle"
-    #Type of angle (or other thing)
-    type = "angle"
-    #Units used internally
-    units = "rad"
-    #Friendly units, to be displayed to users
-    friendly_units = "deg"
-    #Conversion factor from internal units to friendly units (multiply the internal by THIS to get friendly)
-    conversion = np.deg2rad(1)
-    #Range to use, in friendly units; for sliders and such.
-    friendly_range = [-180, 180]
-    #Randomization range: when generating an angle at random (in a genetic algorithm, for example,
-    # us this range. In internal units
-    random_range = [-np.pi, np.pi]
 
-    #Units required by the DAS group to be used in the output CSV file
-    das_units = "deg"
-    #Conversion factor from internal units to DAS units (multiply the internal by THIS to get DAS units)
-    das_conversion = np.deg2rad(1)
+    def __init__(self, name, type="angle", units="rad", friendly_units="deg", conversion=np.deg2rad(1),
+                    friendly_range=[-180, 180], random_range=[-np.pi, np.pi],
+                    das_units="deg", das_conversion=np.deg2rad(1)):
+        """Constructor.
 
-    def __init__(self, name, type="angle", units="rad", friendly_units="deg", conversion=np.deg2rad(1), friendly_range=[-180, 180], random_range=[-np.pi, np.pi]):
-        """Constructor."""
+        Parameters:
+            name: Name of the angle
+            type: Type of angle (or other thing)
+            units: Units used internally
+            friendly_units: Friendly units, to be displayed to users
+            conversion: Conversion factor from internal units to friendly units (multiply the internal by THIS to get friendly)
+            friendly_range: Range to use, in friendly units; for sliders and such.
+            random_range: Randomization range: when generating an angle at random (in a genetic algorithm, for example,
+                 use this range to initialize population.  In internal units.
+            das_conversion: Units required by the DAS group to be used in the output CSV file
+            das_units: Conversion factor from internal units to DAS units (multiply the internal by THIS to get DAS units)
+        """
         self.name = name
         self.type = type
         self.units = units
@@ -114,6 +116,8 @@ class AngleInfo:
             self.conversion = conversion
         self.friendly_range = friendly_range
         self.random_range = random_range
+        self.das_conversion = das_conversion
+        self.das_units = das_units
 
     def friendly_to_internal(self, value):
         """Convert a friendly unit angle value to an internal value."""
@@ -153,13 +157,28 @@ class AngleInfo:
 #===============================================================================================
 #===============================================================================================
 #===============================================================================================
-class Goniometer(object):
+class Goniometer(HasTraits):
     """Base class for goniometers. Will be overridden by specific classes for different types
     of instruments."""
 
     #Some info about the goniometer
-    name = "Simple Goniometer"
-    description = "Simple universal goniometer with no restrictions on movement."
+    name = String("Simple Goniometer")
+    description = String("Simple universal goniometer with no restrictions on movement.")
+    wavelength_control = Bool(False, desc="if the goniometer also controls the measurement wavelength.")
+    wavelength_bandwidth = Float(3.4, desc="the bandwidth of measurement wavelength, in angstroms.")
+    gonio_angles = List(AngleInfo, label='Goniometer angles', desc="the list of goniometer angles.")
+    wl_angles = List(AngleInfo, label='Wavelength control parameters', desc="the list of wavelength control parameters.", rows_trait=1)
+
+    angles_desc = Property(String, depends_on=["gonio_angles", "wl_angles"], label='Description of Angles:', desc="a description of the angles/other positions controlled by the goniometer")
+    def _get_angles_desc(self):
+        return self.get_angles_description()
+
+    view = View(
+        Item('name'), Item('description'), Item('wavelength_control'), Item('wavelength_bandwidth'),
+        Item('angles_desc', style='readonly')
+        )
+
+
 
     #-------------------------------------------------------------------------
     def __init__(self, wavelength_control=False):
@@ -171,11 +190,14 @@ class Goniometer(object):
         self.gonio_angles = [AngleInfo('Phi'), AngleInfo('Chi'), AngleInfo('Omega')]
         #Do we also change wavelengths?
         self.wavelength_control = wavelength_control
-        if wavelength_control:
-            self.wl_angles = [
-                AngleInfo('bandwidth', type="wavelength", units="ang", friendly_units="ang",
-                          conversion=1, friendly_range=[1.7, 10], random_range=[1.7, 10]) 
-                ]
+        #Bandwidth of detection, in angstroms
+        self.wavelength_bandwidth = 3.2
+        #Create the angle info for it, but don't necessarily use it.
+        self.wl_angles = [
+            AngleInfo('WL Center', type="wavelength", units="ang", friendly_units="ang",
+                      conversion=1, friendly_range=[1.0, 10], random_range=[1.7, 10],
+                      das_units="ang", das_conversion=1.0)
+            ]
 
     #-------------------------------------------------------------------------
     def are_angles_allowed(self, angles, return_reason=False):
@@ -215,8 +237,10 @@ class Goniometer(object):
     def get_angles_description(self):
         """Return a string describing each angle for the goniometer."""
         s = ""
-        for ang in self.angles:
+        for ang in self.gonio_angles:
             s += "%s\n" % ang
+        for ang in self.wl_angles:
+            s += "[Optional]: %s\n" % ang
         return s
 
 
@@ -228,8 +252,10 @@ class Goniometer(object):
         """
         if self.wavelength_control:
             wl_center = angles[len(self.gonio_angles)]
-            wl_min = wl_center - 1.7
-            wl_max = wl_center + 1.7
+            wl_min = wl_center - self.wavelength_bandwidth/2.
+            wl_max = wl_center + self.wavelength_bandwidth/2.
+            if wl_min < 1e-3: wl_min = 1e-3
+            if wl_max < 1e-3: wl_max = 1e-3
             return (wl_min, wl_max)
         else:
             return (None, None)
@@ -754,7 +780,7 @@ class LimitedGoniometer(Goniometer):
 
         args = (initial_R, ending_vec, starting_vec)
 
-        if search_method:
+        if search_+method:
             #--- scipy optimize ----
             #Get a starting point by brute force ?
             best_rot_angle = np.pi/2 # optimize(0, pi*2.0, pi/10)[0]
@@ -793,10 +819,10 @@ class LimitedGoniometer(Goniometer):
 class TopazAmbientGoniometer(LimitedGoniometer):
     """Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."""
 
-    #Some info about the goniometer
-    name = "TOPAZ Ambient Goniometer"
-    description = "Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."
-
+    chi = Float(np.pi/4, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
+    
+    view = View(Item('name'), Item('description'), Item('wavelength_control'), Item('wavelength_bandwidth'),
+                Item('chi'), Item('angles_desc', style='readonly'))
 
 
     #-------------------------------------------------------------------------
@@ -804,7 +830,12 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         """Constructor"""
         #Init the base class
         LimitedGoniometer.__init__(self, wavelength_control)
-        self.chi = np.pi/8 #+45 degrees
+
+        #Some info about the goniometer
+        self.name = "TOPAZ Ambient Goniometer"
+        self.description = "Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."
+
+        self.chi = np.pi/4 #+45 degrees
 
         #Make the angle info object
         self.gonio_angles = [
@@ -943,9 +974,6 @@ class TopazInHouseGoniometer(LimitedGoniometer):
     #misalignment.
     sample_motor_zero_offset = 0
 
-    #The phi, chi, and omega angles of the goniometer.
-    angles = np.array([0,0,0])
-
     #MAXIMUM amount of travel (in both directions from center) that each leg has on the fixed plate, in mm
     travel = 15
 
@@ -992,7 +1020,7 @@ class TopazInHouseGoniometer(LimitedGoniometer):
         #Make the arrays with the XY limits of leg movement
         self.calculate_leg_xy_limits(visualize=False)
         #Make the angle info object
-        self.angles = [AngleInfo('Phi'),
+        self.gonio_angles = [AngleInfo('Phi'),
                     AngleInfo('Chi', random_range=[np.deg2rad(-12), np.deg2rad(+12)]),
                     AngleInfo('Omega', random_range=[np.deg2rad(-12), np.deg2rad(+12)])]
 

@@ -76,7 +76,10 @@ class TryPositionController:
         #Get the list of angles in this instrument.
         for angle in model.instrument.inst.angles:
             id = wx.NewId()
-            slid = ValueSlider(parent=self.panel)
+            # number of decimal points to keep.
+            floats = 0
+            if angle.friendly_units == "ang": floats=1
+            slid = ValueSlider(parent=self.panel, floats=floats)
             slid.SetLabel(angle.name + " (in " + angle.friendly_units +"):")
             slid.SetMin(angle.friendly_range[0])
             slid.SetMax(angle.friendly_range[1])

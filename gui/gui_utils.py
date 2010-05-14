@@ -169,7 +169,7 @@ TEXT_BACKGROUND_COLOUR_GOOD = "white"
 TEXT_BACKGROUND_COLOUR_BAD = wx.Colour(255, 200, 200)
 
 #---------------------------------------------------------------------------
-def test_my_gui(WindowClass, *args):
+def test_my_gui(WindowClass, *args, **kwargs):
     """General-purpose test for any wx window object. Here's how to use:
     
     (app, pnl) = test_my_gui(WindowClass, arguments)
@@ -182,7 +182,7 @@ def test_my_gui(WindowClass, *args):
     boxSizer = wx.BoxSizer(orient=wx.VERTICAL)
     frame.SetSizer(boxSizer)
     #Create the control!
-    my_control = WindowClass(frame, *args)
+    my_control = WindowClass(frame, *args, **kwargs)
     if isinstance(my_control, wx.Frame) or isinstance(my_control, wx.Dialog):
         #We are trying a frame
         my_control.Show()

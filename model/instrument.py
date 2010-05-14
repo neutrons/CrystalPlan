@@ -372,6 +372,7 @@ class Instrument:
         
             angles_lists: list of lists of angles. There are as many lists as there are angles in
                 instrument.angles: e.g. 3 for phi, chi, omega.
+                Angles are in internal units.
             ignore_gonio: set to True to ignore any goniometer limitations.
             
         returns (valid, redundant, invalid, invalid_reason):
@@ -794,7 +795,7 @@ class Instrument:
             a string.
         """
         import string
-        return string.join( [self.angles[i].pretty_print(angles[i], False) for i in range(len(angles))], ", " )
+        return string.join( [self.angles[i].pretty_print(angles[i], add_unit=True) for i in range(len(angles))], ", " )
 
     #========================================================================================================
     def get_default_stopping_criterion(self):

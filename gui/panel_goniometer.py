@@ -9,6 +9,7 @@ goniometer.
 
 #--- General Imports ---
 import wx
+import copy
 
 #--- GUI Imports ---
 import gui_utils
@@ -16,11 +17,17 @@ import gui_utils
 #--- Model Imports ---
 import model
 
+#--- Traits Imports ---
+from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
+from enthought.traits.ui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor, ListEditor
+from enthought.traits.ui.menu import OKButton, CancelButton,RevertButton
+from enthought.traits.ui.menu import Menu, Action, Separator
+
 
 [wxID_PANELGONIOMETER, wxID_PANELGONIOMETERCHOICEGONIO, 
  wxID_PANELGONIOMETERSTATICTEXT1, wxID_PANELGONIOMETERSTATICTEXTDESC, 
  wxID_PANELGONIOMETERSTATICTEXTDESCLABEL, 
- wxID_PANELGONIOMETERSTATICTEXTSELECTEDGONIO, 
+ wxID_PANELGONIOMETERstaticTextCurrentGonio,
  wxID_PANELGONIOMETERSTATICTEXTTITLE, 
 ] = [wx.NewId() for _init_ctrls in range(7)]
 
@@ -37,26 +44,39 @@ class PanelGoniometerController():
 
     #------------------------------------------------------------------
     def update_current(self):
-        gon = model.instrument.inst.goniometer
+        gon = copy.copy(model.instrument.inst.goniometer)
+        self.current_gon_copy = gon
+        if not self.panel.currentControl is None:
+            #Remove the existing one
+            self.panel.boxSizerAll.Remove(self.panel.currentControl)
+            self.panel.currentControl.Destroy()
+
         if gon is None:
-            self.panel.staticTextSelectedGonio.SetLabel("None selected!")
+            self.panel.staticTextCurrentGonio.SetLabel("None selected!")
         else:
-            self.panel.staticTextSelectedGonio.SetLabel(gon.name)
-        #gui_utils.jiggle_window(self.panel)
+            self.panel.staticTextCurrentGonio.SetLabel('') #(gon.name)
+            self.panel.currentControl = self.current_gon_copy.edit_traits(parent=self.panel, kind='subpanel').control
+            self.panel.boxSizerAll.Insert(2, self.panel.currentControl, 1, flag=wx.EXPAND | wx.SHRINK)
+
+        self.panel.boxSizerAll.Layout()
 
     #------------------------------------------------------------------
     def update_selection(self):
         gon = self.selected
         if gon is None:
             self.panel.staticTextDesc.SetLabel(" ")
+            self.panel.currentControl = None
         else:
-            self.panel.staticTextDesc.SetLabel(gon.description + "\n\n" + gon.get_angles_description())
+#            self.panel.staticTextDesc.SetLabel(gon.description + "\n\n" + gon.get_angles_description())
+            self.panel.staticTextDesc.SetLabel(gon.description)
         #Wrapping the text is the only solution I found to making the layout good.
         self.panel.staticTextDesc.Wrap(self.panel.GetSize()[0]-60)
         self.panel.boxSizerAll.Layout()
 
+    #------------------------------------------------------------------
     def select_current(self):
         """Makes the current goniometer the selected one too."""
+        pass
 
 
     #------------------------------------------------------------------
@@ -76,16 +96,25 @@ class PanelGoniometerController():
             event.Skip()
 
     #------------------------------------------------------------------
-    def edit_goniometer(self, event):
-        """Open a dialog with parameters for the current goniometer."""
-        gon = model.instrument.inst.goniometer
+    def edit_angles(self, event):
+        """Open dialog to change the angles"""
+        view = View(
+            Item('gonio_angles'), Item('wl_angles'),
+            buttons=[OKButton, CancelButton]
+            )
+        result = self.current_gon_copy.configure_traits(self.panel, view=view)
+        self.panel.currentControl.Refresh()
+
+
+    #------------------------------------------------------------------
+    def apply_changes(self, event):
+        """Changes settings on current goniometer."""
+        self.change_goniometer(self.current_gon_copy)
         event.Skip()
 
     #------------------------------------------------------------------
-    def switch_goniometer(self, event):
-        """Select the goniometer shown."""
-        #Select it
-        new_gonio = self.selected
+    def change_goniometer(self, new_gonio):
+        """Change to a new/modified goniometer"""
         old_gonio = model.instrument.inst.goniometer
         if not (new_gonio is None):
             if (new_gonio == old_gonio):
@@ -106,6 +135,10 @@ class PanelGoniometerController():
                 #Show the current gonio
                 self.update_current()
 
+    #------------------------------------------------------------------
+    def switch_goniometer(self, event):
+        """Select the goniometer shown."""
+        self.change_goniometer(self.selected)
         if not event is None:
             event.Skip()
 
@@ -121,8 +154,10 @@ class PanelGoniometer(wx.Panel):
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddSizer(self.boxSizerSelected, 0, border=0, flag=0)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.buttonEditGoniometer, 0, border=24, flag=wx.LEFT)
-        #parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.buttonEditAngles, 0, border=24, flag=wx.LEFT)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.buttonApplyChanges, 0, border=24, flag=wx.LEFT)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(wx.StaticLine(self), 0, border=0, flag=wx.EXPAND)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(self.staticTextTitle, 0, border=4, flag=wx.LEFT)
@@ -132,10 +167,12 @@ class PanelGoniometer(wx.Panel):
         parent.AddSpacer(wx.Size(8, 8), border=4, flag=wx.LEFT)
         parent.AddWindow(self.staticTextDescLabel, 0, border=4, flag=wx.LEFT)
         parent.AddSpacer(wx.Size(8, 8), border=4, flag=0)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(self.staticTextDesc, 0, border=24,
               flag=wx.RIGHT | wx.LEFT | wx.EXPAND)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(self.buttonSwitchGoniometer, 0, border=24, flag=wx.LEFT)
+        parent.AddSpacer(wx.Size(8, 8), border=4, flag=0)
 
     def _init_coll_boxSizerSelected_Items(self, parent):
         # generated method, don't edit
@@ -143,7 +180,7 @@ class PanelGoniometer(wx.Panel):
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(self.staticText1, 0, border=0, flag=0)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.staticTextSelectedGonio, 0, border=0, flag=0)
+        parent.AddWindow(self.staticTextCurrentGonio, 0, border=0, flag=0)
 
     def _init_sizers(self):
         # generated method, don't edit
@@ -174,41 +211,49 @@ class PanelGoniometer(wx.Panel):
         self.staticText1 = wx.StaticText(id=wxID_PANELGONIOMETERSTATICTEXT1,
               label=u'Current Goniometer:', name='staticText1', parent=self,
               pos=wx.Point(8, 70), style=0)
+        self.staticText1.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD, False, u'Sans'))
 
         self.staticTextDescLabel = wx.StaticText(id=wxID_PANELGONIOMETERSTATICTEXTDESCLABEL,
               label=u'Description:', name=u'staticTextDescLabel', parent=self,
               pos=wx.Point(0, 95), style=0)
 
-        self.staticTextSelectedGonio = wx.StaticText(id=wxID_PANELGONIOMETERSTATICTEXTSELECTEDGONIO,
-              label=u'name of selected', name=u'staticTextSelectedGonio',
+        self.staticTextCurrentGonio = wx.StaticText(id=wxID_PANELGONIOMETERstaticTextCurrentGonio,
+              label=u'name of selected', name=u'staticTextCurrentGonio',
               parent=self, style=0)
-        self.staticTextSelectedGonio.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL,
-              wx.BOLD, False, u'Sans'))
+        self.staticTextCurrentGonio.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD, False, u'Sans'))
 
         self.staticTextDesc = wx.StaticText(id=wxID_PANELGONIOMETERSTATICTEXTDESC,
               label=u'... ... text ... ...', name=u'staticTextDesc',
               parent=self, 
               style=0)
 
-        self.buttonEditGoniometer = wx.Button(label=u'Change Goniometer Settings...', parent=self,
+        self.buttonApplyChanges = wx.Button(label=u'Apply Changes to Goniometer...', parent=self,
               pos=wx.Point(4, 734),  style=0)
-        self.buttonEditGoniometer.SetToolTipString(u'Opens a window where advanced goniometer settings can be changed. ')
-        self.buttonEditGoniometer.Bind(wx.EVT_BUTTON, self.controller.edit_goniometer)
-        self.buttonEditGoniometer.Hide() #TODO !!!
+        self.buttonApplyChanges.SetToolTipString(u'Applies any changes made to the current goniometer. ')
+        self.buttonApplyChanges.Bind(wx.EVT_BUTTON, self.controller.apply_changes)
+
+        self.buttonEditAngles = wx.Button(label=u'Edit Angles...', parent=self,
+              pos=wx.Point(4, 734),  style=0)
+        self.buttonEditAngles.SetToolTipString(u'Change the details on the goniometer angles.')
+        self.buttonEditAngles.Bind(wx.EVT_BUTTON, self.controller.edit_angles)
 
         self.buttonSwitchGoniometer = wx.Button(label=u'Switch to this goniometer', parent=self,
               pos=wx.Point(4, 734), size=wx.Size(230, 29), style=0)
         self.buttonSwitchGoniometer.SetToolTipString(u'Select the goniometer shown for this experiment. ')
         self.buttonSwitchGoniometer.Bind(wx.EVT_BUTTON, self.controller.switch_goniometer)
 
-        self._init_sizers()
-
+        
     def __init__(self, parent):
         self.controller = PanelGoniometerController(self)
+        
         self._init_ctrls(parent)
+        self._init_sizers()
+        self.currentControl = None
+
         self.controller.update_current()
         self.controller.update_selection()
         self.controller.select_current()
+
 
 
 
