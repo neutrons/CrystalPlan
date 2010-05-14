@@ -55,14 +55,14 @@ class ValueSlider(wx.Panel):
     def SetMin(self, value):
         """Sets the minimum value allowed in the control."""
         self.Min = value
-        self.sliderValue.SetMin( int(value) )
+        self.sliderValue.SetMin( int(value*self.float_convert) )
         self.sliderValue.SetPageSize(5)
         self._check_value()
         
     def SetMax(self, value):
         """Sets the maximum value allowed in the control."""
         self.Max = value
-        self.sliderValue.SetMax( int(value) )
+        self.sliderValue.SetMax( int(value*self.float_convert) )
         self.sliderValue.SetPageSize(5)
         self._check_value()
         
@@ -72,7 +72,7 @@ class ValueSlider(wx.Panel):
         self.Value = value
         if self.Value < self.Min: self.Value = self.Min
         if self.Value > self.Max: self.Value = self.Max
-        self.sliderValue.SetValue( int(self.Value) )
+        self.sliderValue.SetValue( int(self.Value * self.float_convert) )
         if change_text:
             self.textValue.SetValue( str(self.Value) )
         self._insideSetvalue = False
@@ -127,8 +127,12 @@ class ValueSlider(wx.Panel):
 
         self._init_sizers()
 
-    def __init__(self, parent):
+    def __init__(self, parent, floats=0):
         self._init_ctrls(parent)
+        self.floats=floats
+        self.float_convert = 10.0**floats
+        self.SetMax(100)
+        self.SetMin(0)
 
     #-------------- CUSTOM EVENTS --------------------------
     def SendScrollEvent(self):
@@ -143,18 +147,18 @@ class ValueSlider(wx.Panel):
 
     #-------------- Slider Event Handlers ------------------
     def OnSliderValueScroll(self, event):
-        self.SetValue( self.sliderValue.GetValue() )
+        self.SetValue( self.sliderValue.GetValue()/self.float_convert )
         self.SendScrollEvent()
         event.Skip()
 
     def OnSliderValueScrollThumbrelease(self, event):
-        self.SetValue( self.sliderValue.GetValue() )
+        self.SetValue( self.sliderValue.GetValue()/self.float_convert )
         self.SendScrollEndEvent()
         event.Skip()
 
     def OnSliderLineOrPage(self, event):
         "When pressing line up/down or page up/down"
-        self.SetValue( self.sliderValue.GetValue() )
+        self.SetValue( self.sliderValue.GetValue()/self.float_convert )
         self.SendScrollEndEvent()
         event.Skip()
 
@@ -200,7 +204,7 @@ def on_slider_scroll(event):
 if __name__ == '__main__':
     import gui_utils
     global slid
-    (app, slid) = gui_utils.test_my_gui(ValueSlider)
+    (app, slid) = gui_utils.test_my_gui(ValueSlider, floats=2)
     slid.Bind(EVT_VALUE_SLIDER_CHANGED, on_slider)
     slid.Bind(EVT_VALUE_SLIDER_CHANGING, on_slider_scroll)
     app.MainLoop()
