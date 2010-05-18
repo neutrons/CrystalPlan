@@ -19,7 +19,7 @@ import model
 
 #--- Traits Imports ---
 from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
-from enthought.traits.ui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor, ListEditor
+from enthought.traits.ui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor, ListEditor, TableEditor
 from enthought.traits.ui.menu import OKButton, CancelButton,RevertButton
 from enthought.traits.ui.menu import Menu, Action, Separator
 
@@ -56,7 +56,7 @@ class PanelGoniometerController():
         else:
             self.panel.staticTextCurrentGonio.SetLabel('') #(gon.name)
             self.panel.currentControl = self.current_gon_copy.edit_traits(parent=self.panel, kind='subpanel').control
-            self.panel.boxSizerAll.Insert(2, self.panel.currentControl, 1, flag=wx.EXPAND | wx.SHRINK)
+            self.panel.boxSizerAll.Insert(2, self.panel.currentControl, 0, flag=wx.EXPAND | wx.SHRINK)
 
         self.panel.boxSizerAll.Layout()
 
@@ -99,7 +99,10 @@ class PanelGoniometerController():
     def edit_angles(self, event):
         """Open dialog to change the angles"""
         view = View(
-            Item('gonio_angles'), Item('wl_angles'),
+            Label('In this advanced view, you can change the settings of each angle controlled by the goniometer.'),
+            Item('gonio_angles', editor=ListEditor(rows=3)),
+            Label('This "angle" controls the center of the wavelength bandwidth.'),
+            Item('wl_angles', editor=ListEditor(rows=3)),
             buttons=[OKButton, CancelButton]
             )
         result = self.current_gon_copy.configure_traits(self.panel, view=view)
@@ -227,12 +230,12 @@ class PanelGoniometer(wx.Panel):
               parent=self, 
               style=0)
 
-        self.buttonApplyChanges = wx.Button(label=u'Apply Changes to Goniometer...', parent=self,
+        self.buttonApplyChanges = wx.Button(label=u'  Apply Changes to Goniometer...  ', parent=self,
               pos=wx.Point(4, 734),  style=0)
         self.buttonApplyChanges.SetToolTipString(u'Applies any changes made to the current goniometer. ')
         self.buttonApplyChanges.Bind(wx.EVT_BUTTON, self.controller.apply_changes)
 
-        self.buttonEditAngles = wx.Button(label=u'Edit Angles...', parent=self,
+        self.buttonEditAngles = wx.Button(label=u'  Edit Angles (advanced)...  ', parent=self,
               pos=wx.Point(4, 734),  style=0)
         self.buttonEditAngles.SetToolTipString(u'Change the details on the goniometer angles.')
         self.buttonEditAngles.Bind(wx.EVT_BUTTON, self.controller.edit_angles)
@@ -264,4 +267,5 @@ if __name__ == "__main__":
     model.goniometer.initialize_goniometers()
     import gui_utils
     (app, pnl) = gui_utils.test_my_gui(PanelGoniometer)
+    pnl.SetClientSize(wx.Size(1200,1200))
     app.MainLoop()

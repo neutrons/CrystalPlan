@@ -88,8 +88,26 @@ def csv_line(input_list):
 #========================================================================================================
 #========================================================================================================
 #========================================================================================================
-class AngleInfo(object):
+class AngleInfo(HasTraits):
     """Class holds some relevant information about an angle used in the sample orientation."""
+    name = String()
+    type = String(desc='type of value being set.')
+    units = String(label='Internal units', desc='the units used internally in computations.')
+    friendly_units = String(desc='the "friendly" units displayed in the GUI.')
+    conversion = Float(label='Internal to friendly unit conversion factor', desc='that multiplying internal units by this value gives you the friendly units')
+    das_units = String(label='DAS units', desc='the units required by the DAS group (used in the output CSV file).')
+    das_conversion = Float(label='Internal to DAS unit conversion factor', desc='that multiplying internal units by this value gives you the DAS units')
+    friendly_range = List(Float, label='Range of values in GUI (friendly units)', desc='two numbers giving the minimum and maximum values to show in GUI, for the sliders for example.')
+    random_range = List(Float, label='Randomization range of values (internal units)', desc='two numbers giving the minimum and maximum values to use when generating a random value, used in the coverage optimizer for example.')
+
+    view=View(
+        Item('name'),Item('type'),
+            Group( Item('units'),Item('friendly_units'),
+                    Item('conversion'),Item('das_units'),  Item('das_conversion'), label='Units'),
+            Group( Item('friendly_range'),Item('random_range'), label="Ranges"),
+        buttons=[OKButton, CancelButton]
+        )
+
 
     def __init__(self, name, type="angle", units="rad", friendly_units="deg", conversion=np.deg2rad(1),
                     friendly_range=[-180, 180], random_range=[-np.pi, np.pi],
@@ -148,6 +166,8 @@ class AngleInfo(object):
 
     def __str__(self):
         return "%s, %s, ranges from %.1f to %.1f %s" % (self.name, self.type, self.friendly_range[0], self.friendly_range[1], self.friendly_units)
+    def __repr__(self):
+        return self.__str__()
 
 
 
@@ -165,13 +185,25 @@ class Goniometer(HasTraits):
     name = String("Simple Goniometer")
     description = String("Simple universal goniometer with no restrictions on movement.")
     wavelength_control = Bool(False, desc="if the goniometer also controls the measurement wavelength.")
-    wavelength_bandwidth = Float(3.4, desc="the bandwidth of measurement wavelength, in angstroms.")
     gonio_angles = List(AngleInfo, label='Goniometer angles', desc="the list of goniometer angles.")
     wl_angles = List(AngleInfo, label='Wavelength control parameters', desc="the list of wavelength control parameters.", rows_trait=1)
 
-    angles_desc = Property(String, depends_on=["gonio_angles", "wl_angles"], label='Description of Angles:', desc="a description of the angles/other positions controlled by the goniometer")
+    angles_desc = Property(String, depends_on=["gonio_angles", "wl_angles", "wavelength_bandwidth"], label='Description of Angles:', desc="a description of the angles/other positions controlled by the goniometer")
     def _get_angles_desc(self):
         return self.get_angles_description()
+
+    wavelength_bandwidth = Property(Float, desc="the bandwidth of measurement wavelength, in angstroms.")
+    _wavelength_bandwidth = 3.4
+    def _get_wavelength_bandwidth(self):
+        return self._wavelength_bandwidth
+    def _set_wavelength_bandwidth(self, value):
+        self._wavelength_bandwidth = value
+        #Set the range of bandwidth center so that it can't go too low
+        if hasattr(self, 'wl_angles'):
+            if len(self.wl_angles) > 0:
+                self.wl_angles[0].friendly_range[0] = 0.1 + value/2.0
+                self.wl_angles[0].random_range[0] = 0.1 + value/2.0
+
 
     view = View(
         Item('name'), Item('description'), Item('wavelength_control'), Item('wavelength_bandwidth'),
@@ -190,14 +222,14 @@ class Goniometer(HasTraits):
         self.gonio_angles = [AngleInfo('Phi'), AngleInfo('Chi'), AngleInfo('Omega')]
         #Do we also change wavelengths?
         self.wavelength_control = wavelength_control
-        #Bandwidth of detection, in angstroms
-        self.wavelength_bandwidth = 3.2
         #Create the angle info for it, but don't necessarily use it.
         self.wl_angles = [
             AngleInfo('WL_Center', type="wavelength", units="ang", friendly_units="ang",
                       conversion=1, friendly_range=[1.0, 10], random_range=[1.7, 10],
                       das_units="ang", das_conversion=1.0)
             ]
+        #Bandwidth of detection, in angstroms
+        self.wavelength_bandwidth = 3.2
 
     #-------------------------------------------------------------------------
     def are_angles_allowed(self, angles, return_reason=False):
@@ -236,12 +268,13 @@ class Goniometer(HasTraits):
     #-------------------------------------------------------------------------
     def get_angles_description(self):
         """Return a string describing each angle for the goniometer."""
-        s = ""
+        s = []
         for ang in self.gonio_angles:
-            s += "%s\n" % ang
-        for ang in self.wl_angles:
-            s += "[Optional]: %s\n" % ang
-        return s
+            s.append("%s" % ang)
+        if self.wavelength_control:
+            for ang in self.wl_angles:
+                s.append("%s" % ang)
+        return "\n".join(s)
 
 
     #-------------------------------------------------------------------------------

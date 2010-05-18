@@ -140,6 +140,7 @@ class StartupParameters(HasTraits):
     #Create the view
     header_text = Group(Spring(label="Enter the parameters for Q-space simulation:", emphasized=True, show_label=True))
     second_label = Group(Spring(label="Enter the detectors' wavelength limits:", emphasized=True, show_label=True))
+    third_label = Group(Spring(label="Note: wavelength and bandwidth can also be set, on option, as a goniometer motor setting. See the goniometer tab.", emphasized=False, show_label=True))
 
     view = View( header_text,
                  Item("d_min", label="d_min (angstroms)", format_str="%.3f", tooltip="Minimum d spacing to simulate."),
@@ -150,6 +151,7 @@ class StartupParameters(HasTraits):
                  Item("points_goal", format_str="%.0f", enabled_when="keep_points_same"),
                  Item("points",  label="Number of points in space:", style='readonly', format_func=gui_utils.print_large_number),
                  second_label,
+                 third_label,
                  Item("wl_min", label="Min. wavelength (angstroms)", format_str="%.3f", tooltip="Minimum wavelength that the detectors can measure."),
                  Item("wl_max", label="Max. wavelength (angstroms)", format_str="%.3f", tooltip="Maximum wavelength that the detectors can measure."),
                  kind='panel',
