@@ -53,7 +53,7 @@ class OptimizationParameters(HasTraits):
     worst_gene_location_randomizer = Float(0.4, label='Randomizer of worst-gene location', desc='When picking the worst gene to randomize, randomize the selection by this much so that perhaps the 2nd-worst gene gets changed instead.')
     mutation_rate = Float(0.02, desc="the probability of randomized mutation per gene.")
     mutate_by_nudging = Bool(True, desc='that mutations of a gene "nudge" its position over by a random angle. If unchecked, the mutation is that the position is completely randomized.')
-    nudge_amount = Float(2.0, label='Nudge amount (deg)', desc='the width of the normal distribution of nudging that will be done on the angles.')
+    nudge_amount = Float(2.0, label='Nudge amount (%)', desc='the width of the normal distribution of nudging that will be done on the angles, as a percentage of the allowable range.')
     crossover_rate = Float(0.03, desc="the probability of cross-over.")
     use_multiprocessing = Bool(True, desc="to use multiprocessing (multiple processors) to speed up calculation.")
     number_of_processors = Int(4, desc="the number of processors to use, if multiprocessing is enabled. Enter <=0 to use all the processors available.")
@@ -129,11 +129,18 @@ class GeneAngles(object):
             self.angles.append( ai.get_random() )
 
     #---------------------------------------------------------------
-    def nudge(self, amount):
-        """Randomly nudge the position by the provided amount (in degrees)"""
-        if amount <= 0: return
+    def nudge(self, percent):
+        """Randomly nudge the position by the provided amount (in % of the allowable range)"""
+        if percent <= 0: return
         for i in xrange(len(self.angles)):
-            self.angles[i] += np.random.normal(scale=np.deg2rad(amount))
+            angle_info = instrument.inst.angles[i] #@type angle_info AngleInfo
+            max = angle_info.random_range[1]
+            min = angle_info.random_range[0]
+            amount = (max - min) * percent
+            newval = self.angles[i] + np.random.normal(scale=amount)
+            if newval > max: newval = max
+            if newval < min: newval = min
+            self.angles[i] = newval
 
 
 
