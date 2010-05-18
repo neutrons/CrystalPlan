@@ -824,7 +824,7 @@ class LimitedGoniometer(Goniometer):
 
         args = (initial_R, ending_vec, starting_vec)
 
-        if search_+method:
+        if search_method:
             #--- scipy optimize ----
             #Get a starting point by brute force ?
             best_rot_angle = np.pi/2 # optimize(0, pi*2.0, pi/10)[0]
