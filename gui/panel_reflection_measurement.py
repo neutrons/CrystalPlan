@@ -44,7 +44,7 @@ class PanelReflectionMeasurement(wx.Panel):
 
     MIN_WIDTH = 200
     DEFAULT_WIDTH = 250
-    DEFAULT_HEIGHT = 85
+    DEFAULT_HEIGHT = 88
     
     def _init_coll_flexGridSizer1_Items(self, parent):
         parent.AddWindow(self.staticTextDetectorLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
@@ -84,7 +84,7 @@ class PanelReflectionMeasurement(wx.Panel):
       
         self.boxSizerTop = wx.BoxSizer(orient=wx.HORIZONTAL)
 
-        self.flexGridSizer1 = wx.FlexGridSizer(cols=4, hgap=2, rows=3, vgap=2)
+        self.flexGridSizer1 = wx.FlexGridSizer(cols=4, hgap=1, rows=3, vgap=2)
 
         self.boxSizerMain = wx.BoxSizer(orient=wx.VERTICAL)
 
@@ -167,7 +167,7 @@ class PanelReflectionMeasurement(wx.Panel):
               center_horizontal=False, center_vertical=False )
 
         self.buttonPlace = wx.Button(label=u'Place...',
-              parent=self, pos=wx.Point(128, 62), size=wx.Size(80, 20), style=0)
+              parent=self, pos=wx.Point(128, 62), size=wx.Size(75, 20), style=0)
         self.buttonPlace.Bind(wx.EVT_BUTTON, self.OnButtonPlace)
         self.buttonPlace.SetToolTipString("Open the reflection placer, to move the spot on the detector by changing sample orientation.")
         self.buttonPlace.SetFont(wx.Font(pointSize=8, family=wx.SWISS, weight=wx.NORMAL, style=wx.NORMAL))

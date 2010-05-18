@@ -289,7 +289,7 @@ class FrameMain(wx.Frame):
         self.tab_detectors = panel_detectors.PanelDetectors(parent=self.notebook)
 
         def AddPage(tab, title, mac_title="", select=False):
-            if gui_utils.is_mac() and not (mac_title==""):
+            if (gui_utils.is_mac() or gui_utils.is_windows()) and not (mac_title==""):
                 title = mac_title
             self.notebook.AddPage(tab, title, select)
 

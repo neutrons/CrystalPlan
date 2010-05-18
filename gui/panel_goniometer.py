@@ -240,8 +240,8 @@ class PanelGoniometer(wx.Panel):
         self.buttonEditAngles.SetToolTipString(u'Change the details on the goniometer angles.')
         self.buttonEditAngles.Bind(wx.EVT_BUTTON, self.controller.edit_angles)
 
-        self.buttonSwitchGoniometer = wx.Button(label=u'Switch to this goniometer', parent=self,
-              pos=wx.Point(4, 734), size=wx.Size(230, 29), style=0)
+        self.buttonSwitchGoniometer = wx.Button(label=u'  Switch to this goniometer  ', parent=self,
+              pos=wx.Point(4, 734), style=0)
         self.buttonSwitchGoniometer.SetToolTipString(u'Select the goniometer shown for this experiment. ')
         self.buttonSwitchGoniometer.Bind(wx.EVT_BUTTON, self.controller.switch_goniometer)
 

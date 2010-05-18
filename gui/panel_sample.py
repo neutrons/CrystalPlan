@@ -147,9 +147,8 @@ class PanelSample(wx.Panel):
         self.SetClientSize(wx.Size(419, 467))
 
         self.buttonEditCrystal = wx.Button(id=wxID_PANELSAMPLEBUTTONEDITCRYSTAL,
-              label=u'Edit Crystal Parameters', name=u'buttonEditCrystal',
-              parent=self, pos=wx.Point(117, 8), size=wx.Size(185, 29),
-              style=0)
+              label=u'  Edit Crystal Parameters  ', name=u'buttonEditCrystal',
+              parent=self, pos=wx.Point(117, 8), style=0)
         self.buttonEditCrystal.Bind(wx.EVT_BUTTON,
               self.OnButtonEditCrystalButton,
               id=wxID_PANELSAMPLEBUTTONEDITCRYSTAL)
@@ -167,14 +166,14 @@ class PanelSample(wx.Panel):
               size=wx.Size(371, 17), style=0)
 
         self.buttonApplyRange = wx.Button(id=wxID_PANELSAMPLEBUTTONAPPLYRANGE,
-              label=u'Apply New Range', name=u'buttonApplyRange', parent=self,
-              pos=wx.Point(0, 78), size=wx.Size(185, 29), style=0)
+              label=u'  Apply New Range  ', name=u'buttonApplyRange', parent=self,
+              pos=wx.Point(0, 78), style=0)
         self.buttonApplyRange.Bind(wx.EVT_BUTTON, self.OnButtonApplyRangeButton,
               id=wxID_PANELSAMPLEBUTTONAPPLYRANGE)
 
         self.buttonRevertRange = wx.Button(id=wxID_PANELSAMPLEBUTTONREVERTRANGE,
-              label=u'Revert', name=u'buttonRevertRange', parent=self,
-              pos=wx.Point(193, 78), size=wx.Size(85, 29), style=0)
+              label=u'  Revert  ', name=u'buttonRevertRange', parent=self,
+              pos=wx.Point(193, 78), style=0)
         self.buttonRevertRange.Bind(wx.EVT_BUTTON,
               self.OnButtonRevertRangeButton,
               id=wxID_PANELSAMPLEBUTTONREVERTRANGE)

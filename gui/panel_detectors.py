@@ -415,15 +415,13 @@ class PanelDetectors(wx.Panel):
 
         self.staticText1 = wx.StaticText(id=wxID_PANELDETECTORSSTATICTEXT1,
               label=u'Check which detectors to consider in the calculation.',
-              name='staticText1', parent=self, pos=wx.Point(0, 0),
-              size=wx.Size(512, 17), style=0)
+              name='staticText1', parent=self, pos=wx.Point(0, 0), style=0)
         self.staticText1.SetToolTipString(u'Detectors!')
         self.staticText1.SetMinSize(wx.Size(-1, -1))
 
         self.button_view_detectors = wx.Button(id=wxID_PANELDETECTORSBUTTON_VIEW_DETECTORS,
-              label=u'View Detectors in 3D', name=u'button_view_detectors',
-              parent=self, pos=wx.Point(321, 62), size=wx.Size(176, 29),
-              style=0)
+              label=u'  View Detectors in 3D  ', name=u'button_view_detectors',
+              parent=self, pos=wx.Point(321, 62), style=0)
         self.button_view_detectors.Bind(wx.EVT_BUTTON,
               self.OnButton_view_detectorsButton,
               id=wxID_PANELDETECTORSBUTTON_VIEW_DETECTORS)
@@ -448,32 +446,32 @@ class PanelDetectors(wx.Panel):
               id=wxID_PANELDETECTORSCHECKSELECTALL)
 
         self.buttonStats = wx.Button(id=wxID_PANELDETECTORSBUTTONSTATS,
-              label=u'Coverage Stats...', name=u'buttonStats', parent=self,
-              pos=wx.Point(0, 62), size=wx.Size(120, 29), style=0)
+              label=u'  Coverage Stats...  ', name=u'buttonStats', parent=self,
+              pos=wx.Point(0, 62),  style=0)
         self.buttonStats.Bind(wx.EVT_BUTTON, self.OnButtonStatsButton,
               id=wxID_PANELDETECTORSBUTTONSTATS)
 
         self.buttonSelectBest = wx.Button(id=wxID_PANELDETECTORSBUTTONSELECTBEST,
-              label=u'Select best # detectors...', name=u'buttonSelectBest',
-              parent=self, pos=wx.Point(128, 62), size=wx.Size(185, 29),
-              style=0)
+              label=u'  Select best # detectors...  ', name=u'buttonSelectBest',
+              parent=self, pos=wx.Point(128, 62), style=0)
         self.buttonSelectBest.Bind(wx.EVT_BUTTON, self.OnButtonSelectBestButton,
               id=wxID_PANELDETECTORSBUTTONSELECTBEST)
 
         self.buttonSelectList = wx.Button(id=wxID_PANELDETECTORSBUTTONSELECTLIST,
-              label=u'Select List...', name=u'buttonSelectList', parent=self,
-              pos=wx.Point(93, 25), size=wx.Size(106, 29), style=0)
+              label=u'  Select List...  ', name=u'buttonSelectList', parent=self,
+              pos=wx.Point(93, 25), style=0)
         self.buttonSelectList.Bind(wx.EVT_BUTTON, self.OnButtonSelectListButton,
               id=wxID_PANELDETECTORSBUTTONSELECTLIST)
 
         self.buttonOptimize = wx.Button(id=wxID_PANELDETECTORSBUTTONOPTIMIZE,
-              label=u'Optimize using GA', name=u'buttonOptimize', parent=self,
-              pos=wx.Point(207, 25), size=wx.Size(160, 29), style=0)
+              label=u'  Optimize using GA  ', name=u'buttonOptimize', parent=self,
+              pos=wx.Point(207, 25), style=0)
         self.buttonOptimize.Bind(wx.EVT_BUTTON, self.OnButtonOptimizeButton,
               id=wxID_PANELDETECTORSBUTTONOPTIMIZE)
 
-        self.buttonLoadDetectors = wx.Button(label=u'Load Detectors CSV file', name=u'buttonLoadDetectors', parent=self,
-              pos=wx.Point(207, 25), size=wx.Size(200, 29), style=0)
+        self.buttonLoadDetectors = wx.Button(label=u'  Load Detectors CSV file  ',
+                name=u'buttonLoadDetectors', parent=self,
+                pos=wx.Point(207, 25), style=0)
         self.buttonLoadDetectors.Bind(wx.EVT_BUTTON, self.OnButtonLoadDetectors)
 
         self._init_sizers()

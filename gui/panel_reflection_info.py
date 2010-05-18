@@ -168,7 +168,7 @@ class PanelReflectionInfo(wx.Panel):
         self.staticDivergenceLabel2 = wx.StaticText(label=u' deg. half-width ', name=u'staticDivergenceLabel2', parent=self,
               pos=wx.Point(6, 41),  style=0)
 
-        self.buttonPlace = wx.Button(label=u'Try to place reflection on a detector...',
+        self.buttonPlace = wx.Button(label=u' Try to place reflection on a detector... ',
               parent=self.scrolledWindowMeasurements, pos=wx.Point(128, 62), size=wx.Size(200, 30), style=0)
         self.buttonPlace.Bind(wx.EVT_BUTTON, self.OnButtonPlace)
         self.buttonPlace.SetToolTipString("Open the reflection placer, to try to put the reflection on a detector by changing sample orientation.")

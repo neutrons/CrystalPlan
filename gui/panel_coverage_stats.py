@@ -71,18 +71,6 @@ class PanelCoverageStats(wx.Panel):
         self.gaugeRedundancy.SetBezelFace(1)
         self.gaugeRedundancy.SetShadowWidth(1)
 
-#        self.buttonAdvancedView = wx.Button(id=wx.ID_ANY,
-#              label=u'3D Advanced Settings...', name=u'buttonAdvancedView',
-#              parent=self, pos=wx.Point(0, 160), size=wx.Size(220,
-#              24), style=0)
-#        self.buttonAdvancedView.Bind(wx.EVT_BUTTON,
-#              self.OnButtonAdvancedViewButton,
-#              id=wx.ID_ANY)
-
-#        self.staticLineSpacer = wx.StaticLine(id=wx.ID_ANY,
-#              name=u'staticLineSpacer', parent=self, pos=wx.Point(0,
-#              124), size=wx.Size(220, 36), style=0)
-
         self._init_sizers()
 
 

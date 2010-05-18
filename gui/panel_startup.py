@@ -272,14 +272,14 @@ class PanelStartup(wx.Panel):
               size=wx.Size(475, 2), style=0)
 
         self.buttonApply = wx.Button(id=wxID_DIALOGSTARTUPbuttonApply,
-              label=u'Apply Changes', name=u'buttonApply', parent=self,
-              pos=wx.Point(16, 563), size=wx.Size(150, 29), style=0)
+              label=u'  Apply Changes  ', name=u'buttonApply', parent=self,
+              pos=wx.Point(16, 563), style=0)
         self.buttonApply.Bind(wx.EVT_BUTTON, self.OnbuttonApplyButton,
               id=wxID_DIALOGSTARTUPbuttonApply)
 
         self.buttonQuit = wx.Button(id=wxID_DIALOGSTARTUPBUTTONQUIT,
-              label=u'Revert', name=u'buttonQuit', parent=self, pos=wx.Point(309,
-              563), size=wx.Size(150, 29), style=0)
+              label=u'  Revert  ', name=u'buttonQuit', parent=self, pos=wx.Point(309,
+              563), style=0)
         self.buttonQuit.Bind(wx.EVT_BUTTON, self.OnButtonQuitButton,
               id=wxID_DIALOGSTARTUPBUTTONQUIT)
 

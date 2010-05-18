@@ -28,6 +28,11 @@ def is_mac():
     return sys.platform=="darwin"
 
 #------------------------------------------------------------------
+def is_windows():
+    """Return True if the program is running on Windows"""
+    return sys.platform=="win32"
+
+#------------------------------------------------------------------
 def inelastic_mode():
     """Return true if the instrument being simulated is for
     inelastic scattering."""

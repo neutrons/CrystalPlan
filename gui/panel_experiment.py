@@ -106,7 +106,7 @@ class ExperimentGridController():
             grid.SetColSize(i+1, 100)
 
     #------------------------------------
-    def update_grid(self, message=None):
+    def update_grid(self, *args):
         """Fill the grid rows with data, and set the right editors."""
         # @type grid wx.grid.Grid
         grid = self.panel.gridExp
@@ -500,56 +500,55 @@ class PanelExperiment(wx.Panel):
         self.buttonUseHighlighted.SetToolTipString(u'Select to use all the highlighted rows in the grid below.')
         self.buttonUseHighlighted.Bind(wx.EVT_BUTTON, self.OnButtonUseHighlighted)
 
-        self.buttonDontUseHighlighted = wx.Button(label=u"Don't Use ", name=u'buttonDontUseHighlighted', parent=self,
+        self.buttonDontUseHighlighted = wx.Button(label=u" Don't Use ", name=u'buttonDontUseHighlighted', parent=self,
               pos=wx.Point(4, 734), size=wx.Size(95, 29), style=0)
         self.buttonDontUseHighlighted.SetToolTipString(u'Select not to use all the highlighted rows in the grid below.')
         self.buttonDontUseHighlighted.Bind(wx.EVT_BUTTON, self.OnButtonDontUseHighlighted)
 
         self.buttonDeleteAll = wx.Button(id=wxID_PANELEXPERIMENTBUTTONDELETEALL,
-              label=u'Delete All', name=u'buttonDeleteAll', parent=self,
-              pos=wx.Point(4, 734), size=wx.Size(85, 29), style=0)
+              label=u'  Delete All  ', name=u'buttonDeleteAll', parent=self,
+              pos=wx.Point(4, 734), style=0)
         self.buttonDeleteAll.SetToolTipString(u'Delete all the orientations in the list.')
         self.buttonDeleteAll.Bind(wx.EVT_BUTTON, self.OnButtonDeleteAllButton,
               id=wxID_PANELEXPERIMENTBUTTONDELETEALL)
 
         self.buttonDeleteHighlighted = wx.Button(id=wxID_PANELEXPERIMENTBUTTONDELETEHIGHLIGHTED,
-              label=u'Delete Highlighted', name=u'buttonDeleteHighlighted',
-              parent=self, pos=wx.Point(97, 734), size=wx.Size(144, 29),
-              style=0)
+              label=u'  Delete Highlighted  ', name=u'buttonDeleteHighlighted',
+              parent=self, pos=wx.Point(97, 734), style=0)
         self.buttonDeleteHighlighted.SetToolTipString(u'Delete the orientations in rows above that are highlighted.')
         self.buttonDeleteHighlighted.Bind(wx.EVT_BUTTON,
               self.OnButtonDeleteHighlightedButton,
               id=wxID_PANELEXPERIMENTBUTTONDELETEHIGHLIGHTED)
 
         self.buttonDeleteUnused = wx.Button(id=wxID_PANELEXPERIMENTBUTTONDELETEUNUSED,
-              label=u'Delete Unused', name=u'buttonDeleteUnused', parent=self,
-              pos=wx.Point(249, 734), size=wx.Size(111, 29), style=0)
+              label=u'  Delete Unused  ', name=u'buttonDeleteUnused', parent=self,
+              pos=wx.Point(249, 734), style=0)
         self.buttonDeleteUnused.SetToolTipString(u'Delete all the orientations in the list that are unused (unchecked).')
         self.buttonDeleteUnused.Bind(wx.EVT_BUTTON,
               self.OnButtonDeleteUnusedButton,
               id=wxID_PANELEXPERIMENTBUTTONDELETEUNUSED)
 
         self.buttonSaveToCSV = wx.Button(id=wxID_PANELEXPERIMENTBUTTONSAVETOCSV,
-              label=u'Save to .CSV file', name=u'buttonSaveToCSV', parent=self,
-              pos=wx.Point(0, 804), size=wx.Size(168, 29), style=0)
+              label=u'  Save to .CSV file  ', name=u'buttonSaveToCSV', parent=self,
+              pos=wx.Point(0, 804), style=0)
         self.buttonSaveToCSV.Bind(wx.EVT_BUTTON, self.OnButtonSaveToCSVButton,
               id=wxID_PANELEXPERIMENTBUTTONSAVETOCSV)
         self.buttonSaveToCSV.SetToolTipString("Choose a path to save the list of sample orientations to a .CSV file compatible with PyDas (SNS data acquisition system python scripting).")
 
-        self.buttonOptimizer = wx.Button(id=wx.NewId(), label=u'Automatic Coverage Optimizer...', name=u'buttonOptimizer', parent=self,
-              pos=wx.Point(0, 804), size=wx.Size(270, 29), style=0)
+        self.buttonOptimizer = wx.Button(id=wx.NewId(), label=u'  Automatic Coverage Optimizer...  ', name=u'buttonOptimizer', parent=self,
+              pos=wx.Point(0, 804), style=0)
         self.buttonOptimizer.Bind(wx.EVT_BUTTON, self.OnButtonOptimizer)
         self.buttonOptimizer.SetToolTipString("Open the Experiment Plan Automatic Optimizer window.")
 
         self.buttonRefreshList = wx.Button(id=wxID_PANELEXPERIMENTBUTTONREFRESHLIST,
-              label=u'Refresh List', name=u'buttonRefreshList', parent=self,
-              pos=wx.Point(240, 33), size=wx.Size(100, 29), style=0)
+              label=u' Refresh List ', name=u'buttonRefreshList', parent=self,
+              pos=wx.Point(240, 33), style=0)
         self.buttonRefreshList.Bind(wx.EVT_BUTTON,
               self.OnButtonRefreshListButton,
               id=wxID_PANELEXPERIMENTBUTTONREFRESHLIST)
 
         self.buttonChangeStopping = wx.Button(id=wx.NewId(),
-              label=u'Change Stopping Criteria', name=u'buttonChangeStopping', parent=self,
+              label=u'  Change Stopping Criteria  ', name=u'buttonChangeStopping', parent=self,
               pos=wx.Point(240, 33), style=0)
         self.buttonChangeStopping.Bind(wx.EVT_BUTTON, self.OnButtonChangeStopping)
         self.buttonChangeStopping.SetToolTipString("Change the stopping criteria and value for all selected rows.")

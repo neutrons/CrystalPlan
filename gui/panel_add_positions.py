@@ -415,8 +415,8 @@ class PanelAddPositions(wx.Panel):
               style=0)
 
         self.buttonCalculate = wx.Button(id=wxID_PANELADDPOSITIONSBUTTONCALCULATE,
-              label=u'Begin Calculation', name=u'buttonCalculate', parent=self,
-              pos=wx.Point(65, 419), size=wx.Size(208, 29), style=0)
+              label=u'  Begin Calculation  ', name=u'buttonCalculate', parent=self,
+              pos=wx.Point(65, 419), style=0)
         self.buttonCalculate.Enable(False)
         self.buttonCalculate.Bind(wx.EVT_BUTTON, self.OnButtonCalculateButton,
               id=wxID_PANELADDPOSITIONSBUTTONCALCULATE)
@@ -433,8 +433,8 @@ class PanelAddPositions(wx.Panel):
         self.textWarnings.SetMinSize(wx.Size(-1, -1))
 
         self.buttonCancel = wx.Button(id=wxID_PANELADDPOSITIONSBUTTONCANCEL,
-              label=u'Cancel Calculation', name=u'buttonCancel', parent=self,
-              pos=wx.Point(281, 419), size=wx.Size(200, 29), style=0)
+              label=u'  Cancel Calculation  ', name=u'buttonCancel', parent=self,
+              pos=wx.Point(281, 419), style=0)
         self.buttonCancel.Enable(False)
         self.buttonCancel.Bind(wx.EVT_BUTTON, self.OnButtonCancelButton,
               id=wxID_PANELADDPOSITIONSBUTTONCANCEL)
