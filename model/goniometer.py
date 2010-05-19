@@ -1304,28 +1304,13 @@ class TopazInHouseGoniometer(LimitedGoniometer):
                         z = self.leg_safe_zaxis[i_z]
                         if abs(z)<real_travel_z:
                             self.leg_safe_zone[leg, i_x, i_z] = True
-        #Upper left corner of leg A (0)
-        center = int(len(self.leg_safe_xaxis)/2)
-#        self.leg_safe_zone[0, center:, center:] = False
-#        self.leg_safe_zone[1, 0:center, center:] = False
-        self.leg_safe_zone[0, :, :] = False
-        self.leg_safe_zone[0, :center, :center] = True
-        self.leg_safe_zone[1, :, :] = False
-        self.leg_safe_zone[1, center:, 0:center] = True
-
-        self.leg_safe_zone[2, :, :center] = False
-
-
-#        #Test: add a dumb hole in middle!
-#        real_travel = 3
-#        for leg in range(3):
-#            for i_x in range(self.leg_safe_xaxis.size):
-#                x = self.leg_safe_xaxis[i_x]
-#                if abs(x)<real_travel:
-#                    for i_z in range(self.leg_safe_zaxis.size):
-#                        z = self.leg_safe_zaxis[i_z]
-#                        if abs(z)<real_travel:
-#                            self.leg_safe_zone[leg, i_x, i_z] = False
+#        #Upper left corner of leg A (0)
+#        center = int(len(self.leg_safe_xaxis)/2)
+#        self.leg_safe_zone[0, :, :] = False
+#        self.leg_safe_zone[0, :center, :center] = True
+#        self.leg_safe_zone[1, :, :] = False
+#        self.leg_safe_zone[1, center:, 0:center] = True
+#        self.leg_safe_zone[2, :, :center] = False
 
 
         if visualize:
@@ -1825,6 +1810,11 @@ class TestGoniometers(unittest.TestCase):
     def test_constructors_wavelength_control(self):
         g = Goniometer(wavelength_control=True)
         assert len(g.angles)==4, "3 angles and 1 wavelength"
+
+    def test_inhouse(self):
+        g = TopazInHouseGoniometer()
+        assert g.are_angles_allowed([0,0,0])
+        assert not g.are_angles_allowed([0,1.0,0])
 
 #===============================================================================================
 if __name__ == "__main__":

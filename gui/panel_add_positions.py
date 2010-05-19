@@ -106,7 +106,7 @@ class CalculationThread(Thread):
                 break
                 
         #Ok, we either finished or aborted.
-        model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, i)
+        model.messages.send_message(MSG_POSITION_CALCULATION_PROGRESS, len(self.positions) )
         model.messages.send_message( model.messages.MSG_POSITION_LIST_CHANGED)
         model.messages.send_message( MSG_POSITION_CALCULATION_DONE, self.poscov_list)
 

@@ -103,6 +103,7 @@ function date_ddmmmyy(date)
 }
 
 
+
 // get last modified date of the 
 // current document.
 function date_lastmodified()
@@ -120,11 +121,75 @@ function date_lastmodified()
 
   return s;
 }
+function getElementsByTagNames(list,obj) {
+	if (!obj) var obj = document;
+	var tagNames = list.split(',');
+	var resultArray = new Array();
+	for (var i=0;i<tagNames.length;i++) {
+		var tags = obj.getElementsByTagName(tagNames[i]);
+		for (var j=0;j<tags.length;j++) {
+			resultArray.push(tags[j]);
+		}
+	}
+	var testNode = resultArray[0];
+	if (!testNode) return [];
+	if (testNode.sourceIndex) {
+		resultArray.sort(function (a,b) {
+				return a.sourceIndex - b.sourceIndex;
+		});
+	}
+	else if (testNode.compareDocumentPosition) {
+		resultArray.sort(function (a,b) {
+				return 3 - (a.compareDocumentPosition(b) & 6);
+		});
+	}
+	return resultArray;
+}
 
-//
-// finally display the last modified date
-// as DD-MMM-YY
-//
+
+function createTOC() {
+	var y = document.createElement('div');
+	y.id = 'innertoc';
+	var a = y.appendChild(document.createElement('span'));
+	a.onclick = showhideTOC;
+	a.id = 'contentheader';
+	a.innerHTML = 'show page contents';
+	var z = y.appendChild(document.createElement('div'));
+	z.onclick = showhideTOC;
+	var toBeTOCced = getElementsByTagNames('h2,h3,h4,h5');
+	if (toBeTOCced.length < 2) return false;
+
+	for (var i=0;i<toBeTOCced.length;i++) {
+		var tmp = document.createElement('a');
+		tmp.innerHTML = toBeTOCced[i].innerHTML;
+		tmp.className = 'page';
+		z.appendChild(tmp);
+		if (toBeTOCced[i].nodeName == 'H4')
+			tmp.className += ' indent';
+		if (toBeTOCced[i].nodeName == 'H5')
+			tmp.className += ' extraindent';
+		var headerId = toBeTOCced[i].id || 'link' + i;
+		tmp.href = '#' + headerId;
+		toBeTOCced[i].id = headerId;
+		if (toBeTOCced[i].nodeName == 'H2') {
+			tmp.innerHTML = 'Top';
+			tmp.href = '#top';
+			toBeTOCced[i].id = 'top';
+		}
+	}
+	return y;
+}
+
+var TOCstate = 'none';
+
+function showhideTOC() {
+	TOCstate = (TOCstate == 'none') ? 'block' : 'none';
+	var newText = (TOCstate == 'none') ? 'show page contents' : 'hide page contents';
+	document.getElementById('contentheader').innerHTML = newText;
+	document.getElementById('innertoc').lastChild.style.display = TOCstate;
+}
+
+
 -->
 </script>
 
@@ -144,6 +209,13 @@ Document started April 14, 2010;
 document.write( "last updated on " + date_lastmodified() + "." );
 </script>
 <br/>
+
+<div class="mainContent">
+rtest</div>
+<script type="text/JavaScript" language="JavaScript">
+document.write("tesssst");
+document.write( createTOC() );
+</script>
   
 <h2>Introduction</h2>
 
@@ -246,6 +318,16 @@ use in your instrument.
 <li>Click the "Goniometer" tab. The goniometer that is currently selected is shown at the top:
 <img src="screenshots/goniometer-selected.png" border="0" alt=""/>
 </li>
+<ul> <li>This interface allows you to modify some settings of the goniometer.</li>
+	<li>For instance, you can choose to make your goniometer control the measurement wavelength by checking the "Wavelength control" box.	</li>
+	<li>The goniometer will then have an extra "angle" controlling the center of the measurement wavelength.</li>
+	<li>You have parameters to set the bandwidth as well as a minimal wavelength that you cannot go below.</li>
+	<li>Depending on the goniometer, there may be extra settings you can change. As always, hover the mouse over an entry to get helpful pop-up hints.</li>
+	<li>To edit advanced settings of the goniometer, click the <img src="screenshots/goniometer-buttonEditAngles.png" border="0" alt="Edit Angles"/> button. Settings such as the units and range of each angle can be changed in the dialogs that pop up.</li>
+	<li>If you make any changes, don't forget to click on the <img src="screenshots/goniometer-buttonApplyChanges.png" /> button to apply them. This may clear your experiment plan, if necessary.</li>
+
+</ul>
+
 <li> Select the TOPAZ in-house goniometer:
 <br/><img src="screenshots/goniometer-choice.png" border="0" alt=""/>
 </li>
@@ -582,6 +664,10 @@ experiment plan (which we will see in the next section).</li>
 <img src="screenshots/exp-buttonSaveToCSV.png" />
 button to make a CSV (comma-separated values) file containing the list of sample orientation and runtime criteria. This file can then be loaded on the DAS computers (using PyDas, for example) to run the experiment. 
 </li>
+<li>A very useful feature is the automatic coverage optimizer, covered in <a href="#FrameOptimizer">this section</a>. Click the
+<img src="screenshots/exp-buttonOptimizer.png" />
+button to open the window, or press Ctrl+O. 
+</li>
 </ul>
 
 
@@ -697,6 +783,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <!-- ========================================================= -->
 
 <h3>13. 3D Reflections View</h3>
+<a name="FrameQspaceView" />
 
 <p>Another way to measure your experimental coverage is by looking at single reflections, instead of viewing volume coverage in reciprocal space, as we have been doing before.</p>
 
@@ -795,6 +882,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 </ul>
 
 <h4>13.6. The Reflection Placer</h4> <!-- =================================== -->
+<a name="FrameReflectionPlacer" />
 
 <ul>
 <li>Click the <img src="screenshots/prm-buttonPlace.png"/> to bring up the reflection placer window: 
@@ -809,6 +897,11 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <li>Click the <img src="screenshots/ref_placer-buttonAddOrientation.png" alt="Add This Orientation"/> button and the calculated sample orientation will be added to the current experiment plan.</li>
 </ul>
 
+
+<!-- ========================================================= -->
+
+<h3>14. Automatic Coverage Optimizer</h3>
+<a name="FrameOptimizer" />
 
 </body>
 </html>

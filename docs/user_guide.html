@@ -194,6 +194,16 @@ use in your instrument.
 <li>Click the "Goniometer" tab. The goniometer that is currently selected is shown at the top:
 <img alt="" border="0" src="screenshots/goniometer-selected.png" />
 </li>
+<ul> <li>This interface allows you to modify some settings of the goniometer.</li>
+	<li>For instance, you can choose to make your goniometer control the measurement wavelength by checking the "Wavelength control" box.	</li>
+	<li>The goniometer will then have an extra "angle" controlling the center of the measurement wavelength.</li>
+	<li>You have parameters to set the bandwidth as well as a minimal wavelength that you cannot go below.</li>
+	<li>Depending on the goniometer, there may be extra settings you can change. As always, hover the mouse over an entry to get helpful pop-up hints.</li>
+	<li>To edit advanced settings of the goniometer, click the <img alt="Edit Angles" border="0" src="screenshots/goniometer-buttonEditAngles.png" /> button. Settings such as the units and range of each angle can be changed in the dialogs that pop up.</li>
+	<li>If you make any changes, don't forget to click on the <img src="screenshots/goniometer-buttonApplyChanges.png" /> button to apply them. This may clear your experiment plan, if necessary.</li>
+
+</ul>
+
 <li> Select the TOPAZ in-house goniometer:
 <br /><img alt="" border="0" src="screenshots/goniometer-choice.png" />
 </li>
@@ -530,6 +540,8 @@ experiment plan (which we will see in the next section).</li>
 <img src="screenshots/exp-buttonSaveToCSV.png" />
 button to make a CSV (comma-separated values) file containing the list of sample orientation and runtime criteria. This file can then be loaded on the DAS computers (using PyDas, for example) to run the experiment. 
 </li>
+<li>A very useful feature is the automatic coverage optimizer, covered in <a href="#FrameOptimizer">this section</a>.
+</li>
 </ul>
 
 
@@ -627,6 +639,11 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <ul>
 <li>Click and drag the center of the area to change the q-radius</li>
 <li>Click and drag the edges of the area to change the thickness.</li>
+<li>When the slice control has focus (just click on it), you can use the keyboard too:</li>
+<ul>
+<li>Left and right arrow keys move the slice a little.</li>
+<li>PageUp and PageDown move the slice more.</li>
+</ul>
 </ul>
 <li>The 3D view is updated to show only the selected slice of q-space:
 <br /><div align="center"><img src="screenshots/3d-slice.png" /></div>
@@ -640,6 +657,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 
 
 <h3>13. 3D Reflections View</h3>
+<a name="FrameQspaceView" />
 
 <p>Another way to measure your experimental coverage is by looking at single reflections, instead of viewing volume coverage in reciprocal space, as we have been doing before.</p>
 
@@ -738,6 +756,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 </ul>
 
 <h4>13.6. The Reflection Placer</h4> 
+<a name="FrameReflectionPlacer" />
 
 <ul>
 <li>Click the <img src="screenshots/prm-buttonPlace.png" /> to bring up the reflection placer window: 
@@ -752,6 +771,11 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <li>Click the <img alt="Add This Orientation" src="screenshots/ref_placer-buttonAddOrientation.png" /> button and the calculated sample orientation will be added to the current experiment plan.</li>
 </ul>
 
+
+
+
+<h3>14. Automatic Coverage Optimizer</h3>
+<a name="FrameOptimizer" />
 
 </body>
 </html>

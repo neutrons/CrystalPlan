@@ -16,6 +16,7 @@ from threading import Thread
 import model
 import dialog_edit_crystal
 import gui_utils
+import frame_optimizer
 
 main_frame = None
 
@@ -198,7 +199,7 @@ class UserGuideThread(Thread):
         #Ok we are done.
         print "-> Script Complete!"
         #Close the main frame to exit the program
-        #fm.Destroy()
+        fm.Destroy()
 
 
 
@@ -210,6 +211,7 @@ class UserGuideThread(Thread):
 #==================================================================================================
 #==================================================================================================
 
+#-----------------------------------------------------------------
 def make_animated_tab_click(fm):
 #    #Make a lot of screenshots to animate yay!
 #
@@ -227,6 +229,7 @@ def make_animated_tab_click(fm):
         os.remove(fname)
 
 
+#-----------------------------------------------------------------
 def make_animated_phi_rotation(slid, fv, filename):
     """Animate a rotation of phi or chi"""
     files = []
@@ -248,6 +251,7 @@ def make_animated_phi_rotation(slid, fv, filename):
 #    for fname in files:
 #        os.remove(fname)
 
+#-----------------------------------------------------------------
 def pick_a_reflection():
     """Randomly pick a reflection"""
     #@type refl Reflection
@@ -256,15 +260,27 @@ def pick_a_reflection():
         refl = model.experiment.exp.reflections[np.random.random_integers(0, len(model.experiment.exp.reflections))]
     print "I picked", refl
 
-        
+
+#-----------------------------------------------------------------
+def automatic_optimizer(fm):
+    #--- Automatic coverage optimizer ---
+    #@type fo FrameOptimizer
+    fo = frame_optimizer.get_instance(fm)
+    fo.
 
 
+#==========================================================================================
+#==========================================================================================
+#==========================================================================================
 #The following function will be executed line-by-line by a separate thread.
 # - All commands should be on single lines
 # - No loops or changes of indentation! (Use functions if you need to make a for loop)
 # - Finish with "#---END---\n"
 def user_guide_script():
     #Shortcuts to the tested objects
+
+    automatic_optimizer(fm)
+#---END---
 
     screenshots.disable_screenshots = False
 
@@ -308,9 +324,9 @@ def user_guide_script():
     #@type td PanelDetectors
     td = fm.tab_detectors
     wait(30)
-    ca(screenshot_of, td.buttonLoadDetectors, 'detectors-buttonLoadDetectors', minheight=True, margin=6, gradient_edge=4)
+    ca(screenshot_of, td.buttonLoadDetectors, 'detectors-buttonLoadDetectors',  margin=6, gradient_edge=4)
     wait(50)
-    ca(screenshot_of, td.button_view_detectors, 'detectors-button_view_detectors', minheight=True, margin=6, gradient_edge=4)
+    ca(screenshot_of, td.button_view_detectors, 'detectors-button_view_detectors', margin=6, gradient_edge=4)
     wait(30)
     ca(td.controller.load_detector_file, "../instruments/TOPAZ_detectors_all.csv")
     waitfor( 'len(model.instrument.inst.detectors) >= 48' )
@@ -330,7 +346,9 @@ def user_guide_script():
     wait(50)
     #@type tg PanelGoniometer
     tg = fm.tab_goniometer
-    ca(screenshot_of, tg.boxSizerSelected, 'goniometer-selected', minheight=True, margin=[10, 10, 40, 10], gradient_edge=4)
+    ca(screenshot_of, tg.currentControl, 'goniometer-selected', minheight=True, margin=[10, 10, 40, 10], gradient_edge=4)
+    ca(screenshot_of, tg.buttonEditAngles, 'goniometer-buttonEditAngles', margin=6, gradient_edge=0)
+    ca(screenshot_of, tg.buttonApplyChanges, 'goniometer-buttonApplyChanges', margin=6, gradient_edge=0)
     ca(screenshot_of, tg.buttonSwitchGoniometer, 'goniometer-buttonSwitchGoniometer', margin=6, gradient_edge=0)
     #Select the TopazInHouseGoniometer and switch to it
     ca(select_name, tg.choiceGonio, model.goniometer.TopazInHouseGoniometer().name)
@@ -484,6 +502,7 @@ def user_guide_script():
     ca(screenshot_of, te.boxSizerDelete, 'exp-delete_buttons', margin=8)
     ca(screenshot_of, [te.checkUseAll, te.buttonDontUseHighlighted], 'exp-select_buttons', margin=8)
     ca(screenshot_of, te.buttonSaveToCSV, 'exp-buttonSaveToCSV', margin=6)
+    ca(screenshot_of, te.buttonOptimizer, 'exp-buttonOptimizer', margin=6)
     ca(screenshot_of, te.staticTextEstimatedTime, 'exp-estimated_time', margin=6)
     wait(50)
 
