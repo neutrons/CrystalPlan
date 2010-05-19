@@ -292,7 +292,7 @@ class QspaceViewController(HasTraits):
         """Initialize (or re-initialize) all the view elements in the scene.
         This needs to be called when q-space modeled area changes (changing the outline) or
             q-resolution, etc.
-        """
+        """ 
         #Prevent drawing all the intermediate steps
         self.scene.disable_render = True
 
@@ -303,6 +303,10 @@ class QspaceViewController(HasTraits):
                 'points_module_glyph', 'outline', 'mouse_text', 'mouse_cube']:
             if hasattr(self, x):
                 getattr(self, x).remove()
+        #Now the corner labels
+        if hasattr(self, 'corner_text'):
+            for txt in self.corner_text:
+                txt.remove()
 
         engine = self.engine
 
@@ -377,6 +381,30 @@ class QspaceViewController(HasTraits):
         self.outline.bounds = tuple(np.array([-1.,1.,-1.,1.,-1.,1.]) * model.experiment.exp.inst.qlim)
         #Add it to the scene directly.
         engine.add_module(self.outline)
+
+        #--- Label the HKL of the corners ---
+        if config_gui.cfg.label_corners:
+            q = model.instrument.inst.qlim
+            #This the reciprocal lattice vectors
+            rec = model.experiment.exp.crystal.reciprocal_lattice
+            self.corner_text = []
+            for x in [-q, q]:
+                for y in [-q, q]:
+                    for z in [-q, q]:
+                        (h,k,l) = model.crystal_calc.get_hkl_from_q( column([x,y,z]), rec)
+                        label = "%d,%d,%d" % (h,k,l)
+                        txt = Text(text=label, position_in_3d=False)
+                        txt.position_in_3d = True
+                        txt.x_position = x
+                        txt.y_position = y
+                        txt.z_position = z
+                        txt.actor.text_scale_mode = "none"
+                        txt.actor.text_property.font_size = 14
+                        txt.actor.text_property.vertical_justification = "top"
+                        txt.actor.text_property.justification = "left"
+                        txt.actor.property.color = (0.75, 1.0, 1.0)
+                        engine.add_module(txt)
+                        self.corner_text.append(txt)
 
         # ---- A text overlay, to show what is under the mouse -----
 #        self.mouse_text = Text(text=self.MOUSE_TEXT_WITH_NO_REFLECTION, position_in_3d=False)

@@ -260,8 +260,9 @@ class PanelSample(wx.Panel):
             if not np.allclose(old_U, new_U):
                 #The sample mounting U changed, so we need to recalc all the 3D volume coverage
                 gui_utils.do_recalculation_with_progress_bar(new_U)
-                #Send message signaling a redraw of volume plots
-                display_thread.handle_change_of_qspace(changed_sample_U_matrix=new_U)
+                
+            #Send message signaling a redraw of volume plots
+            display_thread.handle_change_of_qspace(changed_sample_U_matrix=new_U)
 
             #Update the hkl range settings, especially for automatic settings
             self.apply_crystal_range()

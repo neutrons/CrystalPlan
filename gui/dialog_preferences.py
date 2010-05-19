@@ -90,7 +90,9 @@ class DialogPreferences(wx.Dialog):
         view= View(
             Group(
                 Item('cg.show_d_spacing', label="Display in d-spacing (instead of q-space)?"),
+                Item('cg.label_corners'),
                 Item('cg.max_3d_points'),
+                Group(Label("Note: To apply these options, you may\nneed to close and re-open windows\nsuch as the reciprocal space 3D viewer,\nor redo some calculations.")),
                 label="GUI Options"),
             Group(
                 Item('c.force_pure_python'),
