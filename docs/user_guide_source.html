@@ -74,129 +74,6 @@ text-align: left;
 
 
 
-<script 
-  type="text/JavaScript" 
-  language="JavaScript">
- <!-- 
-// format date as dd-mmm-yy; example: 12-Jan-99
-function date_ddmmmyy(date)
-{
-  var d = date.getDate();
-  var m = date.getMonth() + 1;
-  var y = date.getYear();
-
-  // handle different year values returned by IE and NS in the year 2000.
-  if(y >= 1900)
-  {    y -= 1900;   }
-  y += 1900;
-
-  // could use splitString() here 
-  // but the following method is 
-  // more compatible
-  var mmm = 
-    ( 1==m)?'January':( 2==m)?'February':(3==m)?'March':
-    ( 4==m)?'April':( 5==m)?'May':(6==m)?'June':
-    ( 7==m)?'July':( 8==m)?'August':(9==m)?'September':
-    (10==m)?'October':(11==m)?'November':'December';
-
-  return "" + mmm + " " + (d<10?"0"+d:d) + ", " + y;
-}
-
-
-
-// get last modified date of the 
-// current document.
-function date_lastmodified()
-{
-  var lmd = document.lastModified;
-  var s   = "Unknown";
-  var d1;
-
-  // check if we have a valid date
-  // before proceeding
-  if(0 != (d1=Date.parse(lmd)))
-  {
-    s = "" + date_ddmmmyy(new Date(d1));
-  }
-
-  return s;
-}
-function getElementsByTagNames(list,obj) {
-	if (!obj) var obj = document;
-	var tagNames = list.split(',');
-	var resultArray = new Array();
-	for (var i=0;i<tagNames.length;i++) {
-		var tags = obj.getElementsByTagName(tagNames[i]);
-		for (var j=0;j<tags.length;j++) {
-			resultArray.push(tags[j]);
-		}
-	}
-	var testNode = resultArray[0];
-	if (!testNode) return [];
-	if (testNode.sourceIndex) {
-		resultArray.sort(function (a,b) {
-				return a.sourceIndex - b.sourceIndex;
-		});
-	}
-	else if (testNode.compareDocumentPosition) {
-		resultArray.sort(function (a,b) {
-				return 3 - (a.compareDocumentPosition(b) & 6);
-		});
-	}
-	return resultArray;
-}
-
-
-function createTOC() {
-	var y = document.createElement('div');
-	y.id = 'innertoc';
-	var a = y.appendChild(document.createElement('span'));
-	a.onclick = showhideTOC;
-	a.id = 'contentheader';
-	a.innerHTML = 'show page contents';
-	var z = y.appendChild(document.createElement('div'));
-	z.onclick = showhideTOC;
-	var toBeTOCced = getElementsByTagNames('h2,h3,h4,h5');
-	if (toBeTOCced.length < 2) return false;
-
-	for (var i=0;i<toBeTOCced.length;i++) {
-		var tmp = document.createElement('a');
-		tmp.innerHTML = toBeTOCced[i].innerHTML;
-		tmp.className = 'page';
-		z.appendChild(tmp);
-		if (toBeTOCced[i].nodeName == 'H4')
-			tmp.className += ' indent';
-		if (toBeTOCced[i].nodeName == 'H5')
-			tmp.className += ' extraindent';
-		var headerId = toBeTOCced[i].id || 'link' + i;
-		tmp.href = '#' + headerId;
-		toBeTOCced[i].id = headerId;
-		if (toBeTOCced[i].nodeName == 'H2') {
-			tmp.innerHTML = 'Top';
-			tmp.href = '#top';
-			toBeTOCced[i].id = 'top';
-		}
-	}
-	return y;
-}
-
-var TOCstate = 'none';
-
-function showhideTOC() {
-	TOCstate = (TOCstate == 'none') ? 'block' : 'none';
-	var newText = (TOCstate == 'none') ? 'show page contents' : 'hide page contents';
-	document.getElementById('contentheader').innerHTML = newText;
-	document.getElementById('innertoc').lastChild.style.display = TOCstate;
-}
-
-
--->
-</script>
-
-
-
-
-
 <body bgcolor="white">
 
 <img src="../gui/icons/CrystalPlan_icon.png" width="256" height="256" border="0" alt="CrystalPlan Icon" align="right" />
@@ -204,18 +81,9 @@ function showhideTOC() {
 <h1>CrystalPlan 1.0 User Guide</h1>
 by Janik Zikovsky (zikovskyjl@ornl.gov)<br/>
 <br/>
-Document started April 14, 2010; 
-<script type="text/JavaScript" language="JavaScript">
-document.write( "last updated on " + date_lastmodified() + "." );
-</script>
+Document started April 14, 2010; Last modified on {{date}}.
 <br/>
 
-<div class="mainContent">
-rtest</div>
-<script type="text/JavaScript" language="JavaScript">
-document.write("tesssst");
-document.write( createTOC() );
-</script>
   
 <h2>Introduction</h2>
 
@@ -229,6 +97,10 @@ document.write( createTOC() );
 <li>You can then optimize your experiment by trying different orientations and seeing if your coverage statistics will still be adequate.</li>
 </ul>
 
+<h2>Table of Contents</h2>
+
+{{toc}}
+
 <!-- ========================================================= -->
 <!-- ========================================================= -->
 <!-- ========================================================= -->
@@ -240,7 +112,7 @@ document.write( createTOC() );
 
 <!-- ========================================================= -->
 
-<h3>1. Starting CrystalPlan</h3>
+<h3>Starting CrystalPlan</h3>
 
 <p>From the terminal command line, type:
 <div align="center"><font face="Courier">crystalplan.py</font></div>
@@ -254,7 +126,7 @@ Most of your workflow will occur by navigating between these notebook tabs:
 
 <!-- ========================================================= -->
 
-<h3>2. Defining the Reciprocal Space of Interest and Wavelengths</h3>
+<h3>Defining the Reciprocal Space of Interest and Wavelengths</h3>
 
 <p>Here you will set the general parameters of your experiment.</p>
 
@@ -283,7 +155,7 @@ button. Changing these settings requires re-doing a lot of calculations, which m
 
 <!-- ========================================================= -->
 
-<h3>3. Detectors</h3>
+<h3>Detectors</h3>
 
 Here, you ensure that CrystalPlan has the correct detector geometry loaded.
 
@@ -308,7 +180,7 @@ which displays them in a window like this one:
 
 <!-- ========================================================= -->
 
-<h3>4. Goniometer</h3>
+<h3>Goniometer</h3>
 
 
 Now, you want to make sure that CrystalPlan is aware of which goniometer is currently in
@@ -342,7 +214,7 @@ use in your instrument.
 
 <!-- ========================================================= -->
 
-<h3>5. Sample Settings</h3>
+<h3>Sample Settings</h3>
 
 Now, you will want to enter or load in information about your sample: crystal lattice parameters, UB matrix, etc.
 
@@ -351,7 +223,7 @@ Now, you will want to enter or load in information about your sample: crystal la
 <br/><img src="screenshots/sample-info.png" border="0" alt=""/>
 </li>
 
-<h4>5.1. Edit Crystal Parameters dialog</h4>
+<h4>Edit Crystal Parameters dialog</h4>
 
 <li>Click
 <img src="screenshots/sample-buttonEditCrystal.png" border="0" alt=""/>. 
@@ -410,7 +282,7 @@ would revert all the changed made in the dialog.
 <li>Some recalculations will occur when changing the crystal lattice parameters or orientation.</li>
 </ul>
 
-<h4>5.2. Choosing H,K,L ranges</h4>
+<h4>Choosing H,K,L ranges</h4>
 
 <li>Still in the Sample tab, the following GUI allows you to pick which HKL to display:
 <br/><img src="screenshots/sample-range_control.png"/>
@@ -438,7 +310,7 @@ any changes you have made. All reflections are re-calculated.
 </ul>
 <!-- ========================================================= -->
 
-<h3>6. Trying Sample Orientations</h3>
+<h3>Trying Sample Orientations</h3>
 
 <p>At this point, we have given the program all the information it needs to start predicting what we can measure. We will now tell it what sample orientations we will try.
 </p>
@@ -461,7 +333,7 @@ any changes you have made. All reflections are re-calculated.
 
 <!-- ========================================================= -->
 
-<h3>7. The Reciprocal Space 3D Viewer</h3>
+<h3>The Reciprocal Space 3D Viewer</h3>
 
 <p>Congratulations on making it this far! We will now look at the result of 
 our simulated detector coverage.</p>
@@ -523,7 +395,7 @@ affects the reciprocal space coverage in this window. This animation shows the e
 
 <!-- ========================================================= -->
 
-<h3>9. Goniometer Limits</h3>
+<h3>Goniometer Limits</h3>
 
 <ul>
 <li>Back in the Main Window's "Try Position" tab, try to set a Chi angle of +45 degrees:
@@ -547,7 +419,7 @@ the selected goniometer.
 
 <!-- ========================================================= -->
 
-<h3>10. Adding Several Sample Orientations</h3>
+<h3>Adding Several Sample Orientations</h3>
 
 
 <p>Now, we will start building up an experiment plan by adding sample orientations.</p>
@@ -558,7 +430,7 @@ the selected goniometer.
 <li>Switch to the "Add Orientations" tab.</li>
 </ul>
 
-<h4>10.1. Entering Lists of Angles</h4>
+<h4>Entering Lists of Angles</h4>
 
 <ul><li>Near the top of the window, you will see 3 text boxes where you can enter lists of angles to simulate:
 <br/><img src="screenshots/add-lists.png" />
@@ -573,7 +445,7 @@ the selected goniometer.
 <li>You don't <em>have</em> to put in lists - you can also put in a single value for each angle, giving a single sample orientation.</li></ul>
 
 
-<h4>10.2. Checking Validity of Orientations</h4>
+<h4>Checking Validity of Orientations</h4>
 
 <ul><li>Enter the following values in the angle lists: 
 <br/><img src="screenshots/add-lists2.png" />
@@ -588,7 +460,7 @@ the selected goniometer.
 </ul></ul>
 
 
-<h4>10.3. Adding Sample Orientations To Plan</h4>
+<h4>Adding Sample Orientations To Plan</h4>
 <ul>
 <li>Enter the following values in the angle lists: 
 <br/><img src="screenshots/add-lists3.png" />
@@ -619,7 +491,7 @@ experiment plan (which we will see in the next section).</li>
 
 <!-- ========================================================= -->
 
-<h3>11. The Experiment Plan</h3>
+<h3>The Experiment Plan</h3>
 
 <li>Switch to the "Experiment Plan" tab. Here, you see a grid with a list of all the sample orientations that have been calculated up to now:
 <br/><img src="screenshots/exp-grid.png" /> 
@@ -675,7 +547,7 @@ button to open the window, or press Ctrl+O.
 
 <!-- ========================================================= -->
 
-<h3>12. More Reciprocal Space 3D Viewer Options</h3>
+<h3>More Reciprocal Space 3D Viewer Options</h3>
 
 <p>Now that we have more sample orientations in our plan, we return to the 3D viewer and explore some of its options. Here is what the 3D view looks like with the 4 orientations we have calculated:</p>
 
@@ -683,7 +555,7 @@ button to open the window, or press Ctrl+O.
 
 	
 
-<h4>12.1. Coverage Statistics</h4> <!-- =================================== -->
+<h4>Coverage Statistics</h4> <!-- =================================== -->
 <table>
 <tr>
 	<td>
@@ -706,7 +578,7 @@ button to open the window, or press Ctrl+O.
 
 
 
-<h4>12.2. Slice Plot</h4> <!-- =================================== -->
+<h4>Slice Plot</h4> <!-- =================================== -->
 <ul>
 
 <li>On the bottom left is the slice statistics plot:
@@ -722,7 +594,7 @@ refresh the display. </li>
 </ul>
 </ul>
 
-<h4>12.3. Hemisphere View</h4> <!-- =================================== -->
+<h4>Hemisphere View</h4> <!-- =================================== -->
 <ul>
 <li>Since all crystals have at least inversion symmetry (-1 point group) in scattering, that means that measuring a hemisphere of reciprocal space is enough to fully characterize your sample.</li>
 <ul>
@@ -736,7 +608,7 @@ box to find and display only the "optimal" hemisphere. The program will find the
 </li>
 </ul></ul>
 
-<h4>12.4. Inverted View</h4> <!-- =================================== -->
+<h4>Inverted View</h4> <!-- =================================== -->
 <ul><li>You can also check the 
 <img src="screenshots/volume_options-checkInvert.png"/>
 box to <i>invert</i> the coverage map, and show the volumes <i>not</i> measured.
@@ -746,14 +618,14 @@ The next image shows the inverted coverage with the hemisphere box still checked
 <li>This can make it a lot easier to see spots you have missed, especially if they are hidden by covered volume.</li>
 </ul>
 
-<h4>12.5. Redundancy View</h4> <!-- =================================== -->
+<h4>Redundancy View</h4> <!-- =================================== -->
 <ul><li>If you check the <img src="screenshots/volume_options-checkShowRedundancy.png"/> box,
 you will get a view of the redundancy of the measurement - how many times each voxel was measured. Semi-transparent isosurfaces are color-coded to show a single measurement, then 2, then 3, and finally 4 or more measurement.
 <div align="center"><img src="screenshots/3d-redundancy.png"/></div>
 </li>
 </ul>
 
-<h4>12.6. Slice View</h4> <!-- =================================== -->
+<h4>Slice View</h4> <!-- =================================== -->
 <ul>
 <li>Check the 
 <img src="screenshots/volume_options-checkShowSlice.png"/> box
@@ -782,7 +654,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 
 <!-- ========================================================= -->
 
-<h3>13. 3D Reflections View</h3>
+<h3>3D Reflections View</h3>
 <a name="FrameQspaceView" />
 
 <p>Another way to measure your experimental coverage is by looking at single reflections, instead of viewing volume coverage in reciprocal space, as we have been doing before.</p>
@@ -792,7 +664,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <li>The color-coding matches those in the volume view and the slice plot, with the addition of the dark blue peaks: those are peaks that were not measured.</li>
 </ul>
 
-<h4>13.1. How to Display Reflections</h4> <!-- =================================== -->
+<h4>How to Display Reflections</h4> <!-- =================================== -->
 
 <ul>
 <li>You can change the way the peaks are drawn, in order to make the rendering clearer.
@@ -804,7 +676,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 </ul>
 </ul>
 
-<h4>13.2. Which Reflections to Display</h4> <!-- =================================== -->
+<h4>Which Reflections to Display</h4> <!-- =================================== -->
 
 <ul>
 <li>In the drop-down box <img src="screenshots/3drefs-view_option.png"/>, you can pick whether to show all reflections, only those that have at least one measurement, or only the ones that were never measured.
@@ -817,7 +689,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <li>The statistics panel tells you how many reflections are in the experiment, and what percentage were measured once, and twice or more.</li>
 </ul>
 
-<h4>13.3. Using Crystal Symmetry</h4> <!-- =================================== -->
+<h4>Using Crystal Symmetry</h4> <!-- =================================== -->
 
 <ul>
 <li>By checking the <img src="screenshots/3drefs-checkUseSymmetry.png"/> box, you will take the crystal symmetry into account when considering peaks.
@@ -834,7 +706,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <li>Higher symmetries will show even fewer points.</li>
 </ul>
 
-<h4>13.4. Parallel Projection</h4> <!-- =================================== -->
+<h4>Parallel Projection</h4> <!-- =================================== -->
 <ul>
 <li>Parallel projection (as opposed to perspective projection) can be a useful way to visualize reflections in reciprocal space.</li>
 <li>Click the <img src="parallel_projection.png"/> icon in order to toggle parallel projection on/off. With parallel projection, our crystal looks like this:
@@ -844,7 +716,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 </ul>
 
 
-<h4>13.5. Selecting Reflections</h4> <!-- =================================== -->
+<h4>Selecting Reflections</h4> <!-- =================================== -->
 
 <ul>
 <li>Right-click on a point in the reflection view to select it. It becomes highlighted with a small cube, and a separate window ("Single Reflection Info") pops up, as shown below: </li>
@@ -881,7 +753,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 
 </ul>
 
-<h4>13.6. The Reflection Placer</h4> <!-- =================================== -->
+<h4>The Reflection Placer</h4> <!-- =================================== -->
 <a name="FrameReflectionPlacer" />
 
 <ul>
@@ -900,7 +772,7 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 
 <!-- ========================================================= -->
 
-<h3>14. Automatic Coverage Optimizer</h3>
+<h3>Automatic Coverage Optimizer</h3>
 <a name="FrameOptimizer" />
 
 </body>

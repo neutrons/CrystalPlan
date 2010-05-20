@@ -182,6 +182,23 @@ class UserGuideThread(Thread):
         import eqhtml
         eqhtml.embed_latex_in_html("../docs/user_guide_source.html", "../docs/user_guide.html")
 
+        #---- Put today's date ----
+        import toc
+        from datetime import date
+        d = date.today()
+        toc_inst = toc.Toc()
+        html = open("../docs/user_guide.html").read()
+        html = html.replace("{{date}}", d.strftime("%B %d, %Y"))
+
+        #---- Make table of contents ----
+        print "converting html of length", len(html)
+        file_output = open("../docs/user_guide.html", 'w')
+        file_output.write(
+            toc_inst.toc_template( '{{toc}}', html, prefix_li=False )
+            )
+        file_output.close()
+        return
+
         #Now run the script
         for line in self.code:
             print "-> SCRIPT: " + line
@@ -266,7 +283,6 @@ def automatic_optimizer(fm):
     #--- Automatic coverage optimizer ---
     #@type fo FrameOptimizer
     fo = frame_optimizer.get_instance(fm)
-    fo.
 
 
 #==========================================================================================
