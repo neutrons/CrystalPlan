@@ -146,7 +146,7 @@ class DialogEditCrystal(wx.Dialog):
         self.staticTextHelp1 = wx.StaticText(label=u'Loading an ISAW UB matrix file:',
             parent=self.panelIsaw, pos=wx.Point(166, 563), style=wx.ALIGN_CENTER)
         self.staticTextHelp1.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD, False, u'Sans'))
-        self.staticTextHelp2 = wx.StaticText(label=u'Before loading the file, enter the goniometer settings at the time you acquired the data from which this UB matrix was taken.',
+        self.staticTextHelp2 = wx.StaticText(label=u'ISAWev only!: before loading the file, enter the goniometer settings at the time you acquired the data from which this UB matrix was taken.\n\nFor ISAW, leave all angles at 0.0 (the UB matrix is already corrected by ISAW for the goniometer settings)',
             name=u'staticTextHelp2', parent=self.panelIsaw, pos=wx.Point(166, 563), style=wx.ALIGN_LEFT)
         self.staticTextHelp3 = wx.StaticText(label=u"Use ISAW's Initial Peaks Wizard or ISAWev's Find Peaks/Index Peaks functions to find the UB matrix and save it to a text file.",
             name=u'staticTextHelp2', parent=self.panelIsaw, pos=wx.Point(166, 563), style=wx.ALIGN_CENTER)
