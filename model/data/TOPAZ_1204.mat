@@ -1,0 +1,14 @@
+ 0.17425244 -0.15455920 -0.14424726 
+ 0.10553538  0.00140108  0.12839873 
+-0.04870676 -0.06861636  0.01593214 
+     3.6503      6.1739     11.9821     77.0424     89.4479     89.4496    263.1381 
+     0.0000      0.0000      0.0000      0.0000      0.0000      0.0000      0.0000 
+
+
+The above matrix is the Transpose of the UB Matrix. The UB matrix maps the column 
+vector (h,k,l ) to the column vector (q'x,q'y,q'z).
+|Q'|=1/dspacing and its coordinates are a right-hand coordinate system where 
+ x is the beam direction and z is vertically upward.(IPNS convention)
+
+
+Note: Oxalic acid. 33 of 36 peaks indexed. LS optimized matrix. 

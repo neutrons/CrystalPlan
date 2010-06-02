@@ -172,6 +172,18 @@ class Crystal(HasTraits):
             #Make the B matrix etc.
             self.calculate_reciprocal()
 
+#            #Move the columns around
+#            UB = np.eye(3)
+#            UB[:,0] = ub_matrix[:,1]
+#            UB[:,1] = ub_matrix[:,2]
+#            UB[:,2] = ub_matrix[:,0]
+#            B = self.reciprocal_lattice
+#            invB = np.linalg.inv(B)
+#            U = np.dot(UB, invB)
+#            self.u_matrix = U
+#            self.ub_matrix = UB
+#            assert np.allclose( np.dot(U, B), UB ), "Calculated and read UB matrices are good."
+
             #Okay, now we need to account for the ISAW ub matrix file
             #   using IPNS conventions:
             # its coordinates are a right-hand coordinate system where
@@ -182,11 +194,12 @@ class Crystal(HasTraits):
 
             #Rotate U to account for goniometer angles.
             (phi, chi, omega) = angles
-            #The transpose is the inverse of the rotation matrix
-            gon_rot = numpy_utils.rotation_matrix(phi, chi, omega).transpose()
-            #Multiplying the matrix like this (goniometer.T * old_U) takes out the goniometer effect to it.
+            gon_rot = numpy_utils.rotation_matrix(phi, chi, omega)
+            #Invert the rotation matrix - we want to CANCEL out the goniometer rotation.
+            gon_rot = np.linalg.inv(gon_rot)
+            #Multiplying the matrix like this (goniometer^-1 * old_U) takes out the goniometer effect to it.
             self.u_matrix = np.dot(gon_rot, original_U)
-            
+
             #Re-create a UB matrix that uses the SNS convention now
             new_ub_matrix = np.dot(self.u_matrix, self.get_B_matrix())
             self.ub_matrix = new_ub_matrix
@@ -230,7 +243,7 @@ class Crystal(HasTraits):
             U = np.dot(ub_matrix, invB)
             #Test that U must be orthonormal.
             U2 = np.dot(U, U.transpose())
-            assert np.allclose(U2, np.eye(3), atol=1e-5), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
+            assert np.allclose(U2, np.eye(3), atol=1e-4), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
             #Okay, now let's permute the rows for IPNS->SNS convention
             U_out = 1. * U
             U_out[2] = U[0] #x gets put in z
@@ -239,7 +252,7 @@ class Crystal(HasTraits):
             U = U_out
             #Do another test
             U2 = np.dot(U, U.transpose())
-            assert np.allclose(U2, np.eye(3), atol=1e-5), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
+            assert np.allclose(U2, np.eye(3), atol=1e-4), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
 
             return U
         except np.linalg.LinAlgError:
@@ -249,9 +262,6 @@ class Crystal(HasTraits):
     def get_B_matrix(self):
         """Returns the B matrix."""
         return  self.reciprocal_lattice
-
-##        UB = self.ub_matrix
-##        g_star = UB * UB.transpose()
 
 
 #================================================================================
@@ -712,9 +722,8 @@ class TestCrystal(unittest.TestCase):
 
     def test_ub_matrix_and_recip_lattice(self):
         #@type c Crystal
-        print "test_ub_matrix_and_recip_lattice"
         c = self.c
-        c.read_ISAW_ubmatrix_file("data/natrolite_807.mat", [0,0,0])
+        c.read_ISAW_ubmatrix_file("data/natrolite_807_ev.mat", [0,0,0])
         UB = c.ub_matrix
         print "UB matrix loaded (including 2pi) is:\n", UB
 

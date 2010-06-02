@@ -73,7 +73,15 @@ class PositionCoverage:
     A list of these will be a member of the Instrument class."""
 
     def __init__(self, angles, coverage, sample_U_matrix):
-        """Constructor, initialize angles and coverage."""
+        """Constructor, initialize angles and coverage.
+
+        Parameters:
+            angles: Angles of the sample, (a list). Length needs to match instrument.angles.
+                Typically, will be in radians.
+            coverage: 3D array with the coverage; indices are x,y,z
+            sample_U_matrix: 3x3 matrix describing the sample mounting orientation.
+
+        """
         #Angles of the sample, (a list). Length needs to match instrument.angles
         if isinstance(angles, np.ndarray):
             #Convert to a list

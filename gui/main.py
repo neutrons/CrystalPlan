@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """CrystalPlan GUI Main file.
 Includes GUI launcher, logger, error handler."""
 #Boa:App:CrystalPlanApp
