@@ -11,6 +11,7 @@ import numpy as np
 import time
 import threading
 import scipy.weave as weave
+import scipy.ndimage
 import os
 
 #--- Model Imports ---

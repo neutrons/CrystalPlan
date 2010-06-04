@@ -178,26 +178,25 @@ class UserGuideThread(Thread):
         fm = self.fm
         fv = self.fv
 
-        #Do the latex conversion
-        import eqhtml
-        eqhtml.embed_latex_in_html("../docs/user_guide_source.html", "../docs/user_guide.html")
-
-        #---- Put today's date ----
-        import toc
-        from datetime import date
-        d = date.today()
-        toc_inst = toc.Toc()
-        html = open("../docs/user_guide.html").read()
-        html = html.replace("{{date}}", d.strftime("%B %d, %Y"))
-
-        #---- Make table of contents ----
-        print "converting html of length", len(html)
-        file_output = open("../docs/user_guide.html", 'w')
-        file_output.write(
-            toc_inst.toc_template( '{{toc}}', html, prefix_li=False )
-            )
-        file_output.close()
-        return
+#        #Do the latex conversion
+#        import eqhtml
+#        eqhtml.embed_latex_in_html("../docs/user_guide_source.html", "../docs/user_guide.html")
+#
+#        #---- Put today's date ----
+#        from datetime import date
+#        d = date.today()
+#        toc_inst = toc.Toc()
+#        html = open("../docs/user_guide.html").read()
+#        html = html.replace("{{date}}", d.strftime("%B %d, %Y"))
+#
+##        #---- Make table of contents ----
+##        import toc
+##        print "converting html of length", len(html)
+##        file_output = open("../docs/user_guide.html", 'w')
+##        file_output.write(
+##            toc_inst.toc_template( '{{toc}}', html, prefix_li=False )
+##            )
+##        file_output.close()
 
         #Now run the script
         for line in self.code:
@@ -216,7 +215,7 @@ class UserGuideThread(Thread):
         #Ok we are done.
         print "-> Script Complete!"
         #Close the main frame to exit the program
-        fm.Destroy()
+        #fm.Destroy()
 
 
 
@@ -278,11 +277,14 @@ def pick_a_reflection():
     print "I picked", refl
 
 
-#-----------------------------------------------------------------
-def automatic_optimizer(fm):
-    #--- Automatic coverage optimizer ---
-    #@type fo FrameOptimizer
-    fo = frame_optimizer.get_instance(fm)
+##-----------------------------------------------------------------
+#def automatic_optimizer(fm):
+#    #--- Automatic coverage optimizer ---
+#    #@type fo FrameOptimizer
+#    fo = frame_optimizer.get_instance(fm)
+#    fo.Raise();
+#    ca(screenshot_frame, fo, 'frame_optimizer')
+
 
 
 #==========================================================================================
@@ -294,11 +296,28 @@ def automatic_optimizer(fm):
 # - Finish with "#---END---\n"
 def user_guide_script():
     #Shortcuts to the tested objects
-
-    automatic_optimizer(fm)
 #---END---
 
-    screenshots.disable_screenshots = False
+    #--- Automatic coverage optimizer ---
+    #@type te PanelExperiment
+    te = fm.tab_experiment
+    ca(click, te.buttonOptimizer)
+    wait(500)
+    #@type fo FrameOptimizer
+    fo = frame_optimizer.get_instance(fm)
+    wait(500)
+    fo.Raise()
+    ca(screenshot_of, fo.buttonStart, 'optim-buttonStart',  margin=6, gradient_edge=2)
+    ca(click, fo.buttonStart)
+    wait(500)
+    ca(screenshot_of, fo.buttonStop, 'optim-buttonStop',  margin=6, gradient_edge=2)
+    ca(screenshot_of, fo.buttonApply, 'optim-buttonApply',  margin=6, gradient_edge=2)
+    wait(2500)
+    ca(screenshot_frame, fo, 'frame_optimizer')
+    #Stop
+    ca(click, fo.buttonStop)
+    wait(500)
+    ca(screenshot_of, fo.buttonKeepGoing, 'optim-buttonKeepGoing',  margin=6, gradient_edge=2)
 
     #@type fm FrameMain
     #@type fv FrameQspaceView
@@ -611,7 +630,6 @@ def user_guide_script():
 #    #Select it
 #    ca(fv.controller.select_reflection, refl)
 
-    screenshots.disable_screenshots = False
     wait(250)
     ca(screenshot_of, fv.control, '3drefs-reflection_selected', margin=control_margins, gradient_edge=control_gradient_edge)
     #@type fri FrameReflectionInfo
@@ -649,7 +667,7 @@ def user_guide_script():
     frp = prm.last_placer_frame
     #--------------- The Reflection Placer -------------
     #Wait for calculation to be done
-    wait(1800)
+    wait(3800)
     frp.placer.xy[0] = -5
     wait(100)
     ca(screenshot_frame, frp, 'ref_placer')

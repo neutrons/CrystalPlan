@@ -775,5 +775,51 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <h3>Automatic Coverage Optimizer</h3>
 <a name="FrameOptimizer" />
 
+<p>The automatic coverage optimizer can automatically create an experiment plan (list of sample orientations) for you that satisfies your coverage requirements.</p>
+
+<img class="frameshot" src="screenshots/frame_optimizer.png" border="0" alt="The Automatic Coverage Optimizer window."/><br/>
+
+<ul>
+<li>You can start the optimizer from the "Optimization" menu in the main window, or using the 
+<img src="screenshots/exp-buttonOptimizer.png" /> button from the Experiment Plan tab.</li>
+</ul>
+
+<h4>Setting Parameters</h4>
+<ul>
+<li>On the left side, you will find all the settings for optimizing the calculation.</li>
+<ul>
+<li>You can hover the mouse over the parameter to get a popup help hint, so we will not be repeating that information in this user guide.</li>
+</ul>
+<li>A few general guidelines for performing optimization with genetic algorithms:</li>
+<ul>
+<li>Very high mutation rates can make it difficult to find a good solution, giving unstable results.</li>
+<li>However, cross-over is effectively a mutation for this type of calculation, so do not rely on it alone to find a solution. Some mutation rate is necessary.</li>
+<li>Later in the evolution, a higher mutation rate with a smaller amount of mutation (the 'Nudge Amount %' parameter) can be helpful.</li>
+</ul>
+</ul>
+
+<h4>Performing Optimization</h4>
+<ul>
+<li>When the parameters have been set, click the <img src="screenshots/optim-buttonStart.png" /> button to begin the optimization. 
+</li>
+<li>Note how some parameters become greyed out while the optimization is occuring; these parameters cannot be changed while performing the calculation. All other parameters can be modified; the change will be applied at the next generation only.</li>
+<li>Coverage statistics in the form of gauges show you how your population is progressing.</li>
+<li>The plot shows you the history of coverage as generations evolved. The blue line is the average, and the green error bars indicate the lowest and highest fitness individuals. </li>
+<li>At any time, click the <img src="screenshots/optim-buttonStop.png" /> button to abort the optimization.</li>
+<ul>
+<li>The optimization will also stop automatically when it reaches the Desired Coverage value entered.</li>
+<li>If you check the "Auto Increment # of orientations", and the optimization failed to reached the desired coverage before "Max Generations" was reached, the # of orientations in the list is increased by one, and the optimization is restarted. That way, you are sure to keep going towards 100% coverage.</li>
+</ul> 
+<li>If you stopped the optimization prematurely, you can click the <img src="screenshots/optim-buttonKeepGoing.png" /> button to restart the optimization; unlike the <img src="screenshots/optim-buttonStart.png" /> button, however, this way generates the starting population from a randomized sampling of the last population; therefore, you will be picking up approximately where you left off.</li>
+</ul>
+
+<h4>Observing Results</h4>
+<ul>
+<li>During or after the optimization, click the <img src="screenshots/optim-buttonApply.png" /> button to immediately apply the results. This fills the experiment plan with the best list of sample orientations calculated. <b>Watch out! This clears out any entries already in the experiment plan, without a warning!</b></li>
+<li>You can then inspect the results in the main window and the reciprocal space viewer, even as the optimization continues in the background.</li>
+<li>The experiment plan can then be saved to .CSV in the usual way.</li>
+</ul>
+
+
 </body>
 </html>
