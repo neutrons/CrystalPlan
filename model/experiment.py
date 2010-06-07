@@ -12,6 +12,7 @@ import time
 import threading
 import scipy.weave as weave
 import scipy.ndimage
+from cPickle import loads, dumps
 import os
 
 #--- Model Imports ---
@@ -1794,6 +1795,35 @@ class Experiment:
 
         return (numbad, numgood, out)
 
+    #========================================================================================================
+    #======================================= PICKLING =====================================
+    #========================================================================================================
+    def __getstate__(self):
+        """Return a dictionary containing all the stuff to pickle in an experiment."""
+        print "__getstate__ called"
+        d = {}
+
+        exclude_list = ['inst']
+        
+        #Make the dictionary
+        for key in dir(self):
+            if not key.startswith("_"):
+                if not key in exclude_list:
+                    value = getattr(self, key)
+                    #No callable (don't pickle methods"
+                    if not hasattr(value, '__call__'):
+                        d[key] = value
+                        #print key
+        return d
+
+    #========================================================================================================
+    def __setstate__(self, d):
+        """Set the state of experiment, using d as the settings dictionary."""
+        print "__setstate__ called", d
+        for (key, value) in d.items():
+            setattr(self, key, value)
+
+
 
                 
 
@@ -1815,6 +1845,9 @@ import copy
 #==================================================================
 class TestExperiment(unittest.TestCase):
     """Unit test for the Crystal class."""
+
+
+        
     def setUp(self):
         instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_all.csv")
         instrument.inst.goniometer = goniometer.Goniometer()
@@ -2186,12 +2219,22 @@ class TestExperiment(unittest.TestCase):
         e.recalculate_reflections(None)
         e.find_primary_reflections()
 
+
+    def dont_test_pickle(self):
+        e = self.exp
+        datas = dumps(e)
+        print "Length of dumped is ", len(datas)
+        e2 = loads(datas)
+        assert e.crystal.name == e2.crystal.name
+        
+
+
 if __name__ == "__main__":
     unittest.main()
     
-#    tst = TestExperiment('test_compare_to_peaks_file0')
+#    tst = TestExperiment('test_pickle')
 #    tst.setUp()
-#    tst.test_compare_to_peaks_file0()
+#    tst.test_pickle()
 
     
 #    import instrument

@@ -5,13 +5,41 @@
 #--- General Imports ---
 import wx
 import os
+import os.path
 import sys
+from cPickle import loads, dumps
+import xml.etree.ElementTree as ET
 
 #--- GUI Imports ---
 import display_thread
+import config_gui
 
 #--- Model Imports ---
 import model
+
+
+# ===========================================================================================
+def save_configuration():
+    """Save the current configuration to a file in the home folder of the user."""
+    homedir = os.getenv('HOME')
+    filename = os.path.join(homedir, ".crystalplan_cfg.xml")
+
+    root = ET.Element('html')
+    #The gui configuration
+    xml_config_gui = ET.SubElement(root,'config_gui')
+    xml_config_gui.text = dumps(config_gui.cfg)
+    #The model configuration
+    xml_config = ET.SubElement(root,'config')
+    xml_config.text = dumps(model.config.cfg)
+#    #The instrument
+#    xml_inst = ET.SubElement(root, 'instrument')
+#    xml_inst.text = dumps(model.instrument.inst)
+#    #The experiment
+#    xml_exp = ET.SubElement(root, 'experiment')
+#    xml_exp.text = dumps(model.experiment.exp)
+    
+    tree = ET.ElementTree(root)
+    tree.write(filename)
 
 
 # ===========================================================================================
@@ -369,14 +397,17 @@ def find_parent_frame(window):
 
 
 if __name__=="__main__":
-    app = wx.PySimpleApp()
-    parent = wx.Frame(None, title='Parent Frame', size=wx.Size(400,600))
-    parent.Show()
-    child = wx.Frame(None, title='Child Frame')
-    child.Show()
-#    child2 = wx.Frame(None, title='Child Frame #2')
-#    child2.Show()
-    follow_window(parent, child, position=FOLLOW_SIDE_TOP)
-#    follow_window(parent, child2, position=FOLLOW_SIDE_TOP)
-#    stop_following_window(parent, child)
-    app.MainLoop()
+    model.instrument.inst = model.instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")
+    model.experiment.exp = model.experiment.Experiment(model.instrument.inst)
+    save_configuration()
+#    app = wx.PySimpleApp()
+#    parent = wx.Frame(None, title='Parent Frame', size=wx.Size(400,600))
+#    parent.Show()
+#    child = wx.Frame(None, title='Child Frame')
+#    child.Show()
+##    child2 = wx.Frame(None, title='Child Frame #2')
+##    child2.Show()
+#    follow_window(parent, child, position=FOLLOW_SIDE_TOP)
+##    follow_window(parent, child2, position=FOLLOW_SIDE_TOP)
+##    stop_following_window(parent, child)
+#    app.MainLoop()

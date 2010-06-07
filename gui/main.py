@@ -231,6 +231,8 @@ if __name__=="__main__":
 
     if options.test:
         #Run unit tests
+#        print "Clearing your .python26_compiled folder, to ensure full tests."
+#        os.remove(os.path.join(os.getenv('HOME'), '.python26_compiled/*'))
         os.chdir("../model")
         os.system("python test_all.py")
     else:

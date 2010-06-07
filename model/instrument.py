@@ -13,6 +13,7 @@ being used.
 from ctypes import ArgumentError
 import sys
 import os
+from cPickle import loads, dumps
 import warnings
 import messages
 import numpy as np
@@ -1005,6 +1006,56 @@ class Instrument:
         return coverage
 
 
+    #========================================================================================================
+    #======================================= PICKLING =====================================
+    #========================================================================================================
+    def __getstate__(self):
+        """Return a dictionary containing all the stuff to pickle in an experiment."""
+        print "__getstate__ called"
+        d = {}
+
+        exclude_list = []
+
+        #Make the dictionary
+        for key in dir(self):
+            if not key.startswith("_"):
+                if not key in exclude_list:
+                    value = getattr(self, key)
+                    #No callable (don't pickle methods"
+                    if not hasattr(value, '__call__'):
+                        d[key] = value
+                        #print key
+        return d
+
+    #========================================================================================================
+    def __setstate__(self, d):
+        """Set the state of experiment, using d as the settings dictionary."""
+        print "__setstate__ called", d
+        for (key, value) in d.items():
+            setattr(self, key, value)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #========================================================================================================
 #========================================================================================================
@@ -1468,6 +1519,9 @@ class InstrumentInelastic(Instrument):
         return coverage
 
 
+
+
+             
     
 #==============================================================================
 inst = Instrument
@@ -1687,6 +1741,12 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         #Same thing if you give it None for the detector list
         cov = tst_inst.total_coverage(None, None)
 
+    def test_pickle(self):
+        tst_inst = self.tst_inst
+#        datas = dumps(tst_inst)
+#        print "Length of dumped is ", len(datas)
+#        tst_inst2 = loads(datas)
+
 
         
 
@@ -1694,15 +1754,15 @@ class TestInstrumentWithDetectors(unittest.TestCase):
 
 #---------------------------------------------------------------------
 if __name__ == "__main__":
-    #Test just the inelastic one
-    suite = unittest.makeSuite(TestInelasticInstrument)
-    unittest.TextTestRunner().run(suite)
-
-#    tst = TestInelasticInstrument('test_simulate_and_total_more_detectors')
+#    #Test just the inelastic one
+#    suite = unittest.makeSuite(TestInelasticInstrument)
+#    unittest.TextTestRunner().run(suite)
+#
+#    tst = TestInstrumentWithDetectors('test_pickle')
 #    tst.setUp()
-#    tst.test_simulate_and_total_more_detectors()
+#    tst.test_pickle()
 
-#    unittest.main()
+    unittest.main()
 
 #    test_setup()
 #    test_hits_detector()

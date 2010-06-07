@@ -370,13 +370,15 @@ def getq_python(azimuth, elevation, wl_output, rot_matrix, wl_input=None):
 getq_code_header = """py::tuple getq(double wl_output, double az, double elevation, double pi, double* rot_matrix)
 {
     py::tuple return_val(3);
-    double wl_input = wl_output
+    double wl_input = wl_output;
+    
 """
 
 
 #Core code, common for both elastic and inelastic
 getq_code = """
     double r2, x, y, z;
+    
     // The scattered beam emanates from the centre of this spher.
     // Find the intersection of the scattered beam and the sphere, in XYZ
     // We start with an Ewald sphere of radius 1/wavelength
