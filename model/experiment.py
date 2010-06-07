@@ -1777,7 +1777,7 @@ class Experiment:
                         numbad += 1
                     else:
                         if ref.times_measured() <= 0:
-                            out += "Peak was not measured: Det %d, hkl: %d, %d, %d\n" % (detnum, h, k, l)
+                            out += "Measured peak was not calculated to be measured: Det %d, hkl: %d, %d, %d\n" % (detnum, h, k, l)
                             numbad += 1
                         else:
                             #Check that its on the right detector
@@ -1859,73 +1859,6 @@ class TestExperiment(unittest.TestCase):
         #UB and reciprocal
         e.crystal.make_ub_matrix()
         e.crystal.calculate_reciprocal()
-
-    def do_test_compare_to_peaks_file(self, filebase, angles, measurement_file=None, measurement_angle=None,
-                        expect_bad=0, expect_good=0):
-        if measurement_angle is None:
-            measurement_angle = angles
-        if measurement_file is None:
-            measurement_file = filebase
-        #@type e Experiment
-        instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")
-        instrument.inst.goniometer = goniometer.Goniometer()
-        self.exp = Experiment(instrument.inst)
-        e = self.exp
-        e.inst.d_min = 0.5
-        e.inst.wl_min = 0.5
-        e.inst.wl_max = 4.0
-        e.crystal.read_ISAW_ubmatrix_file(filebase + ".mat", angles=angles)
-        e.range_automatic = True
-        e.range_limit_to_sphere = True
-        e.initialize_reflections()
-        #Position coverage object with 0 sample rotation
-        poscov = instrument.PositionCoverage( measurement_angle, None, e.crystal.u_matrix)
-        e.inst.positions.append(poscov)
-        pos_param = ParamPositions( {id(poscov):True} )
-        self.pos_param = pos_param
-        e.recalculate_reflections(pos_param)
-        #Now compare!
-        (numbad, numgood, out) = e.compare_to_peaks_file(measurement_file + ".peaks")
-#        print out, "\n\n%d were bad; %d were good" % (numbad, numgood)
-        print "%s: %d were bad; %d were good" % (filebase, numbad, numgood)
-        assert numbad==expect_bad, "%s: expected %d bad peaks, but got %d bad peaks.\n%s" % (filebase, expect_bad, numbad, out)
-        assert numgood==expect_good, "%s: expected %d good peaks, but got %d god peaks.\n%s" % (filebase, expect_good, numgood, out)
-
-
-    def test_compare_to_peaks_file1(self):
-        self.do_test_compare_to_peaks_file("data/natrolite_808_isaw", [0,0,0],
-                measurement_angle=[-np.pi/6,0,0], expect_good=63, expect_bad=11)
-
-    def test_compare_to_peaks_file2a(self):
-        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
-                measurement_file="data/TOPAZ_1204", measurement_angle=[0, np.pi/4,0],
-                expect_good=34, expect_bad=2)
-
-    def test_compare_to_peaks_file2c(self):
-        self.do_test_compare_to_peaks_file("data/TOPAZ_1204_ev", [0,np.pi/4,0],
-                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
-                expect_good=33, expect_bad=4)
-
-    def test_compare_to_peaks_file2b(self):
-        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
-                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
-                expect_good=33, expect_bad=4)
-
-    def test_compare_to_peaks_file3(self):
-        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0],
-                "data/natrolite_808_indexed_with_807", [-np.pi/6,0,0],
-                expect_bad=17, expect_good=57)
-
-    def test_compare_to_peaks_file4(self):
-        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0], expect_good=39)
-
-    def test_compare_to_peaks_file5(self):
-        self.do_test_compare_to_peaks_file("data/natrolite_808_ev", [-np.pi/6,0,0], expect_good=43)
-
-#        self.do_test_compare_to_peaks_file("data/TOPAZ_1204_ev", [0,0,0])
-#        self.do_test_compare_to_peaks_file("data/TOPAZ_1205", [0,0,0])
-#        self.do_test_compare_to_peaks_file("data/art_ox", [0,0,0])
-
 
     def test_constructor(self):
         """Experiment.__init__()"""

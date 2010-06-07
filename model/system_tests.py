@@ -73,37 +73,37 @@ class TestReflection(unittest.TestCase):
         #print c.reciprocal_lattice, "\n\n\n"
         assert np.allclose(isaw_rec, c.reciprocal_lattice, atol=1e-5), "Reciprocal lattice of %s matches ISAW lattice." % c.name
 
-    #----------------------------------------------------
-    #----------------------------------------------------
-    def do_get_hkls_measured(self, filebase, angles):
-        #@type e Experiment
-        instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")
-        instrument.inst.goniometer = goniometer.Goniometer()
-        self.exp = Experiment(instrument.inst)
-        e = self.exp
-        e.inst.d_min = 0.5
-        e.inst.wl_min = 0.5
-        e.inst.wl_max = 4.0
-        e.crystal.read_ISAW_ubmatrix_file(filebase + ".mat", angles=angles)
-        e.range_automatic = True
-        e.range_limit_to_sphere = True
-        e.initialize_reflections()
-        #Position coverage object with 0 sample rotation
-        poscov = instrument.PositionCoverage( angles, None, e.crystal.u_matrix)
-        e.inst.positions.append(poscov)
-        pos_param = ParamPositions( {id(poscov):True} )
-        self.pos_param = pos_param
-        e.recalculate_reflections(pos_param)
-        out = []
-        for ref in e.reflections:
-            if ref.times_measured() > 0:
-                out.append( ref.hkl )
-        return out
-
-    def test_compare_to_peaks_file(self):
-        original = self.do_get_hkls_measured("data/TOPAZ_1204", [.123, np.pi/4, -0.43])
-        with_rotation = self.do_get_hkls_measured("data/TOPAZ_1204", [0, 0, 0])
-        assert original==with_rotation, "Same HKLs are measured with/without rotation specified."
+#    #----------------------------------------------------
+#    #----------------------------------------------------
+#    def do_get_hkls_measured(self, filebase, angles):
+#        #@type e Experiment
+#        instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")
+#        instrument.inst.goniometer = goniometer.Goniometer()
+#        self.exp = Experiment(instrument.inst)
+#        e = self.exp
+#        e.inst.d_min = 0.5
+#        e.inst.wl_min = 0.5
+#        e.inst.wl_max = 4.0
+#        e.crystal.read_ISAW_ubmatrix_file(filebase + ".mat", angles=angles)
+#        e.range_automatic = True
+#        e.range_limit_to_sphere = True
+#        e.initialize_reflections()
+#        #Position coverage object with 0 sample rotation
+#        poscov = instrument.PositionCoverage( angles, None, e.crystal.u_matrix)
+#        e.inst.positions.append(poscov)
+#        pos_param = ParamPositions( {id(poscov):True} )
+#        self.pos_param = pos_param
+#        e.recalculate_reflections(pos_param)
+#        out = []
+#        for ref in e.reflections:
+#            if ref.times_measured() > 0:
+#                out.append( ref.hkl )
+#        return out
+#
+#    def test_compare_to_peaks_file(self):
+#        original = self.do_get_hkls_measured("data/TOPAZ_1204", [.123, np.pi/4, -0.43])
+#        with_rotation = self.do_get_hkls_measured("data/TOPAZ_1204", [0, 0, 0])
+#        assert original==with_rotation, "Same HKLs are measured with/without rotation specified."
 
 
     #----------------------------------------------------
@@ -123,6 +123,80 @@ class TestReflection(unittest.TestCase):
         print c.u_matrix
         print c2.u_matrix
         
+    #----------------------------------------------------
+    #----------------------------------------------------
+
+    def do_test_compare_to_peaks_file(self, filebase, angles, measurement_file=None, measurement_angle=None,
+                        expect_bad=0, expect_good=0):
+        if measurement_angle is None:
+            measurement_angle = angles
+        if measurement_file is None:
+            measurement_file = filebase
+        #@type e Experiment
+        instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")
+        instrument.inst.goniometer = goniometer.Goniometer()
+        self.exp = Experiment(instrument.inst)
+        e = self.exp
+        e.inst.d_min = 0.5
+        e.inst.wl_min = 0.5
+        e.inst.wl_max = 4.0
+        e.crystal.read_ISAW_ubmatrix_file(filebase + ".mat", angles=angles)
+        e.range_automatic = True
+        e.range_limit_to_sphere = True
+        e.initialize_reflections()
+        #Position coverage object with 0 sample rotation
+        poscov = instrument.PositionCoverage( measurement_angle, None, e.crystal.u_matrix)
+        e.inst.positions.append(poscov)
+        pos_param = ParamPositions( {id(poscov):True} )
+        self.pos_param = pos_param
+        e.recalculate_reflections(pos_param)
+        #Now compare!
+        (numbad, numgood, out) = e.compare_to_peaks_file(measurement_file + ".peaks")
+#        print out, "\n\n%d were bad; %d were good" % (numbad, numgood)
+        print "%s: %d were bad; %d were good" % (filebase, numbad, numgood)
+        assert numbad==expect_bad, "%s: expected %d bad peaks, but got %d bad peaks.\n%s" % (filebase, expect_bad, numbad, out)
+        assert numgood==expect_good, "%s: expected %d good peaks, but got %d god peaks.\n%s" % (filebase, expect_good, numgood, out)
+
+    def test_compare_to_peaks_file1(self):
+        self.do_test_compare_to_peaks_file("data/natrolite_808_isaw", [0,0,0],
+                measurement_angle=[-np.pi/6,0,0], expect_good=63, expect_bad=11)
+
+    def test_compare_to_peaks_file2a(self):
+        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
+                measurement_file="data/TOPAZ_1204", measurement_angle=[0, np.pi/4,0],
+                expect_good=34, expect_bad=2)
+
+    def test_compare_to_peaks_file2c(self):
+        self.do_test_compare_to_peaks_file("data/TOPAZ_1204_ev", [0,np.pi/4,0],
+                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
+                expect_good=33, expect_bad=4)
+
+    def test_compare_to_peaks_file2b(self):
+        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
+                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
+                expect_good=33, expect_bad=4)
+
+    def test_compare_to_peaks_file3(self):
+        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0],
+                "data/natrolite_808_indexed_with_807", [-np.pi/6,0,0],
+                expect_bad=17, expect_good=57)
+
+    def test_compare_to_peaks_file4(self):
+        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0], expect_good=39)
+
+    def test_compare_to_peaks_file5(self):
+        self.do_test_compare_to_peaks_file("data/natrolite_808_ev", [-np.pi/6,0,0], expect_good=43)
+
+    def test_compare_to_peaks_file_omega_rotation(self):
+        self.do_test_compare_to_peaks_file("data/natrolite_1223_isaw", [0,0,0],
+                measurement_file="data/natrolite_1224_with_1223_mat",
+                measurement_angle=np.deg2rad( [0.114, 45., 90] ), expect_good=114, expect_bad=10)
+
+
+#        self.do_test_compare_to_peaks_file("data/TOPAZ_1204_ev", [0,0,0])
+#        self.do_test_compare_to_peaks_file("data/TOPAZ_1205", [0,0,0])
+#        self.do_test_compare_to_peaks_file("data/art_ox", [0,0,0])
+
 
 
 
