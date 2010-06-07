@@ -4,7 +4,7 @@
 
 module_list = ['config', 'crystal_calc', 'crystals', 'detectors', 'experiment', 'goniometer',
     'instrument', 'messages', 'numpy_utils', 'optimize_coverage', 'reflections',
-    'ubmatrixreader', 'system_tests', 'optimization']
+    'ubmatrixreader', 'system_tests']
 
 import unittest
 import string

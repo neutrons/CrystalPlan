@@ -152,7 +152,7 @@ class TestReflection(unittest.TestCase):
         e.recalculate_reflections(pos_param)
         #Now compare!
         (numbad, numgood, out) = e.compare_to_peaks_file(measurement_file + ".peaks")
-#        print out, "\n\n%d were bad; %d were good" % (numbad, numgood)
+#        print out, "\n\nsvi%d were bad; %d were good" % (numbad, numgood)
         print "%s: %d were bad; %d were good" % (filebase, numbad, numgood)
         assert numbad==expect_bad, "%s: expected %d bad peaks, but got %d bad peaks.\n%s" % (filebase, expect_bad, numbad, out)
         assert numgood==expect_good, "%s: expected %d good peaks, but got %d god peaks.\n%s" % (filebase, expect_good, numgood, out)
