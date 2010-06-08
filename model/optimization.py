@@ -40,6 +40,7 @@ class OptimizationParameters(HasTraits):
 
     number_of_orientations = Int(10, desc="the number of orientations you want in the sample plan.")
     desired_coverage = Float(85.0, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
+    use_volume = Bool(False, label='Optimize Q-volume rather than reflections?', desc='That the optimization will be performed using the reciprocal space volume calculation. If unchecked, the coverage will be calculated as the % of individual reflections that were measured.')
     use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection coverage.")
     auto_increment = Bool(False, label='Auto increment # of orientations?', desc="that if the optimization does not converge in the # of generations, add one to the # of sample orientations and try again.")
     avoid_edges = Bool(True, desc="to try to keep reflections away from the detector edges. Any reflection measured close to an edge (within the distance specified below, edge_x, or edge_y) is not considered as 'measured'.")
@@ -66,10 +67,11 @@ class OptimizationParameters(HasTraits):
         Group(
             Item('number_of_orientations', enabled_when="not optimization_running"),
             Item('desired_coverage'),
-            Item('use_symmetry', enabled_when="not optimization_running"),
-            Item('avoid_edges', enabled_when="not optimization_running"),
-            Item('edge_x_mm', enabled_when="not optimization_running"),
-            Item('edge_y_mm', enabled_when="not optimization_running"),
+            Item('use_volume', enabled_when="not optimization_running"),
+            Item('use_symmetry', enabled_when="not optimization_running", visible_when="not use_volume"),
+            Item('avoid_edges', enabled_when="not optimization_running", visible_when="not use_volume"),
+            Item('edge_x_mm', enabled_when="not optimization_running", visible_when="not use_volume"),
+            Item('edge_y_mm', enabled_when="not optimization_running", visible_when="not use_volume"),
             Item('auto_increment'),
             label='Optimization Settings'
         ),
@@ -284,8 +286,8 @@ def ChromosomeMutatorRandomizeWorst(genome, **args):
     pmut = args["pmut"]
     if pmut <= 0.0: return 0 #No mutants?
 
-    if not hasattr(genome, 'unique_measurements'):
-        print "ChromosomeMutatorRandomizeWorst: Error: Can't find worst gene list."
+    if not hasattr(genome, 'unique_measurements') or genome.unique_measurements is None:
+        #print "ChromosomeMutatorRandomizeWorst: Error: Can't find worst gene list."
         return 0
 
     #Do the given # of mutations, but flip a coin if non-integer
@@ -356,7 +358,7 @@ def ChromosomeCrossoverSinglePoint(genome, **args):
 
 #-----------------------------------------------------------------------------------------------
 def get_angles(genome):
-    """Extract the list of lists of angles"""
+    """Extract the list of lists of angles."""
     #@type instr Instrument
     instr = instrument.inst
     exp = experiment.exp
@@ -384,7 +386,7 @@ def eval_func(genome, verbose=False):
     instr = instrument.inst
 
     positions = get_angles(genome)
-    
+
     #@type exp Experiment
     exp = experiment.exp
     #Calculate (this calculates the stats)
@@ -432,7 +434,7 @@ def eval_func(genome, verbose=False):
         for refl in exp.reflections: #@type refl Reflection
             #If we're using symmetry, skip the check for non-primary beams.
             if len(refl.measurements)==1:
-                #Non-redundant measurement 
+                #Non-redundant measurement
                 poscovid = refl.measurements[0][0]
                 #Find the index in positions list, add 1
                 unique_measurements[poscovid_map[poscovid]] += 1
@@ -456,7 +458,68 @@ def eval_func(genome, verbose=False):
         #There some invalid positions. Penalize the score
         score -= (1.0 * invalid_positions) / len(genome)
         if score < 0: score = 0
-        
+
+    return score
+
+
+
+
+#-----------------------------------------------------------------------------------------------
+def eval_func_volume(genome, verbose=False):
+    """Fitness evaluation function for a chromosome in coverage optimization.
+    This one uses the volume coverage."""
+    global op #@type op OptimizationParameters
+    #@type instr Instrument
+    instr = instrument.inst
+    instr.verbose = False
+
+    positions = get_angles(genome)
+
+    #Calculate everything
+    instr.positions = []
+    pd = {}
+    for poscov in positions: #@type poscov PositionCoverage
+        new_poscov = instr.simulate_position(poscov.angles, poscov.sample_U_matrix, use_multiprocessing=False)
+        pd[id(new_poscov)] = True
+
+    #@type exp Experiment
+    exp = experiment.exp
+
+    #Set all the parameters for evaluation
+    #No hemispher
+    exp.params[experiment.PARAM_HEMISPHERE] = experiment.ParamHemisphere(False)
+    #All detectors
+    exp.params[experiment.PARAM_DETECTORS] = experiment.ParamDetectors([True]*len(instr.detectors))
+    #All positions
+    exp.params[experiment.PARAM_POSITIONS] = experiment.ParamPositions(pd)
+    #Don't invert
+    exp.params[experiment.PARAM_INVERT] = None
+    #Don't slice
+    exp.params[experiment.PARAM_SLICE] = None
+
+    #Calculate (this calculates the stats)
+    exp.calculate_coverage(None, None)
+
+    #This is the stat
+    coverage = exp.overall_coverage / 100.0
+
+    #Save the sorted list of (unique_measurements, index into the list of genes)
+    genome.unique_measurements = None
+
+    #Save the coverage value
+    genome.coverage = coverage
+
+    if verbose:
+        print  "Fitness: had %3d positions, score was %7.3f" % (len(positions), coverage)
+
+    #Score is equal to the coverage
+    score = coverage
+    invalid_positions = len(genome)-len(positions)
+    if invalid_positions > 0:
+        #There some invalid positions. Penalize the score
+        score -= (1.0 * invalid_positions) / len(genome)
+        if score < 0: score = 0
+
     return score
 
 
@@ -530,7 +593,10 @@ def run_optimization(optim_params, step_callback=None):
     genome.crossover.set(Crossovers.G1DListCrossoverUniform)
 
     # The evaluator function (evaluation function)
-    genome.evaluator.set(eval_func)
+    if op.use_volume:
+        genome.evaluator.set(eval_func_volume)
+    else:
+        genome.evaluator.set(eval_func)
 
     # Genetic Algorithm Instance
     #@type ga GSimpleGA

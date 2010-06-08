@@ -199,7 +199,7 @@ class OptimizerController():
         frm = self.frame #@type frm FrameOptimizer
         if frm is None:
             return
-        if self.params.avoid_edges:
+        if self.params.avoid_edges and not self.params.use_volume:
             edges = " (excluding edges)"
         else:
             edges = ""

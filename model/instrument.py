@@ -198,6 +198,9 @@ class Instrument:
         self.last_sort_ascending = False
         self.last_sort_angle_num = -1
 
+        #Default as verbose
+        self.verbose = True
+
 
 
 #    #---------------------------------------------------------------------------------------------
@@ -679,7 +682,7 @@ class Instrument:
 
         coverage = self.make_blank_qspace(np.uint32, number_of_ints=number_of_ints)
         count = 0
-        sys.stdout.write( "For angles [%s], calculating coverage of detectors... " % angles_string)
+        if self.verbose: sys.stdout.write( "For angles [%s], calculating coverage of detectors... " % angles_string)
         for det in det_list:
             #Make sure the detector object is valid
             if det is None:
@@ -690,8 +693,8 @@ class Instrument:
             messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
             if (time.time() - last_time) > 0.33:
                 last_time = time.time()
-                sys.stdout.write(det.name + ", ")
-                sys.stdout.flush()
+                if self.verbose: sys.stdout.write(det.name + ", ")
+                if self.verbose: sys.stdout.flush()
 
             #The binary flag to use here.
             if count < 31:
@@ -795,7 +798,7 @@ class Instrument:
                                 if number_of_ints == 2:
                                     coverage[iqx, iqy, iqz, 1] |= set_value2
 
-        print " done!"
+        if self.verbose:  print " done!"
 
         return coverage
 
@@ -862,7 +865,8 @@ class Instrument:
             
         t1 = time.time()
         coverage = self.calculate_coverage(self.detectors, angles, sample_U_matrix=sample_U_matrix)
-        print "intrument.simulate_position done in %s sec." % (time.time()-t1)
+        if self.verbose:
+            print "instrument.simulate_position done in %s sec." % (time.time()-t1)
 
         #Create a PositionCoverage object that holds both the position and the coverage
         pos = PositionCoverage(angles, coverage, sample_U_matrix=sample_U_matrix)
@@ -1300,7 +1304,9 @@ class InstrumentInelastic(Instrument):
         coverage = self.make_blank_qspace(np.float) + 1e6
         
         count = 0
-        sys.stdout.write( "For angles [%s], calculating coverage of detectors... " % angles_string)
+        if self.verbose:
+            sys.stdout.write( "For angles [%s], calculating coverage of detectors... " % angles_string)
+            
         for det in det_list:
             #Make sure the detector object is valid
             if det is None:
@@ -1310,8 +1316,8 @@ class InstrumentInelastic(Instrument):
             messages.send_message_optional(self, messages.MSG_UPDATE_MAIN_STATUSBAR, "Calculating coverage of detector '%s' at %s" % (det.name, angles_string))
             if (time.time() - last_time) > 0.33:
                 last_time = time.time()
-                sys.stdout.write(det.name + ", ")
-                sys.stdout.flush()
+                if self.verbose: sys.stdout.write(det.name + ", ")
+                if self.verbose: sys.stdout.flush()
 
 
             #Two nearby pixels
@@ -1423,7 +1429,7 @@ class InstrumentInelastic(Instrument):
                                 coverage[iqx, iqy, iqz] = E
                 print "Python-code: neutron energy gain min", np.min(coverage), "; max", np.max(coverage[coverage <1e6])
 
-        print " done!"
+        if self.verbose: print " done!"
 
         return coverage
 
