@@ -194,11 +194,6 @@ class TestSystem(unittest.TestCase):
                 measurement_angle=np.deg2rad( [0.114, 45., 90] ), expect_good=114, expect_bad=10)
 
 
-#        self.do_test_compare_to_peaks_file("data/TOPAZ_1204_ev", [0,0,0])
-#        self.do_test_compare_to_peaks_file("data/TOPAZ_1205", [0,0,0])
-#        self.do_test_compare_to_peaks_file("data/art_ox", [0,0,0])
-
-
     def test_mask_error(self):
         """Error with experiment primary ref mask length not matching timesmeasured length."""
         instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")

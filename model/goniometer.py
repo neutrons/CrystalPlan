@@ -222,6 +222,16 @@ class Goniometer(HasTraits):
 
 
 
+    def __eq__(self, other):
+        """Return True if the contents of self are equal to other."""
+        return (self.name == other.name) and (self.wavelength_control == other.wavelength_control) \
+                and (self.gonio_angles == other.gonio_angles) and (self.wl_angles == other.wl_angles) \
+                and (self.wavelength_minimum == other.wavelength_minimum) \
+                and (self.wavelength_bandwidth == other.wavelength_bandwidth)
+
+    def __ne__(self,other):
+        return not self.__eq__(other)
+    
     #-------------------------------------------------------------------------
     def __init__(self, wavelength_control=False):
         """Constructor.
@@ -870,6 +880,11 @@ class TopazAmbientGoniometer(LimitedGoniometer):
                 Item('wavelength_minimum'),
                 Item('chi'), Item('angles_desc', style='readonly'))
 
+    #-------------------------------------------------------------------------
+    def __eq__(self, other):
+        """Return True if the contents of self are equal to other."""
+        return LimitedGoniometer.__eq__(self,other) and \
+            (self.chi == other.chi)
 
     #-------------------------------------------------------------------------
     def __init__(self, wavelength_control=False):

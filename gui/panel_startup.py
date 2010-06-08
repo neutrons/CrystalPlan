@@ -9,6 +9,7 @@ be changed any time.
 #--- General Imports ---
 import wx
 import numpy as np
+import copy
 
 #--- GUI Imports ---
 import display_thread
@@ -138,8 +139,8 @@ class StartupParameters(HasTraits):
 
     #Create the view
     header_text = Group(Spring(label="Enter the parameters for Q-space simulation:", emphasized=True, show_label=True))
-    second_label = Group(Spring(label="Enter the detectors' wavelength limits:", emphasized=True, show_label=True))
-    third_label = Group(Spring(label="Note: wavelength and bandwidth can also be set, on option, as a goniometer motor setting. See the goniometer tab.", emphasized=False, show_label=True))
+    second_label = Group(Spring(label="Enter the wavelength limits (from the source and/or detectors):", emphasized=True, show_label=True))
+    third_label = Group(Spring(label="Note: wavelength and bandwidth can also be set, on option, as a goniometer motor setting. See the goniometer tab.\nThe settings below are ignored in that case!", emphasized=False, show_label=True))
 
     view = View( header_text,
                  Item("d_min", label="d_min (angstroms)", format_str="%.3f", tooltip="Minimum d spacing to simulate."),
@@ -151,8 +152,8 @@ class StartupParameters(HasTraits):
                  Item("points",  label="Number of points in space:", style='readonly', format_func=gui_utils.print_large_number),
                  second_label,
                  third_label,
-                 Item("wl_min", label="Min. wavelength (angstroms)", format_str="%.3f", tooltip="Minimum wavelength that the detectors can measure."),
-                 Item("wl_max", label="Max. wavelength (angstroms)", format_str="%.3f", tooltip="Maximum wavelength that the detectors can measure."),
+                 Item("wl_min", label="Min. wavelength (angstroms)", format_str="%.3f", tooltip="Minimum wavelength that the source can provide, or that the detectors can measure."),
+                 Item("wl_max", label="Max. wavelength (angstroms)", format_str="%.3f", tooltip="Maximum wavelength that the source can provide, or that the detectors can measure."),
                  kind='panel',
             )
             
@@ -174,7 +175,13 @@ class StartupParameters(HasTraits):
             if hasattr(other, name):
                 setattr(self, name,  getattr(other, name) )
         
+    def __eq__(self, other):
+        """Return True if the contents of self are equal to other."""
+        return (self.d_min == other.d_min) and (self.q_resolution == other.q_resolution) \
+                and (self.wl_min == other.wl_min) and (self.wl_max == other.wl_max)
 
+    def __ne__(self,other):
+        return not self.__eq__(other)
 
 # ===========================================================================================
 # ===========================================================================================
@@ -322,16 +329,22 @@ class PanelStartup(wx.Panel):
         self.control = self.params.edit_traits(parent=self, kind='subpanel', handler=self.handler).control
         self.boxSizerParams.AddWindow(self.control, 3, border=1, flag=wx.EXPAND)
         self.GetSizer().Layout()
-
+        #Make a copy for comparison
+        self.original_params = copy.copy(self.params)
 
     def OnbuttonApplyButton(self, event):
         self.handler.apply()
+        self.original_params = copy.copy(self.params)
         event.Skip()
 
     def OnButtonQuitButton(self, event):
         self.handler.revert()
         event.Skip()
 
+    def needs_apply(self):
+        """Return True if the panel needs to be applied, because a setting changed."""
+        return (self.original_params != self.params)
+        
 
 
 # ===========================================================================================

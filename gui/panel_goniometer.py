@@ -257,6 +257,11 @@ class PanelGoniometer(wx.Panel):
         self.controller.update_selection()
         self.controller.select_current()
 
+    def needs_apply(self):
+        """Return True if the panel needs to be applied, because a setting changed."""
+        return (self.controller.current_gon_copy != model.instrument.inst.goniometer)
+
+
 
 
 

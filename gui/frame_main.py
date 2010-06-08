@@ -300,11 +300,21 @@ class FrameMain(wx.Frame):
         AddPage(self.tab_try, 'Try an\nOrientation', 'Try Orientation')
         AddPage(self.tab_add, 'Add\nOrientations', 'Add Orientations')
         AddPage(self.tab_experiment, 'Experiment\nPlan', 'Experiment Plan' )
+
+        self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.onNotebookPageChanging)
         
 
     #--------------------------------------------------------------------
     #---------------- other event handlers ------------------------------
     #--------------------------------------------------------------------
+    def onNotebookPageChanging(self, event):
+        tab = self.notebook.GetCurrentPage()
+        if not tab is None:
+            if hasattr(tab, 'needs_apply'):
+                if tab.needs_apply():
+                    wx.MessageDialog(self, "You have changed some settings in this tab. \nYou need to click the 'Apply' button to apply them!", "Need To Apply Changes", wx.OK).ShowModal()
+
+    
     def OnClose(self, event):
         res = wx.MessageDialog(self, "Are you sure you want to quit %s?" % CrystalPlan_version.package_name, "Quit %s?" % CrystalPlan_version.package_name, wx.YES_NO | wx.YES_DEFAULT).ShowModal()
         if res == wx.ID_YES:
