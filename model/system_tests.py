@@ -158,40 +158,40 @@ class TestSystem(unittest.TestCase):
         assert numgood==expect_good, "%s: expected %d good peaks, but got %d god peaks.\n%s" % (filebase, expect_good, numgood, out)
 
 
-#    def test_compare_to_peaks_file1(self):
-#        self.do_test_compare_to_peaks_file("data/natrolite_808_isaw", [0,0,0],
-#                measurement_angle=[-np.pi/6,0,0], expect_good=63, expect_bad=11)
-#
-#    def test_compare_to_peaks_file2a(self):
-#        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
-#                measurement_file="data/TOPAZ_1204", measurement_angle=[0, np.pi/4,0],
-#                expect_good=34, expect_bad=2)
-#
-#    def test_compare_to_peaks_file2c(self):
-#        self.do_test_compare_to_peaks_file("data/TOPAZ_1204_ev", [0,np.pi/4,0],
-#                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
-#                expect_good=33, expect_bad=4)
-#
-#    def test_compare_to_peaks_file2b(self):
-#        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
-#                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
-#                expect_good=33, expect_bad=4)
-#
-#    def test_compare_to_peaks_file3(self):
-#        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0],
-#                "data/natrolite_808_indexed_with_807", [-np.pi/6,0,0],
-#                expect_bad=17, expect_good=57)
-#
-#    def test_compare_to_peaks_file4(self):
-#        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0], expect_good=39)
-#
-#    def test_compare_to_peaks_file5(self):
-#        self.do_test_compare_to_peaks_file("data/natrolite_808_ev", [-np.pi/6,0,0], expect_good=43)
-#
-#    def test_compare_to_peaks_file_omega_rotation(self):
-#        self.do_test_compare_to_peaks_file("data/natrolite_1223_isaw", [0,0,0],
-#                measurement_file="data/natrolite_1224_with_1223_mat",
-#                measurement_angle=np.deg2rad( [0.114, 45., 90] ), expect_good=114, expect_bad=10)
+    def test_compare_to_peaks_file1(self):
+        self.do_test_compare_to_peaks_file("data/natrolite_808_isaw", [0,0,0],
+                measurement_angle=[-np.pi/6,0,0], expect_good=63, expect_bad=11)
+
+    def test_compare_to_peaks_file2a(self):
+        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
+                measurement_file="data/TOPAZ_1204", measurement_angle=[0, np.pi/4,0],
+                expect_good=34, expect_bad=2)
+
+    def test_compare_to_peaks_file2c(self):
+        self.do_test_compare_to_peaks_file("data/TOPAZ_1204_ev", [0,np.pi/4,0],
+                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
+                expect_good=33, expect_bad=4)
+
+    def test_compare_to_peaks_file2b(self):
+        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
+                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
+                expect_good=33, expect_bad=4)
+
+    def test_compare_to_peaks_file3(self):
+        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0],
+                "data/natrolite_808_indexed_with_807", [-np.pi/6,0,0],
+                expect_bad=17, expect_good=57)
+
+    def test_compare_to_peaks_file4(self):
+        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0], expect_good=39)
+
+    def test_compare_to_peaks_file5(self):
+        self.do_test_compare_to_peaks_file("data/natrolite_808_ev", [-np.pi/6,0,0], expect_good=43)
+
+    def test_compare_to_peaks_file_omega_rotation(self):
+        self.do_test_compare_to_peaks_file("data/natrolite_1223_isaw", [0,0,0],
+                measurement_file="data/natrolite_1224_with_1223_mat",
+                measurement_angle=np.deg2rad( [0.114, 45., 90] ), expect_good=114, expect_bad=10)
 
 
 #        self.do_test_compare_to_peaks_file("data/TOPAZ_1204_ev", [0,0,0])
