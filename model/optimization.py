@@ -40,7 +40,7 @@ class OptimizationParameters(HasTraits):
 
     number_of_orientations = Int(10, desc="the number of orientations you want in the sample plan.")
     desired_coverage = Float(85.0, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
-    use_volume = Bool(False, label='Optimize Q-volume rather than reflections?', desc='That the optimization will be performed using the reciprocal space volume calculation. If unchecked, the coverage will be calculated as the % of individual reflections that were measured.')
+    use_volume = Bool(False, label='Optimize Q-volume rather than reflections?\n(EXPERIMENTAL!)', desc='That the optimization will be performed using the reciprocal space volume calculation. \nIf unchecked, the coverage will be calculated as the % of individual reflections that were measured.')
     use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection coverage.")
     auto_increment = Bool(False, label='Auto increment # of orientations?', desc="that if the optimization does not converge in the # of generations, add one to the # of sample orientations and try again.")
     avoid_edges = Bool(True, desc="to try to keep reflections away from the detector edges. Any reflection measured close to an edge (within the distance specified below, edge_x, or edge_y) is not considered as 'measured'.")
@@ -57,7 +57,7 @@ class OptimizationParameters(HasTraits):
     nudge_amount = Float(2.0, label='Nudge amount (%)', desc='the width of the normal distribution of nudging that will be done on the angles, as a percentage of the allowable range.')
     crossover_rate = Float(0.03, desc="the probability of cross-over.")
     use_multiprocessing = Bool(True, desc="to use multiprocessing (multiple processors) to speed up calculation.")
-    number_of_processors = Int(4, desc="the number of processors to use, if multiprocessing is enabled. Enter <=0 to use all the processors available.")
+    number_of_processors = Int(4, desc="the number of processors to use, if multiprocessing is enabled. Enter <=0 to use all the processors available. Try to keep your population = a multiple of the # of processors.")
     use_old_population = Bool(False)
     elitism = Bool(True, desc="to use elitism, which means to keep the best individuals from the previous generation.")
     elitism_replacement = Int(1, desc="the Elitism replacement number - how many of the best individuals from the previous generation to keep.")
@@ -78,8 +78,8 @@ class OptimizationParameters(HasTraits):
         Group(
             Item('population', enabled_when="not optimization_running"),
             Item('max_generations'),
-            Item('pre_mutation_rate'),
-            Item('worst_gene_location_randomizer'),
+            Item('pre_mutation_rate', visible_when="not use_volume"),
+            Item('worst_gene_location_randomizer', visible_when="not use_volume"),
             Item('mutation_rate'),
             Item('mutate_by_nudging'),
             Item('nudge_amount', enabled_when="mutate_by_nudging"),
@@ -486,6 +486,8 @@ def eval_func_volume(genome, verbose=False):
     exp = experiment.exp
 
     #Set all the parameters for evaluation
+    #Don't add a trial position
+    exp.params[experiment.PARAM_TRY_POSITION] = None
     #No hemispher
     exp.params[experiment.PARAM_HEMISPHERE] = experiment.ParamHemisphere(False)
     #All detectors
