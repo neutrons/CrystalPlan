@@ -72,11 +72,10 @@ class StartupTraitsHandler(Handler):
         #This sets up the new size q-space
         model.instrument.inst.change_qspace_size(self.get_params_dictionary())
 
-        #Fix the hkl range if needed
-        if  model.experiment.exp.range_automatic:
-            model.experiment.exp.initialize_reflections()
+        #Always re-initialize the reflections
+        model.experiment.exp.initialize_reflections()
         
-        #This recalcs the volumes
+        #This recalcs the volumes and reflections
         gui_utils.do_recalculation_with_progress_bar(new_sample_U_matrix=None)
 
         #Ensure that the q-space viewer refreshes properly.

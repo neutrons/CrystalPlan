@@ -116,8 +116,9 @@ def do_recalculation_with_progress_bar(new_sample_U_matrix=None):
     Parameters:
         new_sample_U_matrix: set to a 3x3 matrix to change the sample's U-matrix
     """
+    global count, prog_dlg
     #Steps in calculation
-    max = len(model.instrument.inst.positions)+1
+    max = len(model.instrument.inst.positions)*2+1
 
     prog_dlg = wx.ProgressDialog( "Recalculating all sample orientations.",        "Calculation progress:",
         max, style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
@@ -143,6 +144,20 @@ def do_recalculation_with_progress_bar(new_sample_U_matrix=None):
             # We re-raise the exception
             # We are in the main loop, so the sys.excepthook will catch it and display a dialog.
             raise
+
+    #Now recalc the reflections.
+    def progress_callback(poscov):
+        global count, prog_dlg
+        count += 1
+        # @type poscov PositionCoverage
+        (keep_going, skip) = prog_dlg.Update(count, "Recalculating reflections at %s..." % model.instrument.inst.make_angles_string(poscov.angles))
+        
+    try:
+        model.experiment.exp.recalculate_reflections(None, calculation_callback=progress_callback)
+    except:
+        #We destroy the dialog so it doesn't get stuck, and re-raise
+        prog_dlg.Destroy()
+        raise
 
     #Should we recalculate reflections here?
 

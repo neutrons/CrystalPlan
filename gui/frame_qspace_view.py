@@ -460,6 +460,8 @@ class QspaceViewController(HasTraits):
         ref_q = model.experiment.exp.reflections_q_vector
         mask = model.experiment.exp.reflections_mask
 
+        assert len(model.experiment.exp.reflections_times_measured_with_equivalents) == len(mask), "Reflection mask and times measured should be the same length."
+
         if not isinstance(ref_q, np.ndarray):
             #No array = return an empty data set
             return pd

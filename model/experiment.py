@@ -402,88 +402,87 @@ class Experiment:
     Additionally, some methods in Experiment evaluate the quality of the experiment.
     """
 
-    #Reference to the Instrument object for which this relates.
-    inst = None
-
-    #The sample crystal that is being examined. type=Crystal
-    crystal = None
-
-    #Ranges of h,k,l values to look at. These are INCLUSIVE (last value is also in the list).
-    range_h = (-6, 6)
-    range_k = (-6, 6)
-    range_l = (-6, 6)
-    #Will the hkl range be chosen automatically?
-    range_automatic = True
-    #Will the hkl reflections limit q to a sphere of radius 2pi/dmin
-    range_limit_to_sphere = True
-
     #Range in h,k,l as a list that can be indexed
     def get_range_hkl(self):
         return [self.range_h, self.range_k, self.range_l]
     range_hkl = property(get_range_hkl)
 
-    #List of Reflection objects for each reflection
-    reflections = None
-
-    #3xN array of the hkl values of each reflection. This is used to speed up some calculations.
-    reflections_hkl = None
-
-    #Dictionary of all reflections where the index is a tuple of (h,k,l) - used to speed up look-ups
-    reflections_dict = {}
-
-    #3xN array of the q vector of each reflection. This may be used to speed up displays.
-    reflections_q_vector = None
-
-    #Nx1 array of the # of times each reflection was measured. This may be used to speed up displays.
-    reflections_times_measured = None
-
-    #Nx1 array of the # of times each reflection was measured, ALSO counting equivalent reflections (due to symmetries)
-    reflections_times_measured_with_equivalents = None
-
-    #N-sized 1D bool array - mask of which reflections to display in the 3D view.
-    reflections_mask = None
-
-    #Dictionary containing all the parameters for calculating/displaying the coverage
-    params = None
-
-    #q-space coverage map, with the current settings. Indices are x,y,z
-    qspace = None
-
-    #Bool array of the optimal hemisphere of coverage.
-    optimal_space = None
-    
-    #Slice from qmin to qmax of the qspace found
-    qspace_displayed = None
-    
-    #Lock on the qspace_displayed member, for threading.
-    _lock_qspace_displayed = threading.Lock()
-    
-    #Coverage percentage for several slices
-    coverage_stats = list()
-
-    #Overall coverage and redundancy percentages.
-    overall_coverage = 0.0
-    overall_redundancy = 0.0
-
-    #Statistics for reflections, with and without symmetry
-    reflection_stats = ReflectionStats()
-    reflection_stats_with_symmetry = ReflectionStats()
-    #Adjusted statistics, e.g. with edges.
-    reflection_stats_adjusted = ReflectionStats()
-    reflection_stats_adjusted_with_symmetry = ReflectionStats()
-
-
-    #For output
-    verbose = True
 
     #-------------------------------------------------------------------------------
     def __init__(self, instrument_to_use):
         """Constructor. Subscribe to messages.
             inst: The instrument this experiment refers to."""
+
+        #Reference to the instrument
         self.inst = instrument_to_use
+
+        #Dictionary containing all the parameters for calculating/displaying the coverage
         self.params = ParamsDict()
+
+        #The sample crystal that is being examined. type=Crystal
         self.crystal = Crystal("new crystal")
-        
+
+        #Ranges of h,k,l values to look at. These are INCLUSIVE (last value is also in the list).
+        self.range_h = (-6, 6)
+        self.range_k = (-6, 6)
+        self.range_l = (-6, 6)
+
+        #Will the hkl range be chosen automatically?
+        self.range_automatic = True
+
+        #Will the hkl reflections limit q to a sphere of radius 2pi/dmin
+        self.range_limit_to_sphere = True
+
+        #List of Reflection objects for each reflection
+        self.reflections = None
+
+        #3xN array of the hkl values of each reflection. This is used to speed up some calculations.
+        self.reflections_hkl = None
+
+        #Dictionary of all reflections where the index is a tuple of (h,k,l) - used to speed up look-ups
+        self.reflections_dict = {}
+
+        #3xN array of the q vector of each reflection. This may be used to speed up displays.
+        self.reflections_q_vector = None
+
+        #Nx1 array of the # of times each reflection was measured. This may be used to speed up displays.
+        self.reflections_times_measured = None
+
+        #Nx1 array of the # of times each reflection was measured, ALSO counting equivalent reflections (due to symmetries)
+        self.reflections_times_measured_with_equivalents = None
+
+        #N-sized 1D bool array - mask of which reflections to display in the 3D view.
+        self.reflections_mask = None
+
+        #q-space coverage map, with the current settings. Indices are x,y,z
+        self.qspace = None
+
+        #Bool array of the optimal hemisphere of coverage.
+        self.optimal_space = None
+
+        #Slice from qmin to qmax of the qspace found
+        self.qspace_displayed = None
+
+        #Lock on the qspace_displayed member, for threading.
+        self._lock_qspace_displayed = threading.Lock()
+
+        #Coverage percentage for several slices
+        self.coverage_stats = list()
+
+        #Overall coverage and redundancy percentages.
+        self.overall_coverage = 0.0
+        self.overall_redundancy = 0.0
+
+        #Statistics for reflections, with and without symmetry
+        self.reflection_stats = ReflectionStats()
+        self.reflection_stats_with_symmetry = ReflectionStats()
+        #Adjusted statistics, e.g. with edges.
+        self.reflection_stats_adjusted = ReflectionStats()
+        self.reflection_stats_adjusted_with_symmetry = ReflectionStats()
+
+        #For output
+        self.verbose = True
+
     #-------------------------------------------------------------------------------
     def set_parameters(self, params_dict):
         """Set the parameters dictionary. Does not re-do calculations.
@@ -578,6 +577,9 @@ class Experiment:
 
         #Now we find the primary reflections using crystal symmetry.
         self.find_primary_reflections()
+
+        #At this point, the reflections mask needs to be updated since the reflections changed.
+        self.calculate_reflections_mask()
 
 
     #-------------------------------------------------------------------------------

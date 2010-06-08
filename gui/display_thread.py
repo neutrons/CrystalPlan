@@ -210,9 +210,7 @@ def handle_change_of_qspace(changed_sample_U_matrix=None):
     Parameters:
         changed_sample_U_matrix: set to a 3x3 matrix if the sample orientation has changed too.
     """
-    #Re-init the qspace frame first.
-    model.messages.send_message(model.messages.MSG_EXPERIMENT_QSPACE_SETTINGS_CHANGED)
-    
+
     #Clear the try_position
     if not get_try_position() is None:
         if not get_try_position().try_position is None:
@@ -227,6 +225,9 @@ def handle_change_of_qspace(changed_sample_U_matrix=None):
     #Clear the latest to force the thread to re-do everything.
     LatestParams.clear()
     #TODO: Fix the slice display parameter - it can be moved off-scale.
+    
+    #Re-init the qspace frame last?
+    model.messages.send_message(model.messages.MSG_EXPERIMENT_QSPACE_SETTINGS_CHANGED)
 
 
 #-----------------------------------------------------------------------------------------------

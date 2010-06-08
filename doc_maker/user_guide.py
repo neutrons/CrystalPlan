@@ -296,7 +296,6 @@ def pick_a_reflection():
 # - Finish with "#---END---\n"
 def user_guide_script():
     #Shortcuts to the tested objects
-#---END---
 
     #--- Automatic coverage optimizer ---
     #@type te PanelExperiment
@@ -717,3 +716,11 @@ def generate_user_guide(fm, fv):
 
 
 
+##==========================================================================================
+##==========================================================================================
+##==========================================================================================
+##The following function will be executed line-by-line by a separate thread.
+## - All commands should be on single lines
+## - No loops or changes of indentation! (Use functions if you need to make a for loop)
+## - Finish with "#---END---\n"
+#def test_mask_error():
