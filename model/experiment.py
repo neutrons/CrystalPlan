@@ -1541,42 +1541,14 @@ class Experiment:
         self.reflection_stats.measured = np.sum(self.reflections_times_measured > 0)
         self.reflection_stats.redundant = np.sum(self.reflections_times_measured > 1)
         #Now do it with symmetry
+        assert len(self.primary_reflections_mask)==len(self.reflections), "The primary reflections mask should be the same length as the reflections; otherwise, incorrect stats will be computed."
         mask = self.primary_reflections_mask
         self.reflection_stats_with_symmetry.total = np.sum(mask)
         self.reflection_stats_with_symmetry.measured = np.sum(self.reflections_times_measured_with_equivalents[mask,:] > 0)
         self.reflection_stats_with_symmetry.redundant = np.sum(self.reflections_times_measured_with_equivalents[mask,:] > 1)
         #Stats using edge avoidance
         if edge_avoidance:
-            detectors = self.inst.detectors
-
-            #Total to add up
-            rsa = 0
-            rsaws = 0
-
-            self.reflection_stats_adjusted.total = len(self.reflections)
-            #@type refl Reflection
-            for refl in self.reflections:
-                mav = []
-                for meas in refl.measurements:
-                    (poscov_id, detector_num, horizontal, vertical, wavelength, distance) = meas
-                    mav.append( detectors[detector_num].edge_avoidance(horizontal, vertical, edge_x, edge_y) )
-                #Sum it
-                mysum = np.sum(mav > 0.99)
-                refl.measurement_adjusted_sum = mysum
-                rsa += (mysum > 0)
-
-                refl.measurement_adjusted_value = mav
-
-            #Now handle symmetry
-            mask = self.primary_reflections_mask
-            for refl in self.reflections:
-                if refl.is_primary:
-                    for equiv in refl.equivalent:
-                        rsaws += (equiv.measurement_adjusted_sum > 0)
-
-            #Save 'em
-            self.reflection_stats_adjusted.measured = rsa
-            self.reflection_stats_adjusted_with_symmetry.measured = rsaws
+            self.calculate_reflection_coverage_stats_adjusted(edge_x, edge_y)
 
         return None
 
@@ -1591,8 +1563,9 @@ class Experiment:
         rsa = 0
         rsaws = 0
 
-        self.reflection_stats_adjusted.total = self.reflection_stats.total
-        self.reflection_stats_adjusted_with_symmetry.total = self.reflection_stats_with_symmetry.total
+        self.reflection_stats_adjusted.total = len(self.reflections)
+        self.reflection_stats_adjusted_with_symmetry.total = np.sum(self.primary_reflections_mask)
+        #assert self.reflection_stats_adjusted_with_symmetry.total <= len(self.reflections), "Can't have more primary reflections than reflections."
         #@type refl Reflection
         for refl in self.reflections:
             mav = []
@@ -1613,12 +1586,19 @@ class Experiment:
         mask = self.primary_reflections_mask
         for refl in self.reflections:
             if refl.is_primary:
+                anything = False
                 for equiv in refl.equivalent:
-                    rsaws += (equiv.measurement_adjusted_sum > 0)
+                    if (equiv.measurement_adjusted_sum > 0):
+                        anything = True
+                        break
+                if anything:
+                    rsaws += 1
+
 
         #Save 'em
         self.reflection_stats_adjusted.measured = rsa
         self.reflection_stats_adjusted_with_symmetry.measured = rsaws
+        assert self.reflection_stats_adjusted_with_symmetry.measured <= self.reflection_stats_adjusted_with_symmetry.total, "Can't have more measured reflections than primary reflections."
 
         return None
 

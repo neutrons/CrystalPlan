@@ -389,10 +389,10 @@ def eval_func(genome, verbose=False):
     exp = experiment.exp
     #Calculate (this calculates the stats)
     exp.recalculate_reflections(positions, calculation_callback=None)
+    #Calculate the stats with edge avoidance if an option
+    exp.calculate_reflection_coverage_stats(op.avoid_edges, op.edge_x_mm, op.edge_y_mm)
 
-    #Calculate the stats with edge avoidance
     if op.avoid_edges:
-        exp.calculate_reflection_coverage_stats_adjusted(op.edge_x_mm, op.edge_y_mm)
         #Use this fraction
         if op.use_symmetry:
             coverage = exp.reflection_stats_adjusted_with_symmetry.measured * 1.0 / exp.reflection_stats_adjusted_with_symmetry.total

@@ -233,6 +233,13 @@ class TestSystem(unittest.TestCase):
         assert len(e.reflections_mask)==numref, "Correct sized mask."
         assert len(e.reflections_times_measured_with_equivalents)==numref, "Correct sized # of times measured."
 
+        e.calculate_reflection_coverage_stats(True, 5.0, 5.0)
+        assert e.reflection_stats_with_symmetry.total == np.sum(e.primary_reflections_mask), "Total reflection stas is the same as the # of primary reflections."
+        assert e.reflection_stats_with_symmetry.measured <= e.reflection_stats_with_symmetry.total, "Coverage is less than 100%"
+        assert e.reflection_stats_adjusted_with_symmetry.total == np.sum(e.primary_reflections_mask), "Adjusted: Total reflection stas is the same as the # of primary reflections."
+        assert e.reflection_stats_adjusted_with_symmetry.measured <= e.reflection_stats_adjusted_with_symmetry.total, "Adjusted: Coverage is less than 100%"
+
+
 
 
 
