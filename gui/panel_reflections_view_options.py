@@ -135,7 +135,6 @@ class ReflectionsViewOptionsController:
         #@type mask ParamReflectionMasking
         mask.masking_type = n
         mask.primary_reflections_only = self.panel.checkUseSymmetry.GetValue()
-        mask.primary_reflections_only = False #TODO!
         mask.show_equivalent_reflections = self.panel.checkUseSymmetry.GetValue()
         #Apply it.
         display_thread.NextParams[model.experiment.PARAM_REFLECTION_MASKING] = mask
