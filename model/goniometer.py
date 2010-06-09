@@ -454,8 +454,14 @@ class Goniometer(HasTraits):
         #So lets get q directly.
         q_rotated = q_over_a * a
 
-        #Separate function finds the angles.
+        #Separate function finds the phi, [chi], omega angles.
         (angles) = self.calculate_angles_to_rotate_vector(q0, q_rotated, starting_angles, search_method)
+        if self.wavelength_control and not (angles is None):
+            #Need to add a wavelength angle
+            wl_center = wavelength
+            wl_center = max(wl_center, self.wl_angles[0].friendly_range[0]) #Lowest bound
+            wl_center = min(wl_center, self.wl_angles[0].friendly_range[1]) #Higher bound
+            angles += [wl_center]
 
         return (angles, wavelength)
 
@@ -851,7 +857,7 @@ class LimitedGoniometer(Goniometer):
         if search_method:
             #--- scipy optimize ----
             #Get a starting point by brute force ?
-            best_rot_angle = np.pi/2 # optimize(0, pi*2.0, pi/10)[0]
+            best_rot_angle = np.pi/2 
 
             if False:
                 x0 = best_rot_angle
@@ -919,6 +925,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
             ]
 
         #C code for the fitness of phi,chi, omega
+        #TODO: Modify this when chi_fixed changes.
         self.fitness_function_c_code = """
         FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
         {
