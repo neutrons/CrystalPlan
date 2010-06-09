@@ -332,6 +332,7 @@ class OptimizerController():
         self.last_population = ga.getPopulation()
 
         if self.params.auto_increment and not aborted and not converged:
+            print "AUTO INCREMENTING !!!"
             #Try again with 1 more orientation
             self.params.number_of_orientations += 1
             wx.CallAfter(self.keep_going, None)

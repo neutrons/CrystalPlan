@@ -2,7 +2,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-<title>CrystalPlan 1.0 User Guide</title>
+<title>CrystalPlan 1.1 User Guide</title>
 <meta name="generator" content="Bluefish 1.0.7"/>
 <meta name="author" content="Janik Zikovsky"/>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
@@ -78,7 +78,7 @@ text-align: left;
 
 <img src="../gui/icons/CrystalPlan_icon.png" width="256" height="256" border="0" alt="CrystalPlan Icon" align="right" />
 
-<h1>CrystalPlan 1.0 User Guide</h1>
+<h1>CrystalPlan 1.1 User Guide</h1>
 by Janik Zikovsky (zikovskyjl@ornl.gov)<br/>
 <br/>
 Document started April 14, 2010; Last modified on {{date}}.
@@ -784,18 +784,24 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <img src="screenshots/exp-buttonOptimizer.png" /> button from the Experiment Plan tab.</li>
 </ul>
 
-<h4>Setting Parameters</h4>
+<h4>How Optimization Works; Setting Parameters</h4>
 <ul>
-<li>On the left side, you will find all the settings for optimizing the calculation.</li>
+<li>This window uses the <i>Genetic Algorithm</i> method to optimize a list of sample orientations. </li>
+<li>The genetic algorithm method starts by creating a <i>Population</i> of a certain number of randomized individuals.</li>
+<li>Each individual has a <i>Chromosome</i>, which consists of a list of <i>Genes</i>; in this case, a gene is a single sample orientation (goniometer angles). </li>
+<li>The <i>Fitness</i> of each individual is calculated; in this case, the % of reflections measured is the fitness score; a higher score means an individual is 'better' or 'fitter'.</li>
+<li>At each generation, the best individuals are picked (through a random process that favors the fittest individuals) to go on to the next generation. With <i>Elitism</i> enabled, the best individual(s) of the previous generation is guaranteed to stay in the next generation. This is almost always very advantageous for convergence speed. </li>
+<li>Pairs of individuals are mated together to produce offspring. Normally, a <i>Crossover</i> method mixes the chromosomes of the two parents to form new individuals. In our case, mixing lists of sample orientations tends to randomize the result, so we keep the crossover rate low, and most children are clones of their parents.</li>
+<li>Randomly selected genes are <i>Mutated</i>; they can be either completely randomized (a new angle is chosen) or "nudged" by a random amount within a few % of the full range of values. Try either way at different times. </li>
+
+<li>On the left side of the window, you will find all the settings for optimizing the calculation.</li>
 <ul>
 <li>You can hover the mouse over the parameter to get a popup help hint, so we will not be repeating that information in this user guide.</li>
 </ul>
-<li>A few general guidelines for performing optimization with genetic algorithms:</li>
-<ul>
-<li>Very high mutation rates can make it difficult to find a good solution, giving unstable results.</li>
-<li>However, cross-over is effectively a mutation for this type of calculation, so do not rely on it alone to find a solution. Some mutation rate is necessary.</li>
-<li>Later in the evolution, a higher mutation rate with a smaller amount of mutation (the 'Nudge Amount %' parameter) can be helpful.</li>
-</ul>
+<li>You have an option to use the Q-space volume covered, rather than the single reflections. 
+If your crystal unit cell is large and/or you are looking at a large volume of reciprocal space
+ (i.e. you have a very large number of HKL reflections to consider), 
+ this method <i>can</i> compute faster than doing it using the single reflections. Limit your q-space resolution in the Q-Space tab of the Main Window to increase speed (at the expense of precision).</li>
 </ul>
 
 <h4>Performing Optimization</h4>
@@ -816,10 +822,19 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <h4>Observing Results</h4>
 <ul>
 <li>During or after the optimization, click the <img src="screenshots/optim-buttonApply.png" /> button to immediately apply the results. This fills the experiment plan with the best list of sample orientations calculated. <b>Watch out! This clears out any entries already in the experiment plan, without a warning!</b></li>
-<li>You can then inspect the results in the main window and the reciprocal space viewer, even as the optimization continues in the background.</li>
+<li>You can then inspect the results in the main window and the reciprocal space viewer, even as the optimization continues in the background. <b>Warning: This works best when in multiprocessing mode (even with a single processor allocated)! Otherwise, the optimization routine is modifying the current experiment plan constantly, and you will get inconsistent results.</b></li>
 <li>The experiment plan can then be saved to .CSV in the usual way.</li>
 </ul>
 
+<h4>Tips for Faster Convergence</h4>
+<ul>
+<li>Very high mutation rates can make it difficult to find a good solution, giving unstable results.</li>
+<li>However, cross-over is effectively a mutation for this type of calculation, so do not rely on it alone to find a solution. Some mutation rate is necessary.</li>
+<li>Later in the evolution, a higher mutation rate with a smaller amount of mutation (the 'Nudge Amount %' parameter) can be helpful.</li>
+<li>Try to change your mutation settings during optimization; increase then lower the rate, amount, or switch back and forth from nudge mutation to full mutation. Sometimes the population needs a "jolt" of extra mutation to get past a plateau.</li>
+<li>Use multiprocessing, and pick a number of processors that does not exceed your system capabilities. Some of the analysis computers at SNS have many processors (e.g. 32 processors on TOPAZ). </li>
+<li>Your population should be an even multiple of the number of processors allocated. Allocating more processors than population will not be helpful.</li>
+</ul>
 
 </body>
 </html>
