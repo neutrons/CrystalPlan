@@ -298,14 +298,13 @@ class PanelReflectionInfo(wx.Panel):
         i = 0
         for (reflection_number, refl) in enumerate(refls):
             
-            if num_measurements>0:
-                #Add a static text label for the hkl
-                s = "As HKL %d,%d,%d:" % refl.hkl
-                if len(refl.measurements) == 0: s += " (not measured)"
-                txt = wx.StaticText(parent=self.scrolledWindowMeasurements, label=s)
-                self.hkl_static_texts.append(txt)
-                #Slip it in the right spot
-                self.boxSizerScrollWindow.InsertWindow(i+reflection_number+1, txt, 0, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
+            #Add a static text label for the hkl
+            s = "As HKL %d,%d,%d:" % refl.hkl
+            if len(refl.measurements) == 0: s += " (not measured)"
+            txt = wx.StaticText(parent=self.scrolledWindowMeasurements, label=s)
+            self.hkl_static_texts.append(txt)
+            #Slip it in the right spot
+            self.boxSizerScrollWindow.InsertWindow(i+reflection_number+1, txt, 0, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
 
             #Now do all the measurements
             for refl_measurement_number in xrange(len(refl.measurements)):
