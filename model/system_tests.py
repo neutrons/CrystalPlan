@@ -158,83 +158,109 @@ class TestSystem(unittest.TestCase):
         assert numgood==expect_good, "%s: expected %d good peaks, but got %d god peaks.\n%s" % (filebase, expect_good, numgood, out)
 
 
-    def test_compare_to_peaks_file1(self):
-        self.do_test_compare_to_peaks_file("data/natrolite_808_isaw", [0,0,0],
-                measurement_angle=[-np.pi/6,0,0], expect_good=63, expect_bad=11)
+#    def test_compare_to_peaks_file1(self):
+#        self.do_test_compare_to_peaks_file("data/natrolite_808_isaw", [0,0,0],
+#                measurement_angle=[-np.pi/6,0,0], expect_good=63, expect_bad=11)
+#
+#    def test_compare_to_peaks_file2a(self):
+#        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
+#                measurement_file="data/TOPAZ_1204", measurement_angle=[0, np.pi/4,0],
+#                expect_good=34, expect_bad=2)
+#
+#    def test_compare_to_peaks_file2c(self):
+#        self.do_test_compare_to_peaks_file("data/TOPAZ_1204_ev", [0,np.pi/4,0],
+#                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
+#                expect_good=33, expect_bad=4)
+#
+#    def test_compare_to_peaks_file2b(self):
+#        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
+#                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
+#                expect_good=33, expect_bad=4)
+#
+#    def test_compare_to_peaks_file3(self):
+#        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0],
+#                "data/natrolite_808_indexed_with_807", [-np.pi/6,0,0],
+#                expect_bad=17, expect_good=57)
+#
+#    def test_compare_to_peaks_file4(self):
+#        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0], expect_good=39)
+#
+#    def test_compare_to_peaks_file5(self):
+#        self.do_test_compare_to_peaks_file("data/natrolite_808_ev", [-np.pi/6,0,0], expect_good=43)
+#
+#    def test_compare_to_peaks_file_omega_rotation(self):
+#        self.do_test_compare_to_peaks_file("data/natrolite_1223_isaw", [0,0,0],
+#                measurement_file="data/natrolite_1224_with_1223_mat",
+#                measurement_angle=np.deg2rad( [0.114, 45., 90] ), expect_good=114, expect_bad=10)
+#
+#
+#    def test_mask_error(self):
+#        """Error with experiment primary ref mask length not matching timesmeasured length."""
+#        instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")
+#        experiment.exp = experiment.Experiment(instrument.inst)
+#        e = experiment.exp #@type e Experiment
+#        i = instrument.inst #@type i Instrument
+#        i.d_min = 1.0
+#        i.make_qspace()
+#        e.range_automatic = True
+#        e.initialize_reflections()
+#        e.calculate_reflections_mask()
+#        numref = len(e.reflections)
+#        param = experiment.ParamReflectionMasking(use_slice=False)
+#        param.primary_reflections_only = True
+#        e.params[experiment.PARAM_REFLECTION_MASKING] = param
+#        assert len(e.reflections_mask)==numref, "Correct sized mask."
+#        assert len(e.primary_reflections_mask)==numref, "Correct sized primary mask."
+#        c = e.crystal #@type c Crystal
+#        c.read_ISAW_ubmatrix_file("data/natrolite_1223_isaw.mat", angles=[0,0,0])
+#        e.initialize_reflections()
+#        assert len(e.reflections)>numref, "More reflections now"
+#        numref = len(e.reflections)
+#        assert len(e.primary_reflections_mask)==numref, "Correct sized primary mask."
+#        assert len(e.reflections_mask)==numref, "Correct sized mask."
+#        #Change q-space size
+#        i.change_qspace_size({'d_min':0.6})
+#        e.initialize_reflections()
+#        e.recalculate_reflections(None) #<--- this is necessary to make the test pass.
+#        #Check
+#        assert len(e.reflections)>numref, "Even more reflections now"
+#        numref = len(e.reflections)
+#        assert len(e.reflections_mask)==numref, "Correct sized mask."
+#        assert len(e.reflections_times_measured_with_equivalents)==numref, "Correct sized # of times measured."
+#
+#        e.calculate_reflection_coverage_stats(True, 5.0, 5.0)
+#        assert e.reflection_stats_with_symmetry.total == np.sum(e.primary_reflections_mask), "Total reflection stas is the same as the # of primary reflections."
+#        assert e.reflection_stats_with_symmetry.measured <= e.reflection_stats_with_symmetry.total, "Coverage is less than 100%"
+#        assert e.reflection_stats_adjusted_with_symmetry.total == np.sum(e.primary_reflections_mask), "Adjusted: Total reflection stas is the same as the # of primary reflections."
+#        assert e.reflection_stats_adjusted_with_symmetry.measured <= e.reflection_stats_adjusted_with_symmetry.total, "Adjusted: Coverage is less than 100%"
 
-    def test_compare_to_peaks_file2a(self):
-        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
-                measurement_file="data/TOPAZ_1204", measurement_angle=[0, np.pi/4,0],
-                expect_good=34, expect_bad=2)
-
-    def test_compare_to_peaks_file2c(self):
-        self.do_test_compare_to_peaks_file("data/TOPAZ_1204_ev", [0,np.pi/4,0],
-                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
-                expect_good=33, expect_bad=4)
-
-    def test_compare_to_peaks_file2b(self):
-        self.do_test_compare_to_peaks_file("data/TOPAZ_1204", [0, 0, 0],
-                measurement_file="data/TOPAZ_1205_indexed_with_1204", measurement_angle=[np.pi/6, np.pi/4,0],
-                expect_good=33, expect_bad=4)
-
-    def test_compare_to_peaks_file3(self):
-        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0],
-                "data/natrolite_808_indexed_with_807", [-np.pi/6,0,0],
-                expect_bad=17, expect_good=57)
-
-    def test_compare_to_peaks_file4(self):
-        self.do_test_compare_to_peaks_file("data/natrolite_807_ev", [0,0,0], expect_good=39)
-
-    def test_compare_to_peaks_file5(self):
-        self.do_test_compare_to_peaks_file("data/natrolite_808_ev", [-np.pi/6,0,0], expect_good=43)
-
-    def test_compare_to_peaks_file_omega_rotation(self):
-        self.do_test_compare_to_peaks_file("data/natrolite_1223_isaw", [0,0,0],
-                measurement_file="data/natrolite_1224_with_1223_mat",
-                measurement_angle=np.deg2rad( [0.114, 45., 90] ), expect_good=114, expect_bad=10)
 
 
-    def test_mask_error(self):
-        """Error with experiment primary ref mask length not matching timesmeasured length."""
+    def test_reflections_vs_volume(self):
+        #@type e Experiment
+        #@type instr Instrument
         instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")
-        experiment.exp = experiment.Experiment(instrument.inst)
-        e = experiment.exp #@type e Experiment
-        i = instrument.inst #@type i Instrument
-        i.d_min = 1.0
-        i.make_qspace()
+        instr = instrument.inst
+        instr.set_goniometer( goniometer.Goniometer() )
+        instr.make_qspace()
+        self.exp = Experiment(instr)
+        e = self.exp
+        instr.d_min = 1.0
+        instr.wl_min = 0.5
+        instr.wl_max = 4.0
+        e.crystal.read_ISAW_ubmatrix_file("data/natrolite_1223_isaw.mat", angles=[0,0,0])
         e.range_automatic = True
+        e.range_limit_to_sphere = True
         e.initialize_reflections()
-        e.calculate_reflections_mask()
-        numref = len(e.reflections)
-        param = experiment.ParamReflectionMasking(use_slice=False)
-        param.primary_reflections_only = True
-        e.params[experiment.PARAM_REFLECTION_MASKING] = param
-        assert len(e.reflections_mask)==numref, "Correct sized mask."
-        assert len(e.primary_reflections_mask)==numref, "Correct sized primary mask."
-        c = e.crystal #@type c Crystal
-        c.read_ISAW_ubmatrix_file("data/natrolite_1223_isaw.mat", angles=[0,0,0])
-        e.initialize_reflections()
-        assert len(e.reflections)>numref, "More reflections now"
-        numref = len(e.reflections)
-        assert len(e.primary_reflections_mask)==numref, "Correct sized primary mask."
-        assert len(e.reflections_mask)==numref, "Correct sized mask."
-        #Change q-space size
-        i.change_qspace_size({'d_min':0.6})
-        e.initialize_reflections()
-        e.recalculate_reflections(None) #<--- this is necessary to make the test pass.
-        #Check
-        assert len(e.reflections)>numref, "Even more reflections now"
-        numref = len(e.reflections)
-        assert len(e.reflections_mask)==numref, "Correct sized mask."
-        assert len(e.reflections_times_measured_with_equivalents)==numref, "Correct sized # of times measured."
-
-        e.calculate_reflection_coverage_stats(True, 5.0, 5.0)
-        assert e.reflection_stats_with_symmetry.total == np.sum(e.primary_reflections_mask), "Total reflection stas is the same as the # of primary reflections."
-        assert e.reflection_stats_with_symmetry.measured <= e.reflection_stats_with_symmetry.total, "Coverage is less than 100%"
-        assert e.reflection_stats_adjusted_with_symmetry.total == np.sum(e.primary_reflections_mask), "Adjusted: Total reflection stas is the same as the # of primary reflections."
-        assert e.reflection_stats_adjusted_with_symmetry.measured <= e.reflection_stats_adjusted_with_symmetry.total, "Adjusted: Coverage is less than 100%"
-
-
+        #Calculate the volume coverage of the one
+        poscov = instr.simulate_position([0,0,0], e.crystal.get_u_matrix())
+        #Make a parameter for it
+        pos_param = ParamPositions( {id(poscov):True} )
+        self.pos_param = pos_param
+        #CAlculate reflections and total volume
+        e.recalculate_reflections(pos_param)
+        e.calculate_coverage(pos_param, None)
+        
 
 
 

@@ -279,7 +279,7 @@ def make_UB_matrix(lattice_lengths, lattice_angles, sample_phi, sample_chi, samp
     #   We used the same set of phi,chi,omega rotations as for sample orientations.
     U = numpy_utils.rotation_matrix(sample_phi, sample_chi, sample_omega)
 
-    #Return the UB matrix product. U*B
+    #Return the UB matrix product. U*Bget_q_from_hkl
     return np.dot(U, B)
 
 

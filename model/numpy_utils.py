@@ -244,6 +244,22 @@ def index_evenly_spaced(min, max_array_index, spacing, desired):
     return index
 
 #===============================================================================================
+def index_array_evenly_spaced(min, max_array_index, spacing, desired):
+    """Calculate AN ARRAY of indices in an evenly spaced, monotonously increasing array.
+        min: first value of array
+        max_array_index: highest value the index into the array can be
+        spacing: space between elements in array.
+        desired: the values we are looking for, as a 1D numpy array.
+
+    Returns: numpy array, 1D with the index; NaN where out of bounds"""
+
+    index = np.round( (desired-min)/spacing )
+    #Adjust the too-low, too-high indices
+    index[ index < 0 ] = np.nan
+    index[ index >= max_array_index ] = np.nan
+    return index
+
+#===============================================================================================
 #======================== VECTOR AND COLUMN CREATION ===========================================
 #===============================================================================================
 

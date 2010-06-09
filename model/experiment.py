@@ -19,6 +19,7 @@ import os
 import instrument
 import goniometer
 import crystals
+import numpy_utils
 from crystals import Crystal
 from reflections import Reflection
 import crystal_calc
@@ -308,13 +309,17 @@ class ParamReflectionMasking(ParamSlice):
         self.masking_type = 0
         #Are we just showing the primary ones?
         self.primary_reflections_only = False
+        #Are we showing equivalent reflections as counting as measured?
+        self.show_equivalent_reflections = False
 
     def __eq__(self, other):
         """Equality (==) operator."""
         if not ParamSlice.__eq__(self, other):
             return False
         else:
-            return (self.primary_reflections_only == other.primary_reflections_only) and (self.masking_type == other.masking_type)
+            return (self.primary_reflections_only == other.primary_reflections_only) and \
+                    (self.masking_type == other.masking_type) and\
+                    (self.show_equivalent_reflections == other.show_equivalent_reflections)
 
 
 #-------------------------------------------------------------------------------
@@ -578,6 +583,9 @@ class Experiment:
         #Now we find the primary reflections using crystal symmetry.
         self.find_primary_reflections()
 
+        #Clear the list of reflection times measured
+        self.get_reflections_times_measured(clear_list=True)
+
         #At this point, the reflections mask needs to be updated since the reflections changed.
         self.calculate_reflections_mask()
 
@@ -800,6 +808,75 @@ class Experiment:
         self.primary_reflections_mask = primary
 
 
+    #-------------------------------------------------------------------------------
+    def initialize_volume_symmetry_map(self):
+        """Create a map for each q-space voxel that maps it to equivalent symmetry elements"""
+        #@type pg PointGroup
+        pg = self.crystal.get_point_group()
+        if pg is None:
+            print "ERROR!"
+            return
+
+        t1 = time.time()
+
+        order = len(pg.table)
+        #@type inst Instrument
+        inst = self.inst
+
+        #Initialize the symmetry map. Last dimension = the ORDER equivalent indices
+        n = len(inst.qx_list)
+        numpix = n**3
+        symm = np.zeros( (numpix, order) , dtype=int)
+
+        print "Starting volume symmetry calculation. Order is %d. Matrix is %d voxels. n=%d to a side " % (order, n**3, n)
+
+        #--- From get_hkl_from_q functions: (moved here for speed) --
+        #Get the inverse the B matrix to do the reverse conversion
+        B = self.crystal.get_B_matrix()
+        invB = np.linalg.inv(B)
+
+        #Go through each pixel
+        q_arr = np.zeros( (3, numpix) )
+
+        for (ix, qx) in enumerate(inst.qx_list):
+            for (iy, qy) in enumerate(inst.qx_list):
+                for (iz, qz) in enumerate(inst.qx_list):
+                    i = iz + iy*n + ix*n*n
+                    #Find the (float) HKL of this voxel at qx,qy,qz.
+                    q_arr[:, i] = (qx,qy,qz)
+
+        #Matrix multiply invB.hkl to get all the HKLs as a column array
+        hkl = np.dot(invB, q_arr)
+
+        #Limit +- in q space
+        qlim = inst.qlim
+
+        #Now get ORDER equivalent HKLs, as a long list.
+        #(as equivalent q)
+        q_equiv = np.zeros( (3, numpix, order) )
+        for ord in xrange(order):
+            #Ok, we go TABLE . hkl to get the equivalent hkl
+            #Them, B . hkl gives you the Q vector
+            q_equiv[:,:, ord] =  np.dot(B,   np.dot(pg.table[ord], hkl) )
+
+            #Now we need to find the index into the array.
+            #Start by finding the x,y,z, indices
+            ix = numpy_utils.index_array_evenly_spaced(-qlim, n, inst.q_resolution, q_equiv[0, :, ord])
+            iy = numpy_utils.index_array_evenly_spaced(-qlim, n, inst.q_resolution, q_equiv[1, :, ord])
+            iz = numpy_utils.index_array_evenly_spaced(-qlim, n, inst.q_resolution, q_equiv[2, :, ord])
+
+            #Now put the index into the symmetry matrix
+            index = iz + iy*n + ix*n*n
+            index[np.isnan(index)] = -1 #Put -1 where a NAN was found
+            symm[:, ord] = index
+#            print "equivalences %d, q %s" % (i ,q_equiv[:,0, ord])
+#            print symm[0, ord], " or xyz ", ix[0], iy[0], iz[0]
+
+        self.volume_symmetry = symm
+        print "Volume symmetry map done in %.3f sec." % (time.time()-t1)
+
+
+
 
     #-------------------------------------------------------------------------------
     def calculate_peak_shape(self, hkl, delta_hkl, poscov, det_num, num_points=100):
@@ -885,9 +962,6 @@ class Experiment:
                 #This is the sample orientation rotation matrix
                 rot_matrix = self.inst.goniometer.make_sample_rot_matrix(poscov.angles)
 
-                #??? TODO!!! 
-#                rot_matrix = np.linalg.inv(rot_matrix)
-
                 #This UB matrix comes from the crystal data
                 ub_matrix = self.crystal.ub_matrix
                 #Calculate the scattered beam direction and inverse wavelength.
@@ -924,6 +998,13 @@ class Experiment:
         if self.reflections is None:
             return
 
+        #Some checks.
+        if self.reflections_times_measured is None:
+            self.get_reflections_times_measured(None)
+            
+        assert len(self.reflections_times_measured ) == len(self.reflections), "The list of reflections_times_measured should be the same length as the # of reflections."
+        assert len(self.reflections_times_measured_with_equivalents ) == len(self.reflections), "The list of reflections_times_measured_with_equivalents should be the same length as the # of reflections."
+
         #Get the slicing parameters.
         # @type mask_param ParamReflectionMasking
         mask_param = self.params[PARAM_REFLECTION_MASKING]
@@ -946,7 +1027,7 @@ class Experiment:
             #Okay, now look at the other parameters
             if mask_param.masking_type > 0:
                 #Are we gonna use all equivalent reflections?
-                if mask_param.primary_reflections_only:
+                if mask_param.show_equivalent_reflections:
                     rtm = self.reflections_times_measured_with_equivalents.ravel()
                 else:
                     rtm = self.reflections_times_measured.ravel()
@@ -973,7 +1054,7 @@ class Experiment:
         self.reflection_masked_index_to_real_index = np.arange(len(self.reflections))[mask]
 
     #-------------------------------------------------------------------------------
-    def get_reflections_times_measured(self, pos_param=None):
+    def get_reflections_times_measured(self, pos_param=None, clear_list=False):
         """Make the array that holds the # of times each one is measured
         This will speed up drawing.
 
@@ -981,6 +1062,7 @@ class Experiment:
         -----------
             pos_param: a ParamPositions object holding which positions to keep in the calculation.
                 None means use all of them (default).
+            clear_list: set to True to simply generate an empty array here.
         """
         #Make a list of position ids
         if pos_param is None:
@@ -992,13 +1074,17 @@ class Experiment:
         #Initialize the arrays
         rtm = np.zeros( (len(self.reflections), 1) )
         rtme = np.zeros( (len(self.reflections), 1) )
-        for (index, ref) in enumerate(self.reflections):
-            # @type ref Reflection
-            rtm[index, 0] = ref.times_measured(position_ids, add_equivalent_ones=False)
-            rtme[index, 0] = ref.times_measured(position_ids, add_equivalent_ones=True)
+
+        if not clear_list:
+            for (index, ref) in enumerate(self.reflections):
+                # @type ref Reflection
+                rtm[index, 0] = ref.times_measured(position_ids, add_equivalent_ones=False)
+                rtme[index, 0] = ref.times_measured(position_ids, add_equivalent_ones=True)
 
         self.reflections_times_measured = rtm
         self.reflections_times_measured_with_equivalents = rtme
+        assert len(self.reflections_times_measured ) == len(self.reflections), "The list of reflections_times_measured should be the same length as the # of reflections."
+        assert len(self.reflections_times_measured_with_equivalents ) == len(self.reflections), "The list of reflections_times_measured_with_equivalents should be the same length as the # of reflections."
             
 
     #-------------------------------------------------------------------------------
@@ -1231,7 +1317,7 @@ class Experiment:
     def hemisphere_coverage(self):
         """If the parameters require, looks for the best hemisphere and sets it in
         self.optimal_space."""
-        if self.inst is None: 
+        if self.inst is None:
             warnings.warn("experiment.hemisphere_coverage(): called with experiment.inst == None.")
             return
         #Do we need to find the hemisphere?
@@ -1241,7 +1327,7 @@ class Experiment:
         else:
             #Make a bool array in the shape of a sphere, indicating use all space.
             self.optimal_space = (self.inst.qspace_radius < self.inst.qlim)
-        
+
         #Adjust qspace using either the hemisphere or the full sphere
         self.qspace = self.qspace * self.optimal_space
 
@@ -1250,6 +1336,58 @@ class Experiment:
 
         #Now is the time to calculate some stats
         self.calculate_coverage_stats()
+
+
+    #-------------------------------------------------------------------------------
+    def hemisphere_coverage_NEW(self):
+        """If the parameters require, looks for the best hemisphere and sets it in
+        self.optimal_space."""
+        if self.inst is None:
+            warnings.warn("experiment.hemisphere_coverage(): called with experiment.inst == None.")
+            return
+        #Do we need to find the hemisphere?
+        
+        if self.use_hemisphere():
+            #!!! We do the symmetry application
+            self.apply_volume_symmetry()
+
+        #Make a bool array in the shape of a sphere, indicating use all space.
+        self.optimal_space = (self.inst.qspace_radius < self.inst.qlim)
+
+        #Finally, adjust qspace using the full sphere (cut all outside the qlim range)
+        self.qspace = self.qspace * self.optimal_space
+
+        #Continue processing sequentially
+        self.invert_coverage()
+
+        #Now is the time to calculate some stats
+        self.calculate_coverage_stats()
+
+
+    #-------------------------------------------------------------------------------
+    def apply_volume_symmetry(self):
+        """Applies the volume symmetry, in place, to self.qspace"""
+        self.initialize_volume_symmetry_map()
+
+        t1 = time.time()
+
+        #Get the # of pixels and the order from the symmetry map
+        symm = self.volume_symmetry
+        (numpix, order) = symm.shape
+
+        #Clear the starting space
+        old_q = self.qspace
+        new_q = self.qspace * 0
+        for pix in xrange(numpix):
+            for ord in xrange(order):
+                eq_index = symm[pix, ord]
+                if eq_index >= 0:
+                    #Add up to this pixel, the equivalent one.
+                    #The list includes this given voxel too.
+                    new_q.flat[pix] += old_q.flat[eq_index]
+
+        self.qspace = new_q
+        print "Volume symmetry computed in %.3f sec." % (time.time()-t1)
 
     
     #-------------------------------------------------------------------------------
@@ -2142,14 +2280,27 @@ class TestExperiment(unittest.TestCase):
         e2 = loads(datas)
         assert e.crystal.name == e2.crystal.name
         
-
+    def test_volume_symmetry(self):
+        e = self.exp #@type e Experiment
+        e.crystal.lattice_lengths = (10, 10, 10)
+        e.crystal.lattice_angles_deg = (90.0, 90.0, 90.0)
+        e.crystal.lattice_angles_deg = (80., 80., 80.)
+        e.crystal.make_ub_matrix()
+        e.crystal.calculate_reciprocal()
+        e.inst.d_min = 1.0
+        e.inst.q_resolution = 0.5
+        e.inst.make_qspace()
+        #Set the point group using this distorted way
+        e.crystal.point_group_name = crystals.get_point_group_from_name("mmm").long_name
+        e.initialize_volume_symmetry_map()
+        
 
 if __name__ == "__main__":
-    unittest.main()
+#    unittest.main()
     
-#    tst = TestExperiment('test_pickle')
-#    tst.setUp()
-#    tst.test_pickle()
+    tst = TestExperiment('test_volume_symmetry')
+    tst.setUp()
+    tst.test_volume_symmetry()
 
     
 #    import instrument

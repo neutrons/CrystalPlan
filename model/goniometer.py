@@ -198,11 +198,14 @@ class Goniometer(HasTraits):
         return self._wavelength_bandwidth
     def _set_wavelength_bandwidth(self, value):
         self._wavelength_bandwidth = value
-        #Set the range of bandwidth center so that it can't go too low
+        #Set the range of bandwidth center so that it can't go too low or too high, using the
+        #   _wavelength_minimum and _wavelength_maximum
         if hasattr(self, 'wl_angles'):
             if len(self.wl_angles) > 0:
                 self.wl_angles[0].friendly_range[0] = self._wavelength_minimum + value/2.0
                 self.wl_angles[0].random_range[0] = self._wavelength_minimum + value/2.0
+                self.wl_angles[0].friendly_range[1] = self._wavelength_maximum - value/2.0
+                self.wl_angles[0].random_range[1] = self._wavelength_maximum - value/2.0
 
     wavelength_minimum = Property(Float, desc="the minimum wavelength that can be reached, in angstroms. Changing this value changes the allowable range for WL_center.")
     _wavelength_minimum = 0.1
@@ -213,10 +216,20 @@ class Goniometer(HasTraits):
         #This takes care of setting the ranges correctly.
         self._set_wavelength_bandwidth(self._wavelength_bandwidth)
 
+    wavelength_maximum = Property(Float, desc="the maximum wavelength that can be reached, in angstroms. Changing this value changes the allowable range for WL_center.")
+    _wavelength_maximum = 6.0
+    def _get_wavelength_maximum(self):
+        return self._wavelength_maximum
+    def _set_wavelength_maximum(self, value):
+        self._wavelength_maximum = value
+        #This takes care of setting the ranges correctly.
+        self._set_wavelength_bandwidth(self._wavelength_bandwidth)
+
 
     view = View(
-        Item('name'), Item('description'), Item('wavelength_control'), Item('wavelength_bandwidth'),
-        Item('wavelength_minimum'),
+        Item('name'), Item('description'),
+        Item('wavelength_control'),
+        Item('wavelength_bandwidth', visible_when="wavelength_control"),        Item('wavelength_minimum', visible_when="wavelength_control"),        Item('wavelength_maximum', visible_when="wavelength_control"),
         Item('angles_desc', style='readonly')
         )
 
@@ -227,6 +240,7 @@ class Goniometer(HasTraits):
         return (self.name == other.name) and (self.wavelength_control == other.wavelength_control) \
                 and (self.gonio_angles == other.gonio_angles) and (self.wl_angles == other.wl_angles) \
                 and (self.wavelength_minimum == other.wavelength_minimum) \
+                and (self.wavelength_maximum == other.wavelength_maximum) \
                 and (self.wavelength_bandwidth == other.wavelength_bandwidth)
 
     def __ne__(self,other):
@@ -876,8 +890,8 @@ class TopazAmbientGoniometer(LimitedGoniometer):
     chi = Float(np.pi/4, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
     
     view = View(Item('name'), Item('description'),
-                Item('wavelength_control'), Item('wavelength_bandwidth'),
-                Item('wavelength_minimum'),
+                Item('wavelength_control'),
+                Item('wavelength_bandwidth', visible_when="wavelength_control"),        Item('wavelength_minimum', visible_when="wavelength_control"),        Item('wavelength_maximum', visible_when="wavelength_control"),
                 Item('chi'), Item('angles_desc', style='readonly'))
 
     #-------------------------------------------------------------------------
