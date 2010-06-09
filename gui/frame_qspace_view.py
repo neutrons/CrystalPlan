@@ -502,7 +502,7 @@ class QspaceViewController(HasTraits):
         verts.shape = (num, 1)
         pd.verts = verts
         #Put the # of times measured here as the scalar data
-        if display_thread.get_reflection_masking_params().primary_reflections_only:
+        if display_thread.get_reflection_masking_params().show_equivalent_reflections:
             #SHow times measured COUNTING equivalent (symmetrical) reflections.
             pd.point_data.scalars = model.experiment.exp.reflections_times_measured_with_equivalents[mask, :]
         else:
