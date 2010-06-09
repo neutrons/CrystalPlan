@@ -40,7 +40,7 @@ class OptimizationParameters(HasTraits):
 
     number_of_orientations = Int(10, desc="the number of orientations you want in the sample plan.")
     desired_coverage = Float(85.0, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
-    use_volume = Bool(True, label='Optimize Q-volume rather than reflections?\n(EXPERIMENTAL!)', desc='That the optimization will be performed using the reciprocal space volume calculation. \nIf unchecked, the coverage will be calculated as the % of individual reflections that were measured.')
+    use_volume = Bool(False, label='Optimize Q-volume rather than reflections?\n(EXPERIMENTAL!)', desc='That the optimization will be performed using the reciprocal space volume calculation. \nIf unchecked, the coverage will be calculated as the % of individual reflections that were measured.')
     use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection coverage.")
     auto_increment = Bool(False, label='Auto increment # of orientations?', desc="that if the optimization does not converge in the # of generations, add one to the # of sample orientations and try again.")
     avoid_edges = Bool(True, desc="to try to keep reflections away from the detector edges. Any reflection measured close to an edge (within the distance specified below, edge_x, or edge_y) is not considered as 'measured'.")
