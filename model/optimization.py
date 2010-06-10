@@ -41,7 +41,7 @@ class OptimizationParameters(HasTraits):
     number_of_orientations = Int(10, desc="the number of orientations you want in the sample plan.")
     desired_coverage = Float(85.0, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
     use_volume = Bool(False, label='Optimize Q-volume rather than reflections?\n(EXPERIMENTAL!)', desc='That the optimization will be performed using the reciprocal space volume calculation. \nIf unchecked, the coverage will be calculated as the % of individual reflections that were measured.')
-    use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection coverage.")
+    use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection/volume coverage. For example, with mmm symmetry, each reflection has 8 equivalent hkl values. A peak is considered measured if any of the hkl were measured.")
     auto_increment = Bool(False, label='Auto increment # of orientations?', desc="that if the optimization does not converge in the # of generations, add one to the # of sample orientations and try again.")
     avoid_edges = Bool(True, desc="to try to keep reflections away from the detector edges. Any reflection measured close to an edge (within the distance specified below, edge_x, or edge_y) is not considered as 'measured'.")
     edge_x_mm = Float(5.0, label="X-edge in mm", desc="how far away from the edges reflections should be (in X, so how far from the vertical edges)")
@@ -68,7 +68,7 @@ class OptimizationParameters(HasTraits):
             Item('number_of_orientations', enabled_when="not optimization_running"),
             Item('desired_coverage'),
             Item('use_volume', enabled_when="not optimization_running"),
-            Item('use_symmetry', enabled_when="not optimization_running", visible_when="not use_volume"),
+            Item('use_symmetry', enabled_when="not optimization_running"),
             Item('avoid_edges', enabled_when="not optimization_running", visible_when="not use_volume"),
             Item('edge_x_mm', enabled_when="not optimization_running", visible_when="not use_volume"),
             Item('edge_y_mm', enabled_when="not optimization_running", visible_when="not use_volume"),
@@ -488,8 +488,8 @@ def eval_func_volume(genome, verbose=False):
     #Set all the parameters for evaluation
     #Don't add a trial position
     exp.params[experiment.PARAM_TRY_POSITION] = None
-    #No hemispher
-    exp.params[experiment.PARAM_HEMISPHERE] = experiment.ParamHemisphere(False)
+    #Using symmetry is an option when starting optimization.
+    exp.params[experiment.PARAM_SYMMETRY] = experiment.ParamSymmetry(op.use_symmetry)
     #All detectors
     exp.params[experiment.PARAM_DETECTORS] = experiment.ParamDetectors([True]*len(instr.detectors))
     #All positions

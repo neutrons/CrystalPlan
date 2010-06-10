@@ -168,21 +168,10 @@ def launch_gui(inelastic):
     model.experiment.exp = model.experiment.Experiment(model.instrument.inst)
     model.experiment.exp.crystal.point_group_name = model.crystals.get_point_group_names(long_name=True)[0]
 
-    #Some initial calculations
-    if False:
-        import numpy as np
-        for i in np.deg2rad([-5, 0, 5]):
-            model.instrument.inst.simulate_position(list([i,i,i]))
-        pd = dict()
-        for pos in model.instrument.inst.positions:
-            pd[ id(pos) ] = True
-        display_thread.NextParams[model.experiment.PARAM_POSITIONS] = model.experiment.ParamPositions(pd)
-        #Do some reflections
-        model.experiment.exp.initialize_reflections()
-        model.experiment.exp.recalculate_reflections(model.experiment.ParamPositions(pd))
-    else:
-        model.experiment.exp.initialize_reflections()
-        model.experiment.exp.recalculate_reflections(None)
+    #Initialize what needs to.
+    model.experiment.exp.initialize_volume_symmetry_map()
+    model.experiment.exp.initialize_reflections()
+    model.experiment.exp.recalculate_reflections(None)
 
     #Initialize the application
     application = CrystalPlanApp(0)

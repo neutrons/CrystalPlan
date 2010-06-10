@@ -81,10 +81,10 @@ class PanelCoverageStats(wx.Panel):
 
 
     #-----------------------------------------------------------------------------------------------
-    def show_stats(self, hemisphere, coverage_pct, redundant_pct):
+    def show_stats(self, symmetry, coverage_pct, redundant_pct):
         """Update the information displayed on the statistics panel."""
-        if hemisphere:
-            self.staticTextStats1.SetLabel("Hemisphere Coverage:")
+        if symmetry:
+            self.staticTextStats1.SetLabel("Coverage with Symmetry:")
         else:
             self.staticTextStats1.SetLabel("Full Sphere Coverage:")
 

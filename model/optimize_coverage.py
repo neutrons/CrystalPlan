@@ -173,7 +173,7 @@ class DetectorChoice(Organism):
 
     #----------------------------------------------------------------
     def fitness(self):
-        """Return the coverage of an optimal hemisphere using these."""
+        """Fitness of this individual"""
         global count_fitness, saved_fitness
         count_fitness += 1
         #Get the list
@@ -208,8 +208,6 @@ class DetectorChoice(Organism):
             detectors[detnum] = True
         #Save as parameter
         experiment.exp.params[experiment.PARAM_DETECTORS] = experiment.ParamDetectors(detectors)
-        #Extra parameters - yes, use a hemisphere.
-        experiment.exp.params[experiment.PARAM_HEMISPHERE] = experiment.ParamHemisphere(True)
         #Do the calculationg
         experiment.exp.calculate_coverage()
         #Return the NON-covered % as the fitness value

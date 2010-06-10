@@ -557,18 +557,18 @@ def user_guide_script():
     ca(screenshot_of, tv.sliceControl, '3d-sliceControl', margin=10)
 
 
-    ca(screenshot_of, tv.checkHemisphere, 'volume_options-checkHemisphere', margin=check_margin)
-    ca(check, tv.checkHemisphere, True)
+    ca(screenshot_of, tv.checkSymmetry, 'volume_options-checkSymmetry', margin=check_margin)
+    ca(check, tv.checkSymmetry, True)
     wait(600)
-    ca(screenshot_of, fv.control, '3d-hemisphere', margin=control_margins, gradient_edge=control_gradient_edge)
-    ca(screenshot_of, fv.panelStats, '3d-panelStats-hemisphere', margin=10)
+    ca(screenshot_of, fv.control, '3d-symmetry', margin=control_margins, gradient_edge=control_gradient_edge)
+    ca(screenshot_of, fv.panelStats, '3d-panelStats-symmetry', margin=10)
 
     ca(screenshot_of, tv.checkInvert, 'volume_options-checkInvert', margin=check_margin)
     ca(check, tv.checkInvert, True)
     wait(600)
     ca(screenshot_of, fv.control, '3d-inverted', margin=control_margins, gradient_edge=control_gradient_edge)
     ca(check, tv.checkInvert, False)
-    ca(check, tv.checkHemisphere, False)
+    ca(check, tv.checkSymmetry, False)
     ca(check, tv.checkShowRedundancy, True)
     wait(1200)
 

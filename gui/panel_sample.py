@@ -255,6 +255,9 @@ class PanelSample(wx.Panel):
         old_U = model.experiment.exp.crystal.get_u_matrix()
         
         if dialog_edit_crystal.show_dialog(self, model.experiment.exp.crystal):
+            #Whenever the crystal changes, you need a new symmetry map.
+            model.experiment.exp.initialize_volume_symmetry_map()
+
             #User clicked okay, something (proably) changed
             new_U = model.experiment.exp.crystal.get_u_matrix()
             if not np.allclose(old_U, new_U):

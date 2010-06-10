@@ -760,7 +760,7 @@ class QspaceViewController(HasTraits):
         if self.in_volume_mode():
             #Volume coverage
             self.parent_frame.stats_panel.show_stats( \
-                exp.use_hemisphere(),
+                exp.use_symmetry(),
                 exp.overall_coverage,
                 exp.overall_redundancy )
         else:

@@ -22,7 +22,7 @@ import model
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-[wxID_PanelQspaceOptions, wxID_PanelQspaceOptionsCHECKHEMISPHERE,
+[wxID_PanelQspaceOptions, wxID_PanelQspaceOptionsCHECKSYMMETRY,
  wxID_PanelQspaceOptionsCHECKINVERT,
  wxID_PanelQspaceOptionsCHECKREALTIMESLICE,
  wxID_PanelQspaceOptionsCHECKSHOWREDUNDANCY,
@@ -55,10 +55,10 @@ class QspaceOptionsController:
         #Tell the experiment to invert and then recalculate the slice.
         display_thread.NextParams[model.experiment.PARAM_INVERT] = model.experiment.ParamInvert(inversion)
 
-    def set_hemisphere(self, hemi):
-        """Sets whether the coverage will use the optimal hemisphere."""
+    def set_symmetry(self, value):
+        """Sets whether the coverage will use the crystal symmetry."""
         #This will tell the display_thread what to do.
-        display_thread.NextParams[model.experiment.PARAM_HEMISPHERE] = model.experiment.ParamHemisphere(hemi)
+        display_thread.NextParams[model.experiment.PARAM_SYMMETRY] = model.experiment.ParamSymmetry(value)
 
     def show_redundancy(self, value):
         """Sets whether the redundancy is displayed graphically (using transparent isosurfaces)."""
@@ -128,7 +128,7 @@ class PanelQspaceOptions(wx.Panel):
     def _init_coll_boxSizerTop_Items(self, parent):
         # generated method, don't edit
 
-        parent.AddWindow(self.checkHemisphere, 0, border=4,
+        parent.AddWindow(self.checkSymmetry, 0, border=4,
               flag=wx.LEFT | wx.RIGHT)
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(self.checkShowRedundancy, 0, border=0, flag=0)
@@ -185,14 +185,13 @@ class PanelQspaceOptions(wx.Panel):
         self.checkInvert.Bind(wx.EVT_CHECKBOX, self.OnCheckInvertCheckbox,
               id=wxID_PanelQspaceOptionsCHECKINVERT)
 
-        self.checkHemisphere = wx.CheckBox(id=wxID_PanelQspaceOptionsCHECKHEMISPHERE,
-              label=u'Find and show the optimal hemisphere',
-              name=u'checkHemisphere', parent=self, pos=wx.Point(4, 0),
-              size=wx.Size(296, 22), style=0)
-        self.checkHemisphere.SetValue(False)
-        self.checkHemisphere.Bind(wx.EVT_CHECKBOX,
-              self.OnCheckHemisphereCheckbox,
-              id=wxID_PanelQspaceOptionsCHECKHEMISPHERE)
+        self.checkSymmetry = wx.CheckBox(id=wxID_PanelQspaceOptionsCHECKSYMMETRY,
+              label=u'Use crystal symmetry?   ',
+              name=u'checkSymmetry', parent=self, pos=wx.Point(4, 0), style=0)
+        self.checkSymmetry.SetValue(False)
+        self.checkSymmetry.Bind(wx.EVT_CHECKBOX,
+              self.OnCheckSymmetryCheckbox,
+              id=wxID_PanelQspaceOptionsCHECKSYMMETRY)
 
         self.checkShowRedundancy = wx.CheckBox(id=wxID_PanelQspaceOptionsCHECKSHOWREDUNDANCY,
               label=u'Show Redundancy', name=u'checkShowRedundancy',
@@ -263,8 +262,8 @@ class PanelQspaceOptions(wx.Panel):
         self.controller.set_invert( self.checkInvert.GetValue() )
         event.Skip()
 
-    def OnCheckHemisphereCheckbox(self, event):
-        self.controller.set_hemisphere( self.checkHemisphere.GetValue() )
+    def OnCheckSymmetryCheckbox(self, event):
+        self.controller.set_symmetry( self.checkSymmetry.GetValue() )
         event.Skip()
 
     def OnCheckShowRedundancyCheckbox(self, event):

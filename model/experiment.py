@@ -19,6 +19,7 @@ import os
 import instrument
 import goniometer
 import crystals
+import config
 import numpy_utils
 from crystals import Crystal
 from reflections import Reflection
@@ -81,7 +82,7 @@ PARAM_DETECTORS = "PARAM_DETECTORS"
 PARAM_SLICE = "PARAM_SLICE"
 PARAM_ENERGY_SLICE = "PARAM_ENERGY_SLICE"
 PARAM_INVERT = "PARAM_INVERT"
-PARAM_HEMISPHERE = "PARAM_HEMISPHERE"
+PARAM_SYMMETRY = "PARAM_SYMMETRY"
 PARAM_DISPLAY = "PARAM_DISPLAY"
 PARAM_REFLECTIONS = "PARAM_REFLECTIONS"
 PARAM_REFLECTION_MASKING = "PARAM_REFLECTION_MASKING"
@@ -89,7 +90,7 @@ PARAM_REFLECTION_HIGHLIGHTING = "PARAM_REFLECTION_HIGHLIGHTING"
 PARAM_REFLECTION_DISPLAY = "PARAM_REFLECTION_DISPLAY"
 
 #List of all valid parameters (see above)
-VALID_PARAMS = [PARAM_POSITIONS, PARAM_TRY_POSITION, PARAM_DETECTORS, PARAM_ENERGY_SLICE, PARAM_SLICE, PARAM_INVERT, PARAM_HEMISPHERE, PARAM_DISPLAY, PARAM_REFLECTIONS, PARAM_REFLECTION_MASKING, PARAM_REFLECTION_HIGHLIGHTING, PARAM_REFLECTION_DISPLAY]
+VALID_PARAMS = [PARAM_POSITIONS, PARAM_TRY_POSITION, PARAM_DETECTORS, PARAM_ENERGY_SLICE, PARAM_SLICE, PARAM_INVERT, PARAM_SYMMETRY, PARAM_DISPLAY, PARAM_REFLECTIONS, PARAM_REFLECTION_MASKING, PARAM_REFLECTION_HIGHLIGHTING, PARAM_REFLECTION_DISPLAY]
 
 #-------------------------------------------------------------------------------
 class ParamsDict(dict):
@@ -215,18 +216,18 @@ class ParamDetectors(Params):
             return False
 
 #-------------------------------------------------------------------------------
-class ParamHemisphere(Params):
-    """Do you find and display only the optimally-covered hemisphere?"""
+class ParamSymmetry(Params):
+    """Consider crystal symmetry in q-space volume calculation?"""
     
-    def __init__(self, hemisphere):
-        #Whether or not you use a hemisphere optimization
-        self.hemisphere = hemisphere
+    def __init__(self, use_symmetry):
+        #Whether or not you use symmetry
+        self.use_symmetry = use_symmetry
 
     def __eq__(self, other):
         """Equality (==) operator."""
         if (self is None): return (other is None)
         if (other is None): return (self is None)
-        return (self.hemisphere == other.hemisphere)
+        return (self.use_symmetry == other.use_symmetry)
 
 
 
@@ -461,9 +462,6 @@ class Experiment:
 
         #q-space coverage map, with the current settings. Indices are x,y,z
         self.qspace = None
-
-        #Bool array of the optimal hemisphere of coverage.
-        self.optimal_space = None
 
         #Slice from qmin to qmax of the qspace found
         self.qspace_displayed = None
@@ -806,77 +804,6 @@ class Experiment:
         if verbose: print [refl.hkl for refl in self.reflections if refl.primary]
 
         self.primary_reflections_mask = primary
-
-
-    #-------------------------------------------------------------------------------
-    def initialize_volume_symmetry_map(self):
-        """Create a map for each q-space voxel that maps it to equivalent symmetry elements"""
-        #@type pg PointGroup
-        pg = self.crystal.get_point_group()
-        if pg is None:
-            print "ERROR!"
-            return
-
-        t1 = time.time()
-
-        order = len(pg.table)
-        #@type inst Instrument
-        inst = self.inst
-
-        #Initialize the symmetry map. Last dimension = the ORDER equivalent indices
-        n = len(inst.qx_list)
-        numpix = n**3
-        symm = np.zeros( (numpix, order) , dtype=int)
-
-        print "Starting volume symmetry calculation. Order is %d. Matrix is %d voxels. n=%d to a side " % (order, n**3, n)
-
-        #--- From get_hkl_from_q functions: (moved here for speed) --
-        #Get the inverse the B matrix to do the reverse conversion
-        B = self.crystal.get_B_matrix()
-        invB = np.linalg.inv(B)
-
-        #Go through each pixel
-        q_arr = np.zeros( (3, numpix) )
-
-        for (ix, qx) in enumerate(inst.qx_list):
-            for (iy, qy) in enumerate(inst.qx_list):
-                for (iz, qz) in enumerate(inst.qx_list):
-                    i = iz + iy*n + ix*n*n
-                    #Find the (float) HKL of this voxel at qx,qy,qz.
-                    q_arr[:, i] = (qx,qy,qz)
-
-        #Matrix multiply invB.hkl to get all the HKLs as a column array
-        hkl = np.dot(invB, q_arr)
-
-        #Limit +- in q space
-        qlim = inst.qlim
-
-        #Now get ORDER equivalent HKLs, as a long list.
-        #(as equivalent q)
-        q_equiv = np.zeros( (3, numpix, order) )
-        for ord in xrange(order):
-            #Ok, we go TABLE . hkl to get the equivalent hkl
-            #Them, B . hkl gives you the Q vector
-            q_equiv[:,:, ord] =  np.dot(B,   np.dot(pg.table[ord], hkl) )
-
-            #Now we need to find the index into the array.
-            #Start by finding the x,y,z, indices
-            ix = numpy_utils.index_array_evenly_spaced(-qlim, n, inst.q_resolution, q_equiv[0, :, ord])
-            iy = numpy_utils.index_array_evenly_spaced(-qlim, n, inst.q_resolution, q_equiv[1, :, ord])
-            iz = numpy_utils.index_array_evenly_spaced(-qlim, n, inst.q_resolution, q_equiv[2, :, ord])
-
-            #Now put the index into the symmetry matrix
-            index = iz + iy*n + ix*n*n
-            index[np.isnan(index)] = -1 #Put -1 where a NAN was found
-            symm[:, ord] = index
-#            print "equivalences %d, q %s" % (i ,q_equiv[:,0, ord])
-#            print symm[0, ord], " or xyz ", ix[0], iy[0], iz[0]
-
-        self.volume_symmetry = symm
-        print "Volume symmetry map done in %.3f sec." % (time.time()-t1)
-
-
-
 
     #-------------------------------------------------------------------------------
     def calculate_peak_shape(self, hkl, delta_hkl, poscov, det_num, num_points=100):
@@ -1301,63 +1228,177 @@ class Experiment:
             self.qspace = self.inst.total_coverage(detectors, positions_used)
 
         #Continue processing sequentially
-        self.hemisphere_coverage()
+        self.symmetry_coverage()
+
+
+
+    #-------------------------------------------------------------------------------
+    def initialize_volume_symmetry_map(self):
+        """Create a map for each q-space voxel that maps it to equivalent symmetry elements"""
+        #@type pg PointGroup
+        pg = self.crystal.get_point_group()
+        if pg is None:
+            print "ERROR!"
+            return
+
+        t1 = time.time()
+
+        order = len(pg.table)
+        #@type inst Instrument
+        inst = self.inst
+
+        #Initialize the symmetry map. Last dimension = the ORDER equivalent indices
+        n = len(inst.qx_list)
+        numpix = n**3
+        symm = np.zeros( (numpix, order) , dtype=int)
+
+        if self.verbose: print "Starting volume symmetry calculation. Order is %d. Matrix is %d voxels (%d to a side)." % (order, n**3, n)
+
+        #--- From get_hkl_from_q functions: (moved here for speed) --
+        #Get the inverse the B matrix to do the reverse conversion
+        B = self.crystal.get_B_matrix()
+        invB = np.linalg.inv(B)
+
+        #Limit +- in q space
+        qlim = inst.qlim
+        
+        if config.cfg.force_pure_python:
+            #----------- Pure Python Version --------------
+
+            #Go through each pixel
+            q_arr = np.zeros( (3, numpix) )
+            for (ix, qx) in enumerate(inst.qx_list):
+                for (iy, qy) in enumerate(inst.qx_list):
+                    for (iz, qz) in enumerate(inst.qx_list):
+                        i = iz + iy*n + ix*n*n
+                        #Find the (float) HKL of this voxel at qx,qy,qz.
+                        q_arr[:, i] = (qx,qy,qz)
+
+            #Matrix multiply invB.hkl to get all the HKLs as a column array
+            hkl = np.dot(invB, q_arr)
+
+            #Now get ORDER equivalent HKLs, as a long list.
+            #(as equivalent q)
+            q_equiv = np.zeros( (3, numpix, order) )
+            for ord in xrange(order):
+                #Ok, we go TABLE . hkl to get the equivalent hkl
+                #Them, B . hkl gives you the Q vector
+                q_equiv[:,:, ord] =  np.dot(B,   np.dot(pg.table[ord], hkl) )
+
+                #Now we need to find the index into the array.
+                #Start by finding the x,y,z, indices
+                ix = numpy_utils.index_array_evenly_spaced(-qlim, n, inst.q_resolution, q_equiv[0, :, ord])
+                iy = numpy_utils.index_array_evenly_spaced(-qlim, n, inst.q_resolution, q_equiv[1, :, ord])
+                iz = numpy_utils.index_array_evenly_spaced(-qlim, n, inst.q_resolution, q_equiv[2, :, ord])
+
+                #Now put the index into the symmetry matrix
+                index = iz + iy*n + ix*n*n
+                index[np.isnan(index)] = -1 #Put -1 where a NAN was found
+                symm[:, ord] = index
+
+
+        else:
+            #--------------- Inline C version (about 17x faster than Python) ---------------
+            code = """
+
+            //-- Calculate  the hkl array ---
+            int ix, iy, iz;
+            int eix, eiy, eiz, eindex;
+            int index, ord;
+            double qx, qy, qz;
+            double eqx, eqy, eqz;
+            double h, k, l;
+            double eh, ek, el;
+            for (ix=0; ix<n; ix++)
+            {
+                qx = ix*qres - qlim;
+                for (iy=0; iy<n; iy++)
+                {
+                    qy = iy*qres - qlim;
+                    for (iz=0; iz<n; iz++)
+                    {
+                        qz = iz*qres - qlim;
+                        index = iz + iy*n + ix*n*n;
+                        //Ok, now we matrix multiply invB.hkl to get all the HKLs as a column array
+                        h = qx * INVB2(0,0) + qy * INVB2(0,1) + qz * INVB2(0,2);
+                        k = qx * INVB2(1,0) + qy * INVB2(1,1) + qz * INVB2(1,2);
+                        l = qx * INVB2(2,0) + qy * INVB2(2,1) + qz * INVB2(2,2);
+
+                        //Now go through each equivalency table.
+                        for (ord=0; ord<order; ord++)
+                        {
+                            //Do TABLE.hkl to find a new equivalent hkl
+                            eh = h * TABLE3(ord, 0,0) + k * TABLE3(ord, 0,1) + l * TABLE3(ord, 0,2);
+                            ek = h * TABLE3(ord, 1,0) + k * TABLE3(ord, 1,1) + l * TABLE3(ord, 1,2);
+                            el = h * TABLE3(ord, 2,0) + k * TABLE3(ord, 2,1) + l * TABLE3(ord, 2,2);
+                            //Now, matrix mult B . equiv_hkl to get the other q vector
+                            eqx = eh * B2(0,0) + ek * B2(0,1) + el * B2(0,2);
+                            eqy = eh * B2(1,0) + ek * B2(1,1) + el * B2(1,2);
+                            eqz = eh * B2(2,0) + ek * B2(2,1) + el * B2(2,2);
+
+                            //Ok, now you have to find the index into QSPACE
+                            eix = round( (eqx+qlim)/qres ); if ((eix >= n) || (eix < 0)) eix = -1; 
+                            eiy = round( (eqy+qlim)/qres ); if ((eiy >= n) || (eiy < 0)) eiy = -1;
+                            eiz = round( (eqz+qlim)/qres ); if ((eiz >= n) || (eiz < 0)) eiz = -1;
+
+                            if ((eix < 0) || (eiy < 0) || (eiz < 0))
+                            {
+                                //One of the indices was out of bounds.
+                                //Put this marker to mean NO EQUIVALENT
+                                SYMM2(index, ord) = -1;
+                            }
+                            else
+                            {
+                                //No problem!, Now I put it in there
+                                eindex = eiz + eiy*n + eix*n*n;
+                                //This pixel (index) has this equivalent pixel index (eindex) for this order transform ord.
+                                SYMM2(index, ord) = eindex;
+                            }
+
+                        }
+                        
+                    }
+                }
+            }
+            """
+            qres = inst.q_resolution
+            n = len(self.inst.qx_list)
+            table = np.array(pg.table) #Turn the list of 3x3 arrays into a Nx3x3 array
+            varlist = ['B', 'invB', 'symm', 'qres', 'qlim', 'n', 'order', 'table']
+            weave.inline(code, varlist, compiler='gcc', support_code="")
+
+        #Done with either version
+        self.volume_symmetry = symm
+
+        if self.verbose: print "Volume symmetry map done in %.3f sec." % (time.time()-t1)
+
+
         
     #-------------------------------------------------------------------------------
-    def use_hemisphere(self):
-        """Utility functions returns True if the parameters say to use an optimal hemisphere"""
-        hemisphere = self.params[PARAM_HEMISPHERE]
-        if hemisphere is None:
+    def use_symmetry(self):
+        """Utility functions returns True if the parameters say to use crystal symmetry"""
+        symmetry = self.params[PARAM_SYMMETRY]
+        if symmetry is None:
             #Default to false if no parameter.
             return False
         else:
-            return hemisphere.hemisphere
+            return symmetry.use_symmetry
 
     #-------------------------------------------------------------------------------
-    def hemisphere_coverage(self):
-        """If the parameters require, looks for the best hemisphere and sets it in
-        self.optimal_space."""
+    def symmetry_coverage(self):
+        """If the parameters require, use the crystal symmetry"""
         if self.inst is None:
-            warnings.warn("experiment.hemisphere_coverage(): called with experiment.inst == None.")
+            warnings.warn("experiment.symmetry_coverage(): called with experiment.inst == None.")
             return
-        #Do we need to find the hemisphere?
-        if self.use_hemisphere():
-            #This bool array will have the hemisphere
-            self.optimal_space = self.find_optimal_hemisphere(self.qspace)
-        else:
-            #Make a bool array in the shape of a sphere, indicating use all space.
-            self.optimal_space = (self.inst.qspace_radius < self.inst.qlim)
-
-        #Adjust qspace using either the hemisphere or the full sphere
-        self.qspace = self.qspace * self.optimal_space
-
-        #Continue processing sequentially
-        self.invert_coverage()
-
-        #Now is the time to calculate some stats
-        self.calculate_coverage_stats()
-
-
-    #-------------------------------------------------------------------------------
-    def hemisphere_coverage_NEW(self):
-        """If the parameters require, looks for the best hemisphere and sets it in
-        self.optimal_space."""
-        if self.inst is None:
-            warnings.warn("experiment.hemisphere_coverage(): called with experiment.inst == None.")
-            return
-        #Do we need to find the hemisphere?
         
-        if self.use_hemisphere():
-            #!!! We do the symmetry application
+        if self.use_symmetry():
+            #We do the symmetry application here
             self.apply_volume_symmetry()
 
-        #Make a bool array in the shape of a sphere, indicating use all space.
-        self.optimal_space = (self.inst.qspace_radius < self.inst.qlim)
+        #Adjust qspace using the full sphere (cut all outside the qlim range)
+        self.qspace = self.qspace * (self.inst.qspace_radius < self.inst.qlim)
 
-        #Finally, adjust qspace using the full sphere (cut all outside the qlim range)
-        self.qspace = self.qspace * self.optimal_space
-
-        #Continue processing sequentially
+        #Continue processing sequentially. Invert?
         self.invert_coverage()
 
         #Now is the time to calculate some stats
@@ -1365,29 +1406,63 @@ class Experiment:
 
 
     #-------------------------------------------------------------------------------
-    def apply_volume_symmetry(self):
+    def apply_volume_symmetry(self, use_inline_c=True):
         """Applies the volume symmetry, in place, to self.qspace"""
-        self.initialize_volume_symmetry_map()
-
         t1 = time.time()
 
         #Get the # of pixels and the order from the symmetry map
         symm = self.volume_symmetry
         (numpix, order) = symm.shape
 
-        #Clear the starting space
-        old_q = self.qspace
-        new_q = self.qspace * 0
-        for pix in xrange(numpix):
-            for ord in xrange(order):
-                eq_index = symm[pix, ord]
-                if eq_index >= 0:
-                    #Add up to this pixel, the equivalent one.
-                    #The list includes this given voxel too.
-                    new_q.flat[pix] += old_q.flat[eq_index]
+        if use_inline_c and not config.cfg.force_pure_python:
+            #------ C version (about 400x faster than python) -------
+            #Put some variables in the workspace
+            old_q = self.qspace.flatten() * 1.0
+            qspace_flat = old_q * 0.0
 
-        self.qspace = new_q
-        print "Volume symmetry computed in %.3f sec." % (time.time()-t1)
+            support = ""
+            code = """
+            int pix, ord, index;
+            for (pix=0; pix<numpix; pix++)
+            {
+                //Go through each pixel
+                for (ord=0; ord<order; ord++)
+                {
+                    //Now go through each equivalent q.
+                    index = SYMM2(pix, ord);
+                    if (index >= 0)
+                    {
+                        //Valid index.
+                        QSPACE_FLAT1(pix) += OLD_Q1(index);
+                        //printf("%d\\n", index);
+                    }
+                }
+            }
+            """
+            varlist = ['old_q', 'qspace_flat', 'numpix', 'order', 'symm']
+            weave.inline(code, varlist, compiler='gcc', support_code=support)
+            #Reshape it back as a 3D array.
+            n = len(self.inst.qx_list)
+            self.qspace = qspace_flat.reshape( (n,n,n) )
+        else:
+            #---- Pure python version ----
+
+            #Clear the starting space
+            old_q = self.qspace
+            new_q = self.qspace * 0
+            for pix in xrange(numpix):
+                for ord in xrange(order):
+                    eq_index = symm[pix, ord]
+                    if eq_index >= 0:
+                        #Add up to this pixel, the equivalent one.
+                        #The list includes this given voxel too.
+                        new_q.flat[pix] += old_q.flat[eq_index]
+            self.qspace = new_q
+
+        #Done.
+        if self.verbose: print "Volume symmetry computed in %.3f sec." % (time.time()-t1)
+
+
 
     
     #-------------------------------------------------------------------------------
@@ -1410,9 +1485,6 @@ class Experiment:
         if do_invert:
             #Ok, we invert, and account for the sphere that fits in the box
             self.qspace_displayed = 1.0*(self.qspace == 0) * (self.inst.qspace_radius < self.inst.qlim)
-            if self.use_hemisphere():
-                #Invert but keep the hemisphere
-                self.qspace_displayed = self.qspace_displayed * self.optimal_space
         else:
             #Or we don't
             self.qspace_displayed = self.qspace.copy()
@@ -1522,7 +1594,7 @@ class Experiment:
         #Initialize the list
         self.coverage_stats = list()
 
-        if False:
+        if config.cfg.force_pure_python:
             #Overall calcs
             (self.overall_coverage, self.overall_redundancy) = self.overall_coverage_stats(self.qspace)
 
@@ -1534,9 +1606,6 @@ class Experiment:
                 covstat = CoverageStats(qmin, qmax)
 
                 bool_array = ((self.inst.qspace_radius < qmax) & (self.inst.qspace_radius > qmin))
-                #If we use a hemisphere, we ignore points outside of it
-                if self.use_hemisphere():
-                    bool_array = bool_array & self.optimal_space
                 #Calculate the slice
                 points_in_slice = np.sum(bool_array)
                 slice = (self.qspace * bool_array)
@@ -1556,10 +1625,9 @@ class Experiment:
             covered_points2 = np.zeros(num)
             covered_points3 = np.zeros(num)
             total_points = np.zeros(num)
-            qspace_radius = self.inst.qspace_radius
-            qspace = self.qspace
+            qspace_radius = self.inst.qspace_radius.flatten()
+            qspace = self.qspace.flatten()
             qspace_size = qspace.size
-            optimal_space = self.optimal_space
             
             support = ""
             code = """
@@ -1572,14 +1640,13 @@ class Experiment:
             
             for (i=0; i<qspace_size; i++)
             {
-                //Check if we are within the optimal hemisphere. That array is fully True if
-                // no hemisphere is chosen.
-                if (optimal_space[i])
-                {
-                    //Coverage value at this points
-                    val = qspace[i];
+                //Coverage value at this points
+                val = QSPACE1(i);
 
-                    //Do the overall stats
+                //Do the overall stats
+                if (QSPACE_RADIUS1(i) < qlim)
+                {
+                    //But only within the sphere
                     overall_points++;
                     if (val > 0)
                     {
@@ -1589,25 +1656,25 @@ class Experiment:
                             overall_redundant_points++;
                         }
                     }
+                }
 
-                    //Which slice are we looking at?
-                    slice = qspace_radius[i] / q_step;
-                    if ((slice < num) && (slice >= 0))
+                //Which slice are we looking at?
+                slice = QSPACE_RADIUS1(i) / q_step;
+                if ((slice < num) && (slice >= 0))
+                {
+                    total_points[slice]++;
+                    if (val>0)
                     {
-                        total_points[slice]++;
-                        if (val>0)
+                        covered_points0[slice]++;
+                        if (val>1)
                         {
-                            covered_points0[slice]++;
-                            if (val>1)
+                            covered_points1[slice]++;
+                            if (val>2)
                             {
-                                covered_points1[slice]++;
-                                if (val>2)
+                                covered_points2[slice]++;
+                                if (val>3)
                                 {
-                                    covered_points2[slice]++;
-                                    if (val>3)
-                                    {
-                                        covered_points3[slice]++;
-                                    }
+                                    covered_points3[slice]++;
                                 }
                             }
                         }
@@ -1621,7 +1688,7 @@ class Experiment:
             results[2] = overall_redundant_points;
             return_val = results;
             """
-            ret_val = weave.inline(code,['qspace', 'optimal_space', 'qspace_radius', 'q_step', 'qlim', 'total_points', 'qspace_size', 'num', 'covered_points0', 'covered_points1', 'covered_points2', 'covered_points3'],
+            ret_val = weave.inline(code,['qspace', 'qspace_radius', 'q_step', 'qlim', 'total_points', 'qspace_size', 'num', 'covered_points0', 'covered_points1', 'covered_points2', 'covered_points3'],
                                 compiler='gcc', support_code = support)
             #The function returns a tuple
             (overall_points, overall_covered_points, overall_redundant_points) = ret_val
@@ -1648,15 +1715,15 @@ class Experiment:
     #-------------------------------------------------------------------------------
     def overall_coverage_stats(self, qspace):
         """Given a 3D qspace coverage array, calculate the overall coverage % of a sphere.
+        
+        Parameters:
             qspace: 3D array of coverage; points should be limited to a sphere of the same size.
-        Returns a tuple with the (coverage, redundancy)."""
+            
+        Returns a tuple with the (coverage, redundancy) as percentage."""
         if self.inst is None: return
         t1 = time.time()
-        qlim = self.inst.qlim
-        #This is either a full sphere or a hemisphere.
-        bool_array = self.optimal_space
         #Add up the points
-        points_in_sphere = np.sum(bool_array)
+        points_in_sphere = np.sum((self.inst.qspace_radius < self.inst.qlim))
         covered_in_sphere = np.sum( qspace > 0)
         redundant_in_sphere = np.sum( qspace > 1)
         coverage = 100.0 * covered_in_sphere/points_in_sphere
@@ -1779,90 +1846,6 @@ class Experiment:
         return (coverage_q, coverage_data)
     
 
-    #-------------------------------------------------------------------------------
-    def find_optimal_hemisphere(self, qspace):
-        """Look for the hemisphere in q-space that gives the highest total coverage.
-        This works by doing a center of mass calculation to find where most of the coverage is centered.
-        Arguments:
-            qspace: the coverage map.
-        Returns:
-            optimal_space, a 3D bool array giving a hemisphere pointing that direction.
-        """
-        t1 = time.time()
-
-        #We calculate the center of mass of the coverage space (ignoring double-measured points).
-        import scipy
-        center = np.array( scipy.ndimage.measurements.center_of_mass( (qspace > 0) ) , dtype=np.double)
-        #Number of points in each dimension
-        num = len(self.inst.qx_list)
-        center = ( center/ (num/2) ) - 1
-
-        if any( np.isnan(center) ):
-            #Invalid center found, most likely from empty q-space
-            #Use a default value
-            center = np.array([1, 0, 0])
-
-        #The center of mass is the normal to the plane of the hemisphere
-        #Calling that normal nx, ny, nz, the plane equation is x*nx + y*ny + z*nz >= 0
-
-        if True:
-            #--- Inline C version ---
-            #   (about 10x faster than the Python version)
-            #Create an empty bool array
-            optimal_space = np.zeros( qspace.shape, dtype=bool)
-
-            #These arguments are for the inline C call.
-            nx = float(center[0])
-            ny = float(center[1])
-            nz = float(center[2])
-            qspace_radius = self.inst.qspace_radius
-            qlim = self.inst.qlim
-            
-            support = ""
-            code = """
-            int ix,iy,iz;
-            float x,y,z;
-            int index;
-            for (ix=0; ix<num; ix++)
-            {
-                x = ix - num/2.0;
-                for (iy=0; iy<num; iy++)
-                {
-                    y = iy - num/2.0;
-                    for (iz=0; iz<num; iz++)
-                    {
-                        z = iz - num/2.0;
-                        index = ix*num*num + iy*num + iz;
-                        if ( qspace_radius[index] <= qlim)
-                        {
-                            optimal_space[index] = (x*nx + y*ny + z*nz >= 0);
-                        }
-                        else
-                        {
-                            optimal_space[index] = 0;
-                        }
-                    }
-                }
-            }
-            """
-            weave.inline(code,['num', 'optimal_space', 'nx', 'ny', 'nz', 'qspace_radius', 'qlim'],
-                                compiler='gcc', support_code = support)
-
-        else:
-            #--- Python version ---
-            #Generate a x,y,z grid
-            grid = np.mgrid[0:num,0:num,0:num]
-            x = grid[0] - num/2
-            y = grid[1] - num/2
-            z = grid[2] - num/2
-
-            #Calculate the hemisphere
-            optimal_space = (x*center[0] + y*center[1] + z*center[2] >= 0)
-
-        if self.verbose: print "found the optimal hemisphere in %s sec." % (time.time()-t1)
-        return optimal_space
-
-
     def compare_to_peaks_file(self, filename):
         """Compare the contents of an ISAW .peaks file with the measurements in this experiment."""
         if not os.path.exists(filename):
@@ -1970,7 +1953,7 @@ class TestExperiment(unittest.TestCase):
         
     def setUp(self):
         instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_all.csv")
-        instrument.inst.goniometer = goniometer.Goniometer()
+        instrument.inst.set_goniometer(goniometer.Goniometer() )
         self.exp = Experiment(instrument.inst)
         e = self.exp
         e.inst.d_min = 0.5
@@ -2290,9 +2273,34 @@ class TestExperiment(unittest.TestCase):
         e.inst.d_min = 1.0
         e.inst.q_resolution = 0.5
         e.inst.make_qspace()
+        e.inst.simulate_position( [0, 0, 0] )
         #Set the point group using this distorted way
         e.crystal.point_group_name = crystals.get_point_group_from_name("mmm").long_name
+
+        #Compare speed and results
+        print "--- C-code "
         e.initialize_volume_symmetry_map()
+        c_map = e.volume_symmetry
+        
+        print "--- Python-code "
+        config.cfg.force_pure_python = True
+        e.initialize_volume_symmetry_map()
+        python_map = e.volume_symmetry
+        config.cfg.force_pure_python = False
+
+        assert np.allclose(c_map, python_map), "Volume symmetry map is identical when made with C and Python"
+        
+        #Do use symmetry
+        e.params[PARAM_SYMMETRY] = ParamSymmetry(True)
+        print "--- C-code "
+        e.calculate_coverage(None, None)
+        qspace_c = e.qspace
+        #Now compare the speed with pure python
+        print "--- Python-code "
+        config.cfg.force_pure_python = True
+        e.calculate_coverage(None, None)
+        qspace_python = e.qspace
+        assert np.allclose(qspace_c, qspace_python), "Volume coverage, with symmetry, is identical when made with C and Python"
         
 
 if __name__ == "__main__":
@@ -2302,12 +2310,4 @@ if __name__ == "__main__":
     tst.setUp()
     tst.test_volume_symmetry()
 
-    
-#    import instrument
-#    exp = Experiment(instrument.Instrument())
-#    exp.inst.make_qspace()
-#    exp.qspace = exp.inst.qspace
-#    exp.optimal_space = exp.find_optimal_hemisphere(exp.qspace)
-#    exp.calculate_coverage_stats()
-
-
+   

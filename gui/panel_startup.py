@@ -73,6 +73,9 @@ class StartupTraitsHandler(Handler):
         #This sets up the new size q-space
         model.instrument.inst.change_qspace_size(self.get_params_dictionary())
 
+        #Whenever the q-space changes, you need a new symmetry map.
+        model.experiment.exp.initialize_volume_symmetry_map()
+
         #Always re-initialize the reflections
         model.experiment.exp.initialize_reflections()
         

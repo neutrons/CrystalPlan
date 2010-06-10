@@ -113,7 +113,7 @@ def check_for_changes():
         pos = ChangedParams[model.experiment.PARAM_POSITIONS]
         trypos = ChangedParams[model.experiment.PARAM_TRY_POSITION]
         det = ChangedParams[model.experiment.PARAM_DETECTORS]
-        hemi = ChangedParams[model.experiment.PARAM_HEMISPHERE]
+        symmetry = ChangedParams[model.experiment.PARAM_SYMMETRY]
         invert = ChangedParams[model.experiment.PARAM_INVERT]
         energy_slice = ChangedParams[model.experiment.PARAM_ENERGY_SLICE]
         slice = ChangedParams[model.experiment.PARAM_SLICE]
@@ -170,8 +170,8 @@ def check_for_changes():
                 reflections_changed = True
                 reflections_recalculated = True
                 
-        elif not (hemi is None):
-            #Just the hemisphere - no need to recalc reflections
+        elif not (symmetry is None):
+            #Just the symmetry - no need to recalc reflections
             model.experiment.exp.calculate_coverage()
             qspace_changed = True
             
