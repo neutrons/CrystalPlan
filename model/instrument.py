@@ -203,6 +203,24 @@ class Instrument:
 
 
 
+    #========================================================================================================
+    #======================================= PICKLING =====================================
+    #========================================================================================================
+    def __getstate__(self):
+        """Return a dictionary containing all the stuff to pickle."""
+        #Exclude all these attributes.
+        exclude_list = ['qspace', 'qspace_radius']
+        return utils.getstate_except(self, exclude_list)
+
+    #========================================================================================================
+    def __setstate__(self, d):
+        """Set the state of experiment, using d as the settings dictionary."""
+        for (key, value) in d.items():
+            setattr(self, key, value)
+
+
+
+
 #    #---------------------------------------------------------------------------------------------
 #    def _load_nxs_file(self, filename):
 #        """Load the detector geometry from a supplied NXS file."""
@@ -266,20 +284,7 @@ class Instrument:
             raise
 
 
-
-#    #========================================================================================================
-#    def __getstate__(self):
-#        """For saving the states - return a modified dictionary of myself."""
-#        d = self.__dict__.copy()
-#
-#
-#    #========================================================================================================
-#    def __setstate__(self, dict):
-#        """Called when loading instrument from file."""
-#
-
-
-    #========================================================================================================
+#========================================================================================================
     def set_parameters(self, params):
         """Set some of the parameters in the instrument.
         

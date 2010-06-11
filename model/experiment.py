@@ -25,6 +25,7 @@ from crystals import Crystal
 from reflections import Reflection
 import crystal_calc
 from numpy_utils import *
+import utils
 
 
 #======================================================================================
@@ -486,6 +487,29 @@ class Experiment:
         #For output
         self.verbose = True
 
+    #========================================================================================================
+    #======================================= PICKLING =====================================
+    #========================================================================================================
+    def __getstate__(self):
+        """Return a dictionary containing all the stuff to pickle in an experiment."""
+        print "__getstate__ called"
+        d = {}
+        
+        #Exclude all these attributes.
+        exclude_list = ['inst', 'reflections', 'reflections_dict', 'reflections_q_vector',
+        'reflections_times_measured', 'reflections_times_measured_with_equivalents',
+        'reflections_mask', 'qspace']
+
+        return utils.getstate_except(self, exclude_list)
+
+    #========================================================================================================
+    def __setstate__(self, d):
+        """Set the state of experiment, using d as the settings dictionary."""
+        #print "__setstate__ called", d
+        for (key, value) in d.items():
+            setattr(self, key, value)
+
+
     #-------------------------------------------------------------------------------
     def set_parameters(self, params_dict):
         """Set the parameters dictionary. Does not re-do calculations.
@@ -493,6 +517,11 @@ class Experiment:
         if not isinstance(params_dict, ParamsDict):
             raise ValueError("experiment.set_parameters(): params_dict is not a ParamsDict object.")
         self.params = params_dict.copy()
+
+
+    #========================================================================================================
+    #======================================= REFLECTION RANGE =====================================
+    #========================================================================================================
 
     #-------------------------------------------------------------------------------
     def automatic_hkl_range(self):
@@ -841,6 +870,9 @@ class Experiment:
         #Return the points positions
         return (h,v,wl)
     
+    #========================================================================================================
+    #======================================= REFLECTION CALCULATIONS =====================================
+    #========================================================================================================
 
     #-------------------------------------------------------------------------------
     def recalculate_reflections(self, pos_param, calculation_callback=None):
@@ -1034,6 +1066,10 @@ class Experiment:
 
 
 
+    #========================================================================================================
+    #======================================= EXPERIMENT PARAMETERS =====================================
+    #========================================================================================================
+
 
     #-------------------------------------------------------------------------------
     def get_detectors_used(self):
@@ -1189,6 +1225,9 @@ class Experiment:
         #Save the file
         f.close()
 
+    #========================================================================================================
+    #======================================= VOLUME COVERAGE CALCULATIONS =====================================
+    #========================================================================================================
             
     #-------------------------------------------------------------------------------
     def calculate_coverage(self, pos_param=None, det_param=None):
@@ -1576,7 +1615,12 @@ class Experiment:
                 
         #At this point we should have a valid qspace_displayed
         return self.qspace_displayed
+
+
         
+    #========================================================================================================
+    #======================================= COVERAGE STATS =====================================
+    #========================================================================================================
 
         
     #-------------------------------------------------------------------------------
@@ -1845,7 +1889,7 @@ class Experiment:
         #Return as tuple
         return (coverage_q, coverage_data)
     
-
+    #---------------------------------------------------------------------------------------------
     def compare_to_peaks_file(self, filename):
         """Compare the contents of an ISAW .peaks file with the measurements in this experiment."""
         if not os.path.exists(filename):
@@ -1898,40 +1942,33 @@ class Experiment:
 
         return (numbad, numgood, out)
 
-    #========================================================================================================
-    #======================================= PICKLING =====================================
-    #========================================================================================================
-    def __getstate__(self):
-        """Return a dictionary containing all the stuff to pickle in an experiment."""
-        print "__getstate__ called"
-        d = {}
-
-        exclude_list = ['inst']
-        
-        #Make the dictionary
-        for key in dir(self):
-            if not key.startswith("_"):
-                if not key in exclude_list:
-                    value = getattr(self, key)
-                    #No callable (don't pickle methods"
-                    if not hasattr(value, '__call__'):
-                        d[key] = value
-                        #print key
-        return d
-
-    #========================================================================================================
-    def __setstate__(self, d):
-        """Set the state of experiment, using d as the settings dictionary."""
-        print "__setstate__ called", d
-        for (key, value) in d.items():
-            setattr(self, key, value)
-
-
-
                 
 
 
 
+#================================================================================
+#============================ LOADING AND SAVING ======================================
+#================================================================================
+
+#-------------------------------------------------------------------------------
+def save_to_file(the_experiment, filename):
+    """Save (pickle) the experiment to a file. Only the necessary data is
+    saved, the rest will be recalculated upon loading."""
+    #Pickle dumps
+    datas = dumps(the_experiment)
+    f = open(filename, 'w')
+    f.write(datas)
+    f.close()
+
+#-------------------------------------------------------------------------------
+def load_from_file(filename):
+    """Loads an experiment from a previously-saved file."""
+    f = open(filename, 'r') #@type f file
+    datas = f.read()
+    f.close()
+    the_experiment = loads(datas)
+    #TODO: recalc all
+    return the_experiment
 
 
 #========================================================================================================
@@ -2256,13 +2293,6 @@ class TestExperiment(unittest.TestCase):
         e.find_primary_reflections()
 
 
-    def dont_test_pickle(self):
-        e = self.exp
-        datas = dumps(e)
-        print "Length of dumped is ", len(datas)
-        e2 = loads(datas)
-        assert e.crystal.name == e2.crystal.name
-        
     def test_volume_symmetry(self):
         e = self.exp #@type e Experiment
         e.crystal.lattice_lengths = (10, 10, 10)
@@ -2301,13 +2331,35 @@ class TestExperiment(unittest.TestCase):
         e.calculate_coverage(None, None)
         qspace_python = e.qspace
         assert np.allclose(qspace_c, qspace_python), "Volume coverage, with symmetry, is identical when made with C and Python"
-        
+#
+#    def dont_test_pickle(self):
+#        e = self.exp
+#        datas = dumps(e)
+#        print "Length of dumped is ", len(datas)
+#        e2 = loads(datas)
+#        assert e.crystal.name == e2.crystal.name
+#
+    def test_save_load(self):
+        e = self.exp #@type e Experiment
+        #Prepare the experiment
+        self.setup_reflections()
+        e.inst.d_min = 1.0
+        e.inst.q_resolution = 0.5
+        e.inst.make_qspace()
+        e.inst.simulate_position( [0, 1, 2] )
+        e.inst.simulate_position( [3, 4, 5] )
+        e.recalculate_reflections(None, None)
+        #Now save to a file.
+        save_to_file(e, "test_save.exp")
+        print "Pickled size is", os.path.getsize("test_save.exp")
+        e2 = load_from_file("test_save.exp")
+
 
 if __name__ == "__main__":
 #    unittest.main()
     
-    tst = TestExperiment('test_volume_symmetry')
+    tst = TestExperiment('test_save_load')
     tst.setUp()
-    tst.test_volume_symmetry()
+    tst.test_save_load()
 
    
