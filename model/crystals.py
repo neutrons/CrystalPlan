@@ -16,6 +16,7 @@ import crystal_calc
 import numpy_utils
 from numpy_utils import column, vector_length
 import ubmatrixreader
+import utils
 
 #--- Traits Imports ---
 from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
@@ -86,6 +87,10 @@ class Crystal(HasTraits):
         self.add_trait("point_group_name", Enum( get_point_group_names(long_name=True), value="1" ) )
         #Pick the first long name
         self.point_group_name = get_point_group_names(long_name=True)[0]
+
+    #========================================================================================================
+    def __eq__(self, other):
+        return utils.equal_objects(self, other)
 
     #--- lattice_lengths ----
     def get_lattice_lengths(self):

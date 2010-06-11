@@ -385,6 +385,10 @@ class CoverageStats:
         self.qmax = qmax
         self.coverage = np.zeros(4)
 
+    #========================================================================================================
+    def __eq__(self, other):
+        return utils.equal_objects(self, other)
+
 
 #========================================================================================================
 #========================================================================================================
@@ -416,9 +420,18 @@ class Experiment:
 
 
     #-------------------------------------------------------------------------------
+    def initialize(self):
+        """Empty initializer"""
+        #Lock on the qspace_displayed member, for threading.
+        self._lock_qspace_displayed = threading.Lock()
+
+
+    #-------------------------------------------------------------------------------
     def __init__(self, instrument_to_use):
         """Constructor. Subscribe to messages.
             inst: The instrument this experiment refers to."""
+            
+        self.initialize()
 
         #Reference to the instrument
         self.inst = instrument_to_use
@@ -467,9 +480,6 @@ class Experiment:
         #Slice from qmin to qmax of the qspace found
         self.qspace_displayed = None
 
-        #Lock on the qspace_displayed member, for threading.
-        self._lock_qspace_displayed = threading.Lock()
-
         #Coverage percentage for several slices
         self.coverage_stats = list()
 
@@ -488,15 +498,19 @@ class Experiment:
         self.verbose = True
 
     #========================================================================================================
+    def __eq__(self, other):
+        return utils.equal_objects(self, other)
+
+
+    #========================================================================================================
     #======================================= PICKLING =====================================
     #========================================================================================================
     def __getstate__(self):
         """Return a dictionary containing all the stuff to pickle in an experiment."""
-        print "__getstate__ called"
         d = {}
         
         #Exclude all these attributes.
-        exclude_list = ['inst', 'reflections', 'reflections_dict', 'reflections_q_vector',
+        exclude_list = ['reflections', 'reflections_dict', 'reflections_q_vector',
         'reflections_times_measured', 'reflections_times_measured_with_equivalents',
         'reflections_mask', 'qspace']
 
@@ -505,9 +519,14 @@ class Experiment:
     #========================================================================================================
     def __setstate__(self, d):
         """Set the state of experiment, using d as the settings dictionary."""
-        #print "__setstate__ called", d
+        self.initialize()
         for (key, value) in d.items():
             setattr(self, key, value)
+        #Ok, now fix everything
+        # self.inst should be good though, its own setstate does it.
+        self.initialize_reflections()
+        self.recalculate_reflections(None, calculation_callback=None)
+        self.calculate_coverage(None, None)
 
 
     #-------------------------------------------------------------------------------
@@ -2346,13 +2365,21 @@ class TestExperiment(unittest.TestCase):
         e.inst.d_min = 1.0
         e.inst.q_resolution = 0.5
         e.inst.make_qspace()
-        e.inst.simulate_position( [0, 1, 2] )
-        e.inst.simulate_position( [3, 4, 5] )
+        pd = {}
+        poscov = e.inst.simulate_position( [0, 1, 2] )
+        pd[id(poscov)] = True
+        poscov = e.inst.simulate_position( [3, 4, 5] )
+        pd[id(poscov)] = True
         e.recalculate_reflections(None, None)
+        pos_param = ParamPositions( pd )
+        e.params[PARAM_POSITIONS] = pos_param
+        e.calculate_coverage(None, None)
         #Now save to a file.
         save_to_file(e, "test_save.exp")
         print "Pickled size is", os.path.getsize("test_save.exp")
+        #Load it out
         e2 = load_from_file("test_save.exp")
+#        assert e==e2, "Experiment matches before/after loading."
 
 
 if __name__ == "__main__":

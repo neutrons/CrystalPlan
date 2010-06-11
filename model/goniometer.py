@@ -26,6 +26,7 @@ from scipy import weave
 #--- Model Imports ---
 import numpy_utils
 from numpy_utils import column, vector_length, rotation_matrix, get_translated_vectors, nearest_index
+import utils
 
 #--- Traits Imports ---
 from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
@@ -136,6 +137,10 @@ class AngleInfo(HasTraits):
         self.random_range = random_range
         self.das_conversion = das_conversion
         self.das_units = das_units
+
+    #========================================================================================================
+    def __eq__(self, other):
+        return utils.equal_objects(self, other)
 
     def friendly_to_internal(self, value):
         """Convert a friendly unit angle value to an internal value."""
@@ -265,6 +270,10 @@ class Goniometer(HasTraits):
         #Bandwidth of detection, in angstroms
         self.wavelength_minimum = 0.1
         self.wavelength_bandwidth = 3.2
+
+    #========================================================================================================
+    def __eq__(self, other):
+        return utils.equal_objects(self, other)
 
     #-------------------------------------------------------------------------
     def are_angles_allowed(self, angles, return_reason=False):

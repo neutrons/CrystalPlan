@@ -11,6 +11,7 @@ import scipy.weave as weave
 
 #--- Model Imports ---
 import numpy_utils
+import utils
 from numpy_utils import rotation_matrix, x_rotation_matrix, column, vector_length
 
 
@@ -52,6 +53,10 @@ class Detector:
 
         #3 by Y by X, where the first dimension gives a 3D vector of the pixel XYZ position
         self.pixels = None
+
+    #========================================================================================================
+    def __eq__(self, other):
+        return utils.equal_objects(self, other)
 
     #-------------------------------------------------------------------------------
     def hits_detector(self, az, elev):

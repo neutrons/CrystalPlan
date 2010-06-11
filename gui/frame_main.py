@@ -46,7 +46,17 @@ class FrameMain(wx.Frame):
     #--------------------------------------------------------------------
     def _init_menuFile(self, parent):
         id = wx.NewId()
-        parent.Append(id=id, text=u'Save sample orientations to CSV file...\tCtrl+S', kind=wx.ITEM_NORMAL, help='Make a CSV file containing the list of motor positions.')
+        parent.Append(id=id, text=u'Save experiment to file...\tCtrl+S', kind=wx.ITEM_NORMAL, help='Make a CSV file containing the list of motor positions.')
+        self.Bind(wx.EVT_MENU, self.OnMenuSave, id=id)
+
+        id = wx.NewId()
+        parent.Append(id=id, text=u'Load experiment from file...\tCtrl+L', kind=wx.ITEM_NORMAL, help='Make a CSV file containing the list of motor positions.')
+        self.Bind(wx.EVT_MENU, self.OnMenuLoad, id=id)
+
+        parent.AppendSeparator()
+
+        id = wx.NewId()
+        parent.Append(id=id, text=u'Save sample orientations to CSV file...\tCtrl+D', kind=wx.ITEM_NORMAL, help='Make a CSV file containing the list of motor positions.')
         self.Bind(wx.EVT_MENU, self.OnMenuSaveToCSV, id=id)
 
         id = wx.NewId()
@@ -131,6 +141,16 @@ class FrameMain(wx.Frame):
     def OnMenuSaveToCSV(self,event):
         import gui_utils
         gui_utils.dialog_to_save_experiment_to_CSV(self)
+        event.Skip()
+
+    def OnMenuSave(self,event):
+        import gui_utils
+        gui_utils.experiment_save_file_dialog(self)
+        event.Skip()
+
+    def OnMenuLoad(self,event):
+        import gui_utils
+        gui_utils.experiment_load_file_dialog(self)
         event.Skip()
 
     def OnMenuView3D(self, event):

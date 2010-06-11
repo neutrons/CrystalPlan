@@ -1,5 +1,3 @@
-#   !/usr /bin /env   python2.6
-
 """ Instrument Class module.
 
 Holds the Instrument class, settings and info about the instrument
@@ -33,6 +31,7 @@ import goniometer
 from goniometer import Goniometer, TopazInHouseGoniometer
 from detectors import Detector, FlatDetector
 import config
+import utils
 
 #--- Multiprocessing check ---
 try:
@@ -108,6 +107,26 @@ class PositionCoverage:
         (phi, chi, omega) = self.angles
         return rotation_matrix(phi, chi, omega)
 
+    #========================================================================================================
+    #======================================= PICKLING =====================================
+    #========================================================================================================
+    def __getstate__(self):
+        """Return a dictionary containing all the stuff to pickle."""
+        #Exclude all these attributes.
+        exclude_list = ['coverage']
+        return utils.getstate_except(self, exclude_list)
+
+    #========================================================================================================
+    def __setstate__(self, d):
+        """Set the state of experiment, using d as the settings dictionary."""
+        for (key, value) in d.items():
+            setattr(self, key, value)
+        self.coverage = None #You need to calculate this later.
+
+    #========================================================================================================
+    def __eq__(self, other):
+        return utils.equal_objects(self, other)
+        
 
 
 #========================================================================================================
@@ -169,23 +188,10 @@ class Instrument:
 
     verbose = True
 
-
     #========================================================================================================
-    def __init__ (self, filename=None, params=dict()):
-        """Create an instrument. Will load the geometry from a supplied CSV file."""
+    def initizalize (self):
         #List of all installed detectors
         self.detectors = []
-
-        if filename is None:
-            pass
-        else:
-            self.load_detectors_csv_file(filename)
-
-        #Now set the params
-        self.set_parameters(params)
-
-        #Goniometer
-        self.set_goniometer( goniometer.TopazAmbientGoniometer(), False )
 
         #This 3D array holds the q-radius (i.e. |q| ) at all points of the grid. Indices are x,y,z
         #   It is used to quickly do slices.
@@ -200,6 +206,29 @@ class Instrument:
 
         #Default as verbose
         self.verbose = True
+        
+    #========================================================================================================
+    def __init__ (self, filename=None, params=dict()):
+        """Create an instrument. Will load the geometry from a supplied CSV file."""
+        #Create the default members
+        self.initizalize()
+        
+        if not (filename is None):
+            self.load_detectors_csv_file(filename)
+            
+        #Save it, for reloading
+        self.detector_filename = filename
+
+        #Now set the params
+        self.set_parameters(params)
+
+        #Goniometer
+        self.set_goniometer( goniometer.TopazAmbientGoniometer(), False )
+
+    #========================================================================================================
+    def __eq__(self, other):
+        return utils.equal_objects(self, other)
+
 
 
 
@@ -209,16 +238,25 @@ class Instrument:
     def __getstate__(self):
         """Return a dictionary containing all the stuff to pickle."""
         #Exclude all these attributes.
-        exclude_list = ['qspace', 'qspace_radius']
+        exclude_list = ['qspace_radius', 'detectors']
         return utils.getstate_except(self, exclude_list)
 
     #========================================================================================================
     def __setstate__(self, d):
         """Set the state of experiment, using d as the settings dictionary."""
+        self.initizalize()
+        
         for (key, value) in d.items():
             setattr(self, key, value)
-
-
+        #Now, re-load the detectors
+        #TODO: Check that it still exists!
+        if not self.detector_filename is None:
+            self.load_detectors_csv_file(self.detector_filename)
+        #Generate your q-space stuff
+        self.make_qspace()
+        #Re-calculate all the positions (with all detectors enabled)
+        for poscov in self.positions: #@type poscov PositionCoverage
+            poscov.coverage = self.calculate_coverage(self.detectors, poscov.angles, poscov.sample_U_matrix, use_inline_c=True)
 
 
 #    #---------------------------------------------------------------------------------------------
@@ -1015,46 +1053,6 @@ class Instrument:
         return coverage
 
 
-    #========================================================================================================
-    #======================================= PICKLING =====================================
-    #========================================================================================================
-    def __getstate__(self):
-        """Return a dictionary containing all the stuff to pickle in an experiment."""
-        print "__getstate__ called"
-        d = {}
-
-        exclude_list = []
-
-        #Make the dictionary
-        for key in dir(self):
-            if not key.startswith("_"):
-                if not key in exclude_list:
-                    value = getattr(self, key)
-                    #No callable (don't pickle methods"
-                    if not hasattr(value, '__call__'):
-                        d[key] = value
-                        #print key
-        return d
-
-    #========================================================================================================
-    def __setstate__(self, d):
-        """Set the state of experiment, using d as the settings dictionary."""
-        print "__setstate__ called", d
-        for (key, value) in d.items():
-            setattr(self, key, value)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1754,9 +1752,14 @@ class TestInstrumentWithDetectors(unittest.TestCase):
 
     def test_pickle(self):
         tst_inst = self.tst_inst
-#        datas = dumps(tst_inst)
-#        print "Length of dumped is ", len(datas)
-#        tst_inst2 = loads(datas)
+        #Do a couple of calcs
+        tst_inst.make_qspace()
+        tst_inst.simulate_position([1,2,3], use_multiprocessing=False)
+        tst_inst.simulate_position([4,5,6], use_multiprocessing=False)
+        datas = dumps(tst_inst)
+        print "Length of dumped is ", len(datas)
+        tst_inst2 = loads(datas)
+        assert tst_inst==tst_inst2, "Matching instruments before and after file load."
 
 
         
@@ -1769,11 +1772,11 @@ if __name__ == "__main__":
 #    suite = unittest.makeSuite(TestInelasticInstrument)
 #    unittest.TextTestRunner().run(suite)
 #
-#    tst = TestInstrumentWithDetectors('test_pickle')
-#    tst.setUp()
-#    tst.test_pickle()
+    tst = TestInstrumentWithDetectors('test_pickle')
+    tst.setUp()
+    tst.test_pickle()
 
-    unittest.main()
+#    unittest.main()
 
 #    test_setup()
 #    test_hits_detector()

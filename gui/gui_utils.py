@@ -109,6 +109,46 @@ def dialog_to_save_experiment_to_CSV(parent):
     #Save the CSV file
     model.experiment.exp.save_sample_orientations_to_CSV_file(filename)
 
+last_experiment_path = ''
+def experiment_save_file_dialog(parent):
+    """Opens a dialog asking the user where to save the experiment."""
+    filters = 'All files (*.*)|*.*|CrystalPlan Experiment files (*.exp)|*.exp'
+    global last_experiment_path
+    (path, filename) = os.path.split(last_experiment_path)
+    dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Save the experiment plan to EXP file', wildcard=filters, style=wx.SAVE )
+    if dialog.ShowModal() == wx.ID_OK:
+        filename = dialog.GetPath()
+        last_experiment_path = filename
+        dialog.Destroy()
+    else:
+        #'Nothing was selected.
+        dialog.Destroy()
+        return None
+    #Save the file
+    model.experiment.save_to_file(model.experiment.exp, filename)
+
+def experiment_load_file_dialog(parent):
+    """Opens a dialog asking the user where to load the experiment."""
+    filters = 'All files (*.*)|*.*|CrystalPlan Experiment files (*.exp)|*.exp'
+    global last_experiment_path
+    (path, filename) = os.path.split(last_experiment_path)
+    dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an experiment plan from an EXP file', wildcard=filters, style=wx.OPEN )
+    if dialog.ShowModal() == wx.ID_OK:
+        filename = dialog.GetPath()
+        last_experiment_path = filename
+        dialog.Destroy()
+    else:
+        #'Nothing was selected.
+        dialog.Destroy()
+        return None
+    #Load it
+    model.experiment.exp = model.experiment.load_from_file(filename)
+    #Now we need to fix a lot of stuff
+    model.instrument.inst = model.experiment.exp.inst
+    #This hopefully redraws everything
+    display_thread.handle_change_of_qspace()
+
+
 # ===========================================================================================
 def do_recalculation_with_progress_bar(new_sample_U_matrix=None):
     """Perform a recalculation of reciprocal space coverage. Show a progress bar.
