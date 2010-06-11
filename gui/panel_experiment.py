@@ -565,6 +565,8 @@ class PanelExperiment(wx.Panel):
         #Set the controller
         self.controller = ExperimentGridController(self)
         
+    def Refresh(self):
+        self.controller.update_grid()
 
     def OnGridExpGridCellLeftClick(self, event):
         event.Skip()

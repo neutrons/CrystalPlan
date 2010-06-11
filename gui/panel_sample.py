@@ -191,7 +191,7 @@ class PanelSample(wx.Panel):
         self._init_ctrls(parent)
 
         #Make a simple, mostly read-only view for the crystal
-        crystal_view = View(
+        self.crystal_view = View(
             Item("name", label="Crystal Name"),
             Item("description", label="Description:", editor=TextEditor(multi_line=True)),
             Item("lattice_lengths_arr", label="Lattice sizes (Angstroms)", format_str="%.3f", style='readonly'),
@@ -203,15 +203,52 @@ class PanelSample(wx.Panel):
             Item("recip_c", label="c*", style='readonly'),
             resizable=True
             )
-        #Make it into a control
-        crystal = model.experiment.exp.crystal
-        self.crystal_control = crystal.edit_traits(parent=self, view=crystal_view, kind='subpanel').control
-        self.boxSizerAll.Insert(0, self.crystal_control, 0, border=1, flag=wx.EXPAND)
-        self.GetSizer().Layout()
+
+
         #Create the range settings object using the global experiment
         self.range_settings = HKLRangeSettings(model.experiment.exp)
         self.range_control = self.range_settings.edit_traits(parent=self, kind='subpanel').control
-        self.boxSizerAll.Insert(9, self.range_control, 0, border=1, flag=wx.EXPAND)
+        self.boxSizerAll.Insert(8, self.range_control, 0, border=1, flag=wx.EXPAND)
+
+        #This'll create the control
+        self.crystal_control = None
+        self.Refresh()
+
+    #---------------------------------------------------------------------------
+    def Refresh(self):
+        #Remove the existing one
+        if not self.crystal_control is None:
+            self.boxSizerAll.Remove(self.crystal_control)
+            self.crystal_control.Destroy()
+
+        #Replace with the current crystal object
+        crystal = model.experiment.exp.crystal
+        self.crystal_control = crystal.edit_traits(parent=self, view=self.crystal_view, kind='subpanel').control
+        #Put it in there
+        self.boxSizerAll.Insert(0, self.crystal_control, 0, border=1, flag=wx.EXPAND)
+        self.GetSizer().Layout()
+        #Also update the range settings
+        self.range_settings.read_from_exp(model.experiment.exp)
+        
+
+    #------------------------------------------------------------------
+    def update_current(self):
+        gon = copy.copy(model.instrument.inst.goniometer)
+        self.current_gon_copy = gon
+        if not self.panel.currentControl is None:
+            #Remove the existing one
+            self.panel.boxSizerAll.Remove(self.panel.currentControl)
+            self.panel.currentControl.Destroy()
+
+        if gon is None:
+            self.panel.staticTextCurrentGonio.SetLabel("None selected!")
+        else:
+            self.panel.staticTextCurrentGonio.SetLabel('') #(gon.name)
+            self.panel.currentControl = self.current_gon_copy.edit_traits(parent=self.panel, kind='subpanel').control
+            self.panel.boxSizerAll.Insert(2, self.panel.currentControl, 0, flag=wx.EXPAND | wx.SHRINK)
+
+        self.panel.boxSizerAll.Layout()
+
 
     #---------------------------------------------------------------------------
     def apply_crystal_range(self):

@@ -425,17 +425,6 @@ class Experiment:
         #Lock on the qspace_displayed member, for threading.
         self._lock_qspace_displayed = threading.Lock()
 
-
-    #-------------------------------------------------------------------------------
-    def __init__(self, instrument_to_use):
-        """Constructor. Subscribe to messages.
-            inst: The instrument this experiment refers to."""
-            
-        self.initialize()
-
-        #Reference to the instrument
-        self.inst = instrument_to_use
-
         #Dictionary containing all the parameters for calculating/displaying the coverage
         self.params = ParamsDict()
 
@@ -473,12 +462,20 @@ class Experiment:
 
         #N-sized 1D bool array - mask of which reflections to display in the 3D view.
         self.reflections_mask = None
+        self.primary_reflections_mask = None
+
+        #Helper stuff
+        self.reflection_masked_index_to_real_index = None
+        self.reflections_q_norm = None
 
         #q-space coverage map, with the current settings. Indices are x,y,z
         self.qspace = None
 
         #Slice from qmin to qmax of the qspace found
         self.qspace_displayed = None
+
+        #For volume symmetry map
+        self.volume_symmetry = None
 
         #Coverage percentage for several slices
         self.coverage_stats = list()
@@ -497,6 +494,17 @@ class Experiment:
         #For output
         self.verbose = True
 
+
+    #-------------------------------------------------------------------------------
+    def __init__(self, instrument_to_use):
+        """Constructor. Subscribe to messages.
+            inst: The instrument this experiment refers to."""
+            
+        self.initialize()
+
+        #Reference to the instrument
+        self.inst = instrument_to_use
+
     #========================================================================================================
     def __eq__(self, other):
         return utils.equal_objects(self, other)
@@ -507,14 +515,17 @@ class Experiment:
     #========================================================================================================
     def __getstate__(self):
         """Return a dictionary containing all the stuff to pickle in an experiment."""
-        d = {}
-        
         #Exclude all these attributes.
         exclude_list = ['reflections', 'reflections_dict', 'reflections_q_vector',
         'reflections_times_measured', 'reflections_times_measured_with_equivalents',
-        'reflections_mask', 'qspace']
-
-        return utils.getstate_except(self, exclude_list)
+        'reflections_hkl', 'reflections_mask', 'primary_reflections_mask',
+        'qspace', 'qspace_displayed', 'volume_symmetry',
+        'coverage_stats', 'reflection_stats',
+        'reflection_stats_with_symmetry', 'reflection_stats_adjusted', 'reflection_stats_adjusted_with_symmetry',
+        'reflection_masked_index_to_real_index', 'reflections_q_norm'
+        ]
+        d =  utils.getstate_except(self, exclude_list)
+        return d
 
     #========================================================================================================
     def __setstate__(self, d):
@@ -526,6 +537,7 @@ class Experiment:
         # self.inst should be good though, its own setstate does it.
         self.initialize_reflections()
         self.recalculate_reflections(None, calculation_callback=None)
+        self.initialize_volume_symmetry_map()
         self.calculate_coverage(None, None)
 
 

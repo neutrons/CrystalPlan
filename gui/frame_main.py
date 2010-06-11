@@ -139,18 +139,18 @@ class FrameMain(wx.Frame):
         event.Skip()
 
     def OnMenuSaveToCSV(self,event):
-        import gui_utils
         gui_utils.dialog_to_save_experiment_to_CSV(self)
         event.Skip()
 
     def OnMenuSave(self,event):
-        import gui_utils
         gui_utils.experiment_save_file_dialog(self)
         event.Skip()
 
     def OnMenuLoad(self,event):
-        import gui_utils
-        gui_utils.experiment_load_file_dialog(self)
+        if not gui_utils.experiment_load_file_dialog(self) is None:
+            self.RefreshAll()
+        #This message will make the experiment lists update, etc.
+        model.messages.send_message(model.messages.MSG_GONIOMETER_CHANGED, "")
         event.Skip()
 
     def OnMenuView3D(self, event):
@@ -299,7 +299,8 @@ class FrameMain(wx.Frame):
     #--------------------------------------------------------------------
     def LoadNotebook(self):
         """Add the notebook tabs. """
-
+        self.tabs = []
+        
         self.tab_startup = panel_startup.PanelStartup(parent=self.notebook)
         self.tab_sample = panel_sample.PanelSample(parent=self.notebook)
         self.tab_goniometer = panel_goniometer.PanelGoniometer(parent=self.notebook)
@@ -322,7 +323,16 @@ class FrameMain(wx.Frame):
         AddPage(self.tab_experiment, 'Experiment\nPlan', 'Experiment Plan' )
 
         self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.onNotebookPageChanging)
-        
+
+
+    #--------------------------------------------------------------------
+    def RefreshAll(self):
+        """Refresh all the tabs."""
+        for i in xrange(self.notebook.GetPageCount()):
+            tab = self.notebook.GetPage(i)
+            #Call the refresh method, if it exists
+            if hasattr(tab, "Refresh"):
+                tab.Refresh()
 
     #--------------------------------------------------------------------
     #---------------- other event handlers ------------------------------

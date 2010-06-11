@@ -485,6 +485,9 @@ class PanelDetectors(wx.Panel):
         #Set up the View objects
         self.controller = DetectorListController(self)
 
+    def Refresh(self):
+        self.controller.update()
+
     def OnButton_view_detectorsButton(self, event):
         if self.frame3d is None:
             #Create the 3D frame

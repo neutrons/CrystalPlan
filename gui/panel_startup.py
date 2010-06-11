@@ -335,6 +335,10 @@ class PanelStartup(wx.Panel):
         #Make a copy for comparison
         self.original_params = copy.copy(self.params)
 
+    def Refresh(self):
+        self.handler.revert()
+        self.original_params = copy.copy(self.params) #Make sure it doesn't think something changed.
+
     def OnbuttonApplyButton(self, event):
         self.handler.apply()
         self.original_params = copy.copy(self.params)

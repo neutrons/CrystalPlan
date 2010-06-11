@@ -215,9 +215,9 @@ class Instrument:
         
         if not (filename is None):
             self.load_detectors_csv_file(filename)
-            
-        #Save it, for reloading
-        self.detector_filename = filename
+        else:
+            #Save it, for reloading
+            self.detector_filename = filename
 
         #Now set the params
         self.set_parameters(params)
@@ -248,8 +248,12 @@ class Instrument:
         
         for (key, value) in d.items():
             setattr(self, key, value)
+
+        #Fix the goniometer
+        self.set_goniometer(self.goniometer)
+
         #Now, re-load the detectors
-        #TODO: Check that it still exists!
+        #TODO: Check that the file still exists!
         if not self.detector_filename is None:
             self.load_detectors_csv_file(self.detector_filename)
         #Generate your q-space stuff
@@ -285,6 +289,9 @@ class Instrument:
     #---------------------------------------------------------------------------------------------
     def load_detectors_csv_file(self, filename):
         """Load the detector geometry from a CSV file."""
+        #Save it, for reloading later.
+        self.detector_filename = filename
+
         if not os.path.exists(filename):
             print "Error! The supplied detector filename '%s' does not exist. No detectors were loaded." % filename
             return
