@@ -35,10 +35,14 @@ class Reflection():
         #And the pre-calculated q-vector
         self.q_vector = q_vector
 
-        #List holds the measurements.
+        #List holds the predicted measurements.
         #   value: a list of tuples.
         #       each tuple holds  (poscov_id, detector_num, horizontal, vertical, wavelength, distance)
         self.measurements = list()
+
+        #List holds the actual, loaded measurements.
+        #   value: a list of ReflectionRealMeasurement objects
+        self.real_measurements = list()
 
         #Divergence (half-width) in radians of the scattered beam
         self.divergence = 0.0
@@ -60,6 +64,9 @@ class Reflection():
         #   used for adjusted coverage statistics taking into account
         #   edges, for example
         self.measurement_adjusted_value = None
+
+        #List of real measurements. Loaded from ISAW.
+        self.real_measurements = []
 
 
     #----------------------------------------------------
@@ -133,6 +140,34 @@ class Reflection():
                         num += 1
             return num
 
+    #----------------------------------------------------
+    def times_real_measured(self, threshold=-1.0, add_equivalent_ones=False):
+        """Return the # of times the peak was really measured.
+
+        Parameters:
+            threshold: I / sigI has to be higher than this value in
+                order for the peak to be considered "measured"; i.e.
+                sufficient signal-to-noise.
+            add_equivalent_ones: add up the times measured of all
+                the equivalent reflections too."""
+        total = 0
+        if add_equivalent_ones:
+            myreflist = self.equivalent
+        else:
+            myreflist = [self]
+            
+        #Go through all the equivalent reflections
+        for ref in myreflist:
+            #@type rrm ReflectionRealMeasurement
+            for rrm in ref.real_measurements:
+                if not rrm is None:
+                    #Don't divide by 0
+                    if rrm.sigI > 1e-8:
+                        if (rrm.integrated / rrm.sigI) > threshold:
+                            total += 1
+
+        return total
+
 
 
 #==================================================================
@@ -140,7 +175,7 @@ class Reflection():
 #==================================================================
 class ReflectionMeasurement():
     """The ReflectionMeasurement class is used to show data about
-    a single measurement of a single reflection.
+    a single predicted measurement of a single reflection.
     It is not saved in the Reflection class (to save memory), but is
     re-generated when the GUI wants it.
     """
@@ -202,6 +237,27 @@ class ReflectionMeasurement():
         else:
             return distance * multiplier
     
+
+
+#==================================================================
+#==================================================================
+#==================================================================
+class ReflectionRealMeasurement():
+    """Class holds info about a real peak measurement (loaded from an peaks or integrate file
+    produced by ISAW)."""
+    def __init__(self):
+        """Constructor."""
+        #The phi,chi,omega angles, in radians.
+        self.angles = []
+        self.detector_num = 0
+        self.row = 0
+        self.col = 0
+        self.wavelength = 0
+        self.distance = 0
+        #Integrated peak
+        self.integrated = 0
+        #Sigma I (error on intensity)
+        self.sigI = 1.0
 
 
 #================================================================================

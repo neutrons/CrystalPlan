@@ -22,7 +22,7 @@ import crystals
 import config
 import numpy_utils
 from crystals import Crystal
-from reflections import Reflection
+from reflections import Reflection, ReflectionRealMeasurement
 import crystal_calc
 from numpy_utils import *
 import utils
@@ -494,6 +494,15 @@ class Experiment:
         #For output
         self.verbose = True
 
+        #For real measurements; list of loaded files.
+        self.real_measurement_filenames = []
+
+        #Nx1 array of the # of times each reflection was measured. This may be used to speed up displays.
+        self.reflections_times_real_measured = None
+
+        #Nx1 array of the # of times each reflection was measured, ALSO counting equivalent reflections (due to symmetries)
+        self.reflections_times_real_measured_with_equivalents = None
+
 
     #-------------------------------------------------------------------------------
     def __init__(self, instrument_to_use):
@@ -518,6 +527,7 @@ class Experiment:
         #Exclude all these attributes.
         exclude_list = ['reflections', 'reflections_dict', 'reflections_q_vector',
         'reflections_times_measured', 'reflections_times_measured_with_equivalents',
+        'reflections_times_real_measured', 'reflections_times_real_measured_with_equivalents',
         'reflections_hkl', 'reflections_mask', 'primary_reflections_mask',
         'qspace', 'qspace_displayed', 'volume_symmetry',
         'coverage_stats', 'reflection_stats',
@@ -646,6 +656,9 @@ class Experiment:
 
         #At this point, the reflections mask needs to be updated since the reflections changed.
         self.calculate_reflections_mask()
+
+        #And if you had any peaks files loaded, reload them.
+        self.reload_peaks_files()
 
 
     #-------------------------------------------------------------------------------
@@ -970,7 +983,7 @@ class Experiment:
                         for i in indices:
                             #print self.reflections_hkl[:, i], "hit the detector", detector_num
                             refls[i].add_measurement(poscov_id, detector_num, h[i], v[i], wl[i], distance[i])
-                    
+
         #We make the array of how many times measured, for all the positions
         self.get_reflections_times_measured(None)
 
@@ -1060,7 +1073,7 @@ class Experiment:
         else:
             positions_used = self.get_positions_used(pos_param)
             position_ids = [id(pos) for pos in positions_used]
-            
+
         #Initialize the arrays
         rtm = np.zeros( (len(self.reflections), 1) )
         rtme = np.zeros( (len(self.reflections), 1) )
@@ -1095,6 +1108,30 @@ class Experiment:
                 output.append(ref)
         return output
 
+
+    #-------------------------------------------------------------------------------
+    def get_reflections_times_real_measured(self, threshold):
+        """Make the array that holds the # of times each one was REALLY measured (from ISAW
+        peaks files loaded previously)
+        This will speed up drawing.
+
+        Parameters:
+        -----------
+            pos_param: a ParamPositions object holding which positions to keep in the calculation.
+                None means use all of them (default).
+            threshold: I/sigI threshold to consider a peak "measured"
+        """
+        #Initialize the arrays
+        rtm = np.zeros( (len(self.reflections), 1) )
+        rtme = np.zeros( (len(self.reflections), 1) )
+
+        for (index, ref) in enumerate(self.reflections):
+            # @type ref Reflection
+            rtm[index, 0] = ref.times_real_measured(threshold, add_equivalent_ones=False)
+            rtme[index, 0] = ref.times_real_measured(threshold, add_equivalent_ones=True)
+
+        self.reflections_times_real_measured = rtm
+        self.reflections_times_real_measured_with_equivalents = rtme
 
 
     #========================================================================================================
@@ -1919,7 +1956,97 @@ class Experiment:
             
         #Return as tuple
         return (coverage_q, coverage_data)
-    
+
+
+    #---------------------------------------------------------------------------------------------
+    def load_peaks_file(self, filename, append=False):
+        """Loads a .peaks or .integrate file (made by ISAW) into the program, adding on
+        to each reflection.
+
+        Parameters:
+            filename: path to .peaks or .integrate
+            append: add on to the measurements; otherwise, they get cleared
+        """
+        if not os.path.exists(filename):
+            raise IOError("The file %s does not exist!" % filename)
+
+        errors = []
+        angles = [0,0,0]
+        poscov = None
+
+        #Clear them?
+        if not append:
+            self.clear_reflection_real_measurements()
+            self.real_measurement_filenames = []
+
+        #Append the filename to list
+        self.real_measurement_filenames.append(filename)
+
+        f = open(filename,'r')
+        #@type line string
+        for line in f:
+            try:
+                #Detector number marker
+                if line.startswith("1"):
+                    arr = line.split()
+                    #Find the detector number, make it 0-based
+                    detnum = int(arr[2]) - 1
+                    #Find the angles, convert to radians
+                    (chi, phi, omega) =  [np.deg2rad(float(arr[i])) for i in xrange(3,6)]
+                    angles = np.array( [phi, chi, omega] )
+
+
+                #Marker that this is a peak line
+                if line.startswith("3"):
+                    arr = line.split()
+                    (h,k,l) = [int(arr[i]) for i in xrange(2,5)]
+
+                    #Was the peak indexed (hkl is not 0,0,0)?
+                    if not ((h,k,l) == (0,0,0)):
+                        #@type ref Reflection
+                        ref = self.get_reflection(h, k, l)
+
+                        if ref is None:
+                            errors.append("Peak was not in the list: Det %d, hkl: %d, %d, %d\n" % (detnum, h, k, l))
+                        else:
+                            #Ok, let's record this info in the same Reflection.
+                            rm = ReflectionRealMeasurement()
+                            rm.angles = angles * 1.0 #Make sure to copy the numpy array
+                            rm.detector_num = detnum
+                            rm.col = float(arr[5])
+                            rm.row = float(arr[6])
+                            rm.wavelength = float(arr[11])
+                            rm.integrated = float(arr[14])
+                            rm.sigI = float(arr[15])
+                            #Add it
+                            ref.real_measurements.append(rm)
+            except IOError:
+                raise
+            except:
+                #Ignore errors and keep loading the file
+                pass
+                        
+        return errors
+
+    #---------------------------------------------------------------------------------------------
+    def clear_reflection_real_measurements(self):
+        """Remove all entries of "real" measurements from the reflections."""
+        #@type ref Reflection
+        for ref in self.reflections:
+            ref.real_measurements = []
+
+    #---------------------------------------------------------------------------------------------
+    def reload_peaks_files(self):
+        """Reload the files that were recorded before. Used when re-initializing
+        crystal reflections."""
+        self.clear_reflection_real_measurements()
+        #Reload each one
+        for filename in self.real_measurement_filenames:
+            if not os.path.exists(filename):
+                print "Error loading peaks file: %s. File does not exist!" % filename
+            else:
+                self.load_peaks_file(filename, append=True)
+
     #---------------------------------------------------------------------------------------------
     def compare_to_peaks_file(self, filename):
         """Compare the contents of an ISAW .peaks file with the measurements in this experiment."""
@@ -1927,7 +2054,7 @@ class Experiment:
             raise IOError("The file %s does not exist!" % filename)
 
         out = ""
-        
+
         f = open(filename,'r')
         detnum = -1
         numbad = 0
@@ -1973,7 +2100,7 @@ class Experiment:
 
         return (numbad, numgood, out)
 
-                
+
 
 
 
@@ -2393,12 +2520,36 @@ class TestExperiment(unittest.TestCase):
         e2 = load_from_file("test_save.exp")
 #        assert e==e2, "Experiment matches before/after loading."
 
+    def test_load_peaks(self):
+        e = self.exp #@type e Experiment
+        e.crystal.lattice_lengths = (10, 10, 10)
+        e.crystal.lattice_angles_deg = (90.0, 90.0, 90.0)
+        e.crystal.make_ub_matrix()
+        e.crystal.calculate_reciprocal()
+        e.initialize_reflections()
+        errors = e.load_peaks_file("data/TOPAZ_1241.integrate", append=False)
+        #@type ref Reflection
+        ref = e.get_reflection(5, 1, -1)
+        assert len(ref.real_measurements)==2, "Found 2 real measurements for 5,1,-1"
+        #@type rrm ReflectionRealMeasurement
+        rrm = ref.real_measurements[0]
+        #Check one of them.
+        assert np.allclose(rrm.angles, np.deg2rad([-59.37, 45.00, 150.49])), "Angles match. %s" % rrm.angles
+        assert np.allclose( [rrm.col], [217.40] ), "Col"
+        assert np.allclose( [rrm.row], [66.71] ), "Row"
+        assert np.allclose( [rrm.wavelength], [3.368968]), "Wavelength"
+        assert np.allclose( [rrm.integrated], [6069.83]), "Integrated"
+        assert np.allclose( [rrm.sigI], [82.90]), "sigI"
+        assert rrm.detector_num == 1, "Detector 1"
+        #print "# of errors:", len(errors)
+
+
 
 if __name__ == "__main__":
 #    unittest.main()
     
-    tst = TestExperiment('test_save_load')
+    tst = TestExperiment('test_load_peaks')
     tst.setUp()
-    tst.test_save_load()
+    tst.test_load_peaks()
 
    

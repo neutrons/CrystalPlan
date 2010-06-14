@@ -240,6 +240,7 @@ class Goniometer(HasTraits):
 
 
 
+    #-------------------------------------------------------------------------
     def __eq__(self, other):
         """Return True if the contents of self are equal to other."""
         return (self.name == other.name) and (self.wavelength_control == other.wavelength_control) \
@@ -350,7 +351,7 @@ class Goniometer(HasTraits):
                 # of angles of this goniometer.
         """
         #For other instruments, this method may be different.
-        (phi, chi, omega) = angles
+        (phi, chi, omega) = angles[0:3]
 
         #In Q space, detector coverage rotates OPPOSITE to what the real space rotation is.
         #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
@@ -369,7 +370,7 @@ class Goniometer(HasTraits):
             angles: should be a list of angle values, in unfriendly units, that matches the
                 # of angles of this goniometer.
         """
-        (phi, chi, omega) = angles
+        (phi, chi, omega) = angles[0:3]
         return numpy_utils.rotation_matrix(phi, chi, omega)
     
 
@@ -388,7 +389,7 @@ class Goniometer(HasTraits):
         """
         #Find the starting rotation matrix
         if not starting_angles is None:
-            (phi, chi, omega) = starting_angles
+            (phi, chi, omega) = starting_angles[0:3]
             starting_rot_matrix = numpy_utils.rotation_matrix(phi, chi, omega)
             #Rotate the starting vector
             starting_vec = np.dot(starting_rot_matrix, column(starting_vec)).flatten()
@@ -519,6 +520,11 @@ class Goniometer(HasTraits):
             #They are okay
             fileobj.write(csv_line( das_angles + [count_for, count_value, comment] ) )
 
+    #===============================================================================================
+    def get_phi_chi_omega(self, angles):
+        """Given a list of angles (which may have more or less angles depending on goniometer type),
+        return the equivalent (phi, chi, omega) in radians."""
+        (phi, chi, omega) = angles[0:3]
 
 
 
@@ -943,6 +949,13 @@ class TopazAmbientGoniometer(LimitedGoniometer):
             return absolute(chi - PI/4);
         }
         """
+
+    #-------------------------------------------------------------------------------
+    def get_phi_chi_omega(self, angles):
+        """Given a list of angles (which may have more or less angles depending on goniometer type),
+        return the equivalent (phi, chi, omega) in radians."""
+        (phi, omega) = angles[0:2]
+        chi = self.chi
 
     #-------------------------------------------------------------------------------
     def make_q_rot_matrix(self, angles):
