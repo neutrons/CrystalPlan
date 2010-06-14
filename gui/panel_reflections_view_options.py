@@ -39,8 +39,12 @@ import model
 
 #The options shown in the drop-down box.
 ReflectionsViewChoices = ['All reflections',
-    'Measured reflections only',
-    'NON-measured reflections only']
+    'Predicted reflections',
+    'NON-predicted reflections',
+    'Measured reflections',
+    'NON-measured reflections',
+    'Predicted but not measured',
+    'Measured but not predicted']
 
 #-------------------------------------------------------------------------------
 class ReflectionsViewOptionsController:
@@ -72,16 +76,21 @@ class ReflectionsViewOptionsController:
         """
         self._inside_show_settings = True
         #- Display settings
+        # @type param ParamReflectionDisplay
         param = display_thread.get_reflection_display_params()
         self.panel.radioPixels.SetValue(param.display_as == param.DISPLAY_AS_PIXELS)
         self.panel.radioSpheres.SetValue(param.display_as == param.DISPLAY_AS_SPHERES)
+        self.panel.radioMeasured.SetValue(param.color_map == param.COLOR_BY_MEASURED)
+        self.panel.radioPredicted.SetValue(param.color_map == param.COLOR_BY_PREDICTED)
         self.panel.sliderSize.SetValue(10. * param.size)
         self.panel.sliderSize.Enable(not param.automatic_size)
         self.panel.checkAutoSize.SetValue(param.automatic_size)
+        
         #- Masking settings
         # @type param ParamReflectionMasking
         param = display_thread.get_reflection_masking_params()
         self.panel.choiceView.Select(param.masking_type)
+        self.panel.textThreshold.SetValue( "%.2f" % param.threshold)
         #Slice settings
         self.panel.checkShowSlice.SetValue(param.use_slice)
         self.panel.sliceControl.use_slice = param.use_slice
@@ -117,11 +126,17 @@ class ReflectionsViewOptionsController:
             param.display_as = param.DISPLAY_AS_PIXELS
         else:
             param.display_as = param.DISPLAY_AS_SPHERES
+            
+        if self.panel.radioMeasured.GetValue() > 0:
+            param.color_map = param.COLOR_BY_MEASURED
+        else:
+            param.color_map = param.COLOR_BY_PREDICTED
+            
         param.size = self.panel.sliderSize.GetValue() / 10.
         param.automatic_size = self.panel.checkAutoSize.GetValue()
         #Make sure the slider is enabled/disabled as needed
         self.panel.sliderSize.Enable(not param.automatic_size)
-        
+
         #Trigger the update
         display_thread.NextParams[model.experiment.PARAM_REFLECTION_DISPLAY] = param
 
@@ -136,6 +151,10 @@ class ReflectionsViewOptionsController:
         mask.masking_type = n
         mask.primary_reflections_only = self.panel.checkUseSymmetry.GetValue()
         mask.show_equivalent_reflections = self.panel.checkUseSymmetry.GetValue()
+        try:
+            mask.threshold = float(self.panel.textThreshold.GetValue())
+        except:
+            mask.threshold = -1.0
         #Apply it.
         display_thread.NextParams[model.experiment.PARAM_REFLECTION_MASKING] = mask
 
@@ -178,8 +197,9 @@ class PanelReflectionsViewOptions(wx.Panel):
         parent.AddSpacer(wx.Size(4,4), border=0, flag=0)
         parent.AddSizer(self.boxSizerTop, 0, border=0, flag=0)
         parent.AddSpacer(wx.Size(4, 4), border=0, flag=0)
+        parent.AddSizer(self.boxSizerColor, 0, border=0, flag=wx.EXPAND)
         parent.AddSizer(self.boxSizerDisplay, 0, border=0, flag=0)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddSpacer(wx.Size(4, 4), border=0, flag=0)
         parent.AddSizer(self.boxSizerSliceOptions, 0, border=0, flag=0)
         self.boxSizerAll.AddWindow(self.panel_to_hold_slice_control, 1,
               border=4, flag=wx.BOTTOM | wx.RIGHT | wx.LEFT | wx.EXPAND)
@@ -200,8 +220,6 @@ class PanelReflectionsViewOptions(wx.Panel):
         parent.AddWindow(self.checkAutoSize, 0, border=0, flag=0)
 
     def _init_coll_boxSizerTop_Items(self, parent):
-        # generated method, don't edit
-
         parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
         parent.AddWindow(self.staticTextViewOption, 0, border=0,
               flag=wx.ALIGN_CENTER_VERTICAL)
@@ -213,25 +231,37 @@ class PanelReflectionsViewOptions(wx.Panel):
         parent.AddWindow(self.checkHighlightImportant, 0, border=0,
               flag=wx.ALIGN_CENTER_VERTICAL)
 
+    def _init_coll_boxSizerColor_Items(self, parent):
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=wx.ALIGN_CENTER_VERTICAL)
+        parent.AddWindow(self.staticTextColor, 0, border=0, flag=wx.ALIGN_CENTER_VERTICAL)
+        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
+        parent.AddWindow(self.radioPredicted, 0, border=0, flag=wx.ALIGN_CENTER_VERTICAL)
+        parent.AddSpacer(wx.Size(4, 4), border=0, flag=0)
+        parent.AddWindow(self.radioMeasured, 0, border=0, flag=wx.ALIGN_CENTER_VERTICAL)
+        parent.AddSpacer(wx.Size(12, 8), border=0, flag=0)
+        parent.AddWindow(self.staticTextThreshold, 0, border=0, flag=wx.ALIGN_CENTER_VERTICAL)
+        parent.AddSpacer(wx.Size(4, 4), border=0, flag=0)
+        parent.AddWindow(self.textThreshold, 0, border=0, flag=wx.ALIGN_CENTER_VERTICAL)
+
+    #-------------------------------------------------------------------------------
     def _init_sizers(self):
         # generated method, don't edit
         self.boxSizerAll = wx.BoxSizer(orient=wx.VERTICAL)
-
         self.boxSizerTop = wx.BoxSizer(orient=wx.HORIZONTAL)
-
+        self.boxSizerColor = wx.BoxSizer(orient=wx.HORIZONTAL)
         self.boxSizerSliceOptions = wx.BoxSizer(orient=wx.HORIZONTAL)
-
         self.boxSizerDisplay = wx.BoxSizer(orient=wx.HORIZONTAL)
 
         self._init_coll_boxSizerAll_Items(self.boxSizerAll)
         self._init_coll_boxSizerTop_Items(self.boxSizerTop)
         self._init_coll_boxSizerSliceOptions_Items(self.boxSizerSliceOptions)
         self._init_coll_boxSizerDisplay_Items(self.boxSizerDisplay)
+        self._init_coll_boxSizerColor_Items(self.boxSizerColor)
 
         self.SetSizer(self.boxSizerAll)
 
+    #-------------------------------------------------------------------------------
     def _init_ctrls(self, prnt):
-        # generated method, don't edit
         wx.Panel.__init__(self, id=wxID_PANELREFLECTIONSVIEWOPTIONS,
               name=u'PanelReflectionsViewOptions', parent=prnt,
               pos=wx.Point(439, 500), size=wx.Size(606, 269),
@@ -256,8 +286,7 @@ class PanelReflectionsViewOptions(wx.Panel):
               id=wxID_PANELREFLECTIONSVIEWOPTIONSCHOICEVIEW, name=u'choiceView',
               parent=self, pos=wx.Point(141, 4), size=wx.Size(260, 29),
               style=0)
-        self.choiceView.Bind(wx.EVT_CHOICE, self.OnChoiceViewChoice,
-              id=wxID_PANELREFLECTIONSVIEWOPTIONSCHOICEVIEW)
+        self.choiceView.Bind(wx.EVT_CHOICE, self.OnChangeMaskingSettings)
 
         self.staticTextViewOption = wx.StaticText(id=wxID_PANELREFLECTIONSVIEWOPTIONSSTATICTEXTVIEWOPTION,
               label=u'Show which peaks:', name=u'staticTextViewOption',
@@ -268,16 +297,13 @@ class PanelReflectionsViewOptions(wx.Panel):
               name=u'checkHighlightImportant', parent=self, pos=wx.Point(413,
               7), size=wx.Size(215, 22), style=0)
         self.checkHighlightImportant.SetValue(True)
-        self.checkHighlightImportant.Bind(wx.EVT_CHECKBOX,
-              self.OnCheckHighlightImportantCheckbox,
-              id=wxID_PANELREFLECTIONSVIEWOPTIONSCHECKHIGHLIGHTIMPORTANT)
         self.checkHighlightImportant.Hide()
 
         
         self.checkUseSymmetry = wx.CheckBox(label=u'Use Symmetry?',
               name=u'checkUseSymmetry', parent=self, style=0)
         self.checkUseSymmetry.SetValue(False)
-        self.checkUseSymmetry.Bind(wx.EVT_CHECKBOX, self.OnCheckUseSymmetry)
+        self.checkUseSymmetry.Bind(wx.EVT_CHECKBOX, self.OnChangeMaskingSettings)
         self.checkUseSymmetry.SetToolTipString("Use the crystal's symmetry to display fewer peaks.")
 
 
@@ -298,16 +324,13 @@ class PanelReflectionsViewOptions(wx.Panel):
               label=u'Pixels', name=u'radioPixels', parent=self,
               pos=wx.Point(88, 37), size=wx.Size(85, 22), style=wx.RB_GROUP)
         self.radioPixels.SetValue(True)
-        self.radioPixels.Bind(wx.EVT_RADIOBUTTON, self.OnRadioPixelsRadiobutton,
-              id=wxID_PANELREFLECTIONSVIEWOPTIONSRADIOPIXELS)
+        self.radioPixels.Bind(wx.EVT_RADIOBUTTON, self.OnChangeDisplaySettings)
 
         self.radioSpheres = wx.RadioButton(id=wxID_PANELREFLECTIONSVIEWOPTIONSRADIOSPHERES,
               label=u'Spheres', name=u'radioSpheres', parent=self,
               pos=wx.Point(173, 37), size=wx.Size(85, 22), style=0)
         self.radioSpheres.SetValue(True)
-        self.radioSpheres.Bind(wx.EVT_RADIOBUTTON,
-              self.OnRadioSpheresRadiobutton,
-              id=wxID_PANELREFLECTIONSVIEWOPTIONSRADIOSPHERES)
+        self.radioSpheres.Bind(wx.EVT_RADIOBUTTON, self.OnChangeDisplaySettings)
 
         self.staticTextSize = wx.StaticText(id=wxID_PANELREFLECTIONSVIEWOPTIONSSTATICTEXTSIZE,
               label=u'Relative Size: ', name=u'staticTextSize', parent=self,
@@ -317,21 +340,35 @@ class PanelReflectionsViewOptions(wx.Panel):
               maxValue=100, minValue=1, name=u'sliderSize', parent=self,
               pos=wx.Point(359, 37), size=wx.Size(133, 19),
               style=wx.SL_HORIZONTAL, value=0)
-        self.sliderSize.Bind(wx.EVT_COMMAND_SCROLL,
-              self.OnSliderSizeCommandScroll,
-              id=wxID_PANELREFLECTIONSVIEWOPTIONSSLIDERSIZE)
+        self.sliderSize.Bind(wx.EVT_COMMAND_SCROLL, self.OnChangeDisplaySettings)
 
         self.checkAutoSize = wx.CheckBox(id=wxID_PANELREFLECTIONSVIEWOPTIONSCHECKAUTOSIZE,
               label=u'Automatic Size', name=u'checkAutoSize',
               parent=self, pos=wx.Point(0, 0),
               size=wx.Size(95, 22), style=0)
         self.checkAutoSize.SetValue(False)
-        self.checkAutoSize.Bind(wx.EVT_CHECKBOX, self.OnCheckAutoSizeCheckbox,
-              id=wxID_PANELREFLECTIONSVIEWOPTIONSCHECKAUTOSIZE)
+        self.checkAutoSize.Bind(wx.EVT_CHECKBOX, self.OnChangeDisplaySettings)
+
+
+
+        self.staticTextColor = wx.StaticText(label=u'Color by:', parent=self, style=0)
+
+        self.radioPredicted = wx.RadioButton(label=u'Predicted', parent=self, style=wx.RB_GROUP)
+        self.radioPredicted.Bind(wx.EVT_RADIOBUTTON, self.OnChangeDisplaySettings)
+
+        self.radioMeasured = wx.RadioButton(label=u'Measured', parent=self, style=0)
+        self.radioMeasured.Bind(wx.EVT_RADIOBUTTON, self.OnChangeDisplaySettings)
+        self.radioPredicted.SetValue(True)
+
+        self.staticTextThreshold = wx.StaticText(label=u'I/sigI threshold', parent=self, style=0)
+        self.textThreshold = wx.TextCtrl(value=u'2.0', parent=self, style=0)
+        self.textThreshold.Bind(wx.EVT_TEXT_ENTER, self.OntextThreshold)
+        self.textThreshold.Bind(wx.EVT_KILL_FOCUS, self.OnChangeMaskingSettings)
 
         self._init_sizers()
 
-    def __init__(self, parent, id, pos, size, style, name):
+    #-------------------------------------------------------------------------------
+    def __init__(self, parent):
         self._init_ctrls(parent)
         
         #Create the view/controller
@@ -353,6 +390,8 @@ class PanelReflectionsViewOptions(wx.Panel):
         #Show the initial data
         self.controller.update_data(None)
 
+
+    #-------------------------------------------------------------------------------
     def change_displayed_size(self, newsize):
         """Change the pixel size shown in the UI. DO NOT apply the change."""
         self.controller.change_displayed_size(newsize)
@@ -365,30 +404,34 @@ class PanelReflectionsViewOptions(wx.Panel):
         self.sliceControl.realtime = self.checkRealtimeSlice.GetValue()
         event.Skip()
 
-    def OnChoiceViewChoice(self, event):
+    def OntextThreshold(self, event):
         self.controller.change_masking_settings()
         event.Skip()
 
-    def OnCheckHighlightImportantCheckbox(self, event):
+    def OnChangeMaskingSettings(self, event):
         self.controller.change_masking_settings()
         event.Skip()
+
+    def OnChangeDisplaySettings(self, event):
+        self.controller.change_display_settings()
+        event.Skip()
+
+
+
         
-    def OnCheckUseSymmetry(self, event):
-        self.controller.change_masking_settings()
-        event.Skip()
+# ===========================================================================================
+# ===========================================================================================
+# ===========================================================================================
 
-    def OnRadioPixelsRadiobutton(self, event):
-        self.controller.change_display_settings()
-        event.Skip()
+if __name__ == '__main__':
+    #Ok, create the instrument
+    model.instrument.inst = model.instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")
+    model.instrument.inst.make_qspace()
+    #Initialize the instrument and experiment
+    model.experiment.exp = model.experiment.Experiment(model.instrument.inst)
+    import gui_utils
+    (app, pnl) = gui_utils.test_my_gui(PanelReflectionsViewOptions)
+    app.frame.SetClientSize(wx.Size(700,500))
+    app.MainLoop()
 
-    def OnRadioSpheresRadiobutton(self, event):
-        self.controller.change_display_settings()
-        event.Skip()
 
-    def OnSliderSizeCommandScroll(self, event):
-        self.controller.change_display_settings()
-        event.Skip()
-
-    def OnCheckAutoSizeCheckbox(self, event):
-        self.controller.change_display_settings()
-        event.Skip()

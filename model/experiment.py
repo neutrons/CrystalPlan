@@ -306,9 +306,12 @@ class ParamReflections(Params):
 class ParamReflectionMasking(ParamSlice):
     """The options on how to slice or mask the reflection peaks."""
     def __init__(self, use_slice=False, slice_min=0, slice_max=10):
-        #Call the parent constructor.
+        #Call the parent constructor. For the slice
         ParamSlice.__init__(self, use_slice, slice_min, slice_max)
+        #Integer that is entry in the list of choices.
         self.masking_type = 0
+        #I/sigI threshold for measured peaks.
+        self.threshold = 2.0
         #Are we just showing the primary ones?
         self.primary_reflections_only = False
         #Are we showing equivalent reflections as counting as measured?
@@ -321,6 +324,7 @@ class ParamReflectionMasking(ParamSlice):
         else:
             return (self.primary_reflections_only == other.primary_reflections_only) and \
                     (self.masking_type == other.masking_type) and\
+                    (self.threshold == other.threshold) and\
                     (self.show_equivalent_reflections == other.show_equivalent_reflections)
 
 
@@ -337,10 +341,14 @@ class ParamReflectionDisplay(Params):
     #Constants for how to display
     DISPLAY_AS_PIXELS = 0
     DISPLAY_AS_SPHERES = 1
+    COLOR_BY_PREDICTED = 0
+    COLOR_BY_MEASURED = 1
 
     def __init__(self):
         #How to display? 0=pixels, 1=spheres
         self.display_as = self.DISPLAY_AS_SPHERES
+        #How to do color map?
+        self.color_map = self.COLOR_BY_PREDICTED
         #Relative size of spheres.
         # For pixels, this is the size in pixels.
         self.size = 1.0
@@ -351,8 +359,8 @@ class ParamReflectionDisplay(Params):
         """Equality (==) operator."""
         if (self is None): return (other is None)
         if (other is None): return (self is None)
-        if not (self.display_as == other.display_as):
-            return False
+        if not (self.display_as == other.display_as): return False
+        if not (self.color_map == other.color_map): return False
         if self.automatic_size and other.automatic_size:
             return True
         if (not self.automatic_size) and (not other.automatic_size):
@@ -998,6 +1006,11 @@ class Experiment:
         #We make the array of how many times measured, for all the positions
         self.get_reflections_times_measured(None)
 
+        #We make the array of how many times REALLY measured, for all the positions
+        refmask = self.params[PARAM_REFLECTION_MASKING] #@type refmask ParamReflectionMasking
+        if refmask is None: refmask = ParamReflectionMasking()
+        self.get_reflections_times_real_measured(refmask.threshold)
+
         #Continue on with masking
         self.calculate_reflections_mask()
 
@@ -1042,20 +1055,31 @@ class Experiment:
             if mask_param.masking_type > 0:
                 #Are we gonna use all equivalent reflections?
                 if mask_param.show_equivalent_reflections:
-                    rtm = self.reflections_times_measured_with_equivalents.ravel()
+                    rtm_predict = self.reflections_times_measured_with_equivalents.ravel()
+                    rtm_real = self.reflections_times_real_measured_with_equivalents.ravel()
                 else:
-                    rtm = self.reflections_times_measured.ravel()
+                    rtm_predict = self.reflections_times_measured.ravel()
+                    rtm_real = self.reflections_times_real_measured.ravel()
 
                 #Yes, there is some masking.
                 if mask_param.masking_type == 1:
-                    #Measured reflections only
-                    mask &= (rtm > 0)
+                    #Predicted reflections only
+                    mask &= (rtm_predict > 0)
                 elif mask_param.masking_type == 2:
-                    #NON-Measured reflections only
-                    mask &= (rtm == 0)
+                    #NON-Predicted reflections only
+                    mask &= (rtm_predict == 0)
                 elif mask_param.masking_type == 3:
-                    #TODO: Important peaks only
-                    pass
+                    #REAL Measured reflections only
+                    mask &= (rtm_real > 0)
+                elif mask_param.masking_type == 4:
+                    #NON-REAL-measured reflections only
+                    mask &= (rtm_real == 0)
+                elif mask_param.masking_type == 5:
+                    #Predicted but not measured
+                    mask &= ((rtm_predict > 0) & (rtm_real == 0))
+                elif mask_param.masking_type == 6:
+                    #Measured but not predicted
+                    mask &= ((rtm_predict == 0) & (rtm_real > 0))
 
             if mask_param.primary_reflections_only and hasattr(self, 'primary_reflections_mask') :
                 # Also mask out the peaks that are not primary.
@@ -1696,7 +1720,7 @@ class Experiment:
         return self.qspace_displayed
 
 
-        
+
     #========================================================================================================
     #======================================= COVERAGE STATS =====================================
     #========================================================================================================
@@ -1972,6 +1996,10 @@ class Experiment:
         return (coverage_q, coverage_data)
 
 
+    #========================================================================================================
+    #======================================= PEAKS FILE LOADING =====================================
+    #========================================================================================================
+
     #---------------------------------------------------------------------------------------------
     def load_peaks_file(self, filename, append=False):
         """Loads a .peaks or .integrate file (made by ISAW) into the program, adding on
@@ -1984,6 +2012,8 @@ class Experiment:
         if not os.path.exists(filename):
             raise IOError("The file %s does not exist!" % filename)
 
+        print "Loading ISAW peaks/integrate file %s." % filename
+
         errors = []
         angles = [0,0,0]
         poscov = None
@@ -1991,10 +2021,6 @@ class Experiment:
         #Clear them?
         if not append:
             self.clear_reflection_real_measurements()
-            self.real_measurement_filenames = []
-
-        #Append the filename to list
-        self.real_measurement_filenames.append(filename)
 
         f = open(filename,'r')
         #@type line string

@@ -460,11 +460,11 @@ class QspaceViewController(HasTraits):
         ref_q = model.experiment.exp.reflections_q_vector
         mask = model.experiment.exp.reflections_mask
 
-        assert len(model.experiment.exp.reflections_times_measured_with_equivalents) == len(mask), "Reflection mask and times measured should be the same length."
-
         if not isinstance(ref_q, np.ndarray):
             #No array = return an empty data set
             return pd
+
+        assert len(model.experiment.exp.reflections_times_measured_with_equivalents) == len(mask), "Reflection mask and times measured should be the same length."
 
         #How many of the points are kept?
         num = np.sum(mask)
@@ -507,12 +507,28 @@ class QspaceViewController(HasTraits):
             verts.shape = (num, 1)
             pd.verts = verts
             #Put the # of times measured here as the scalar data
-            if display_thread.get_reflection_masking_params().show_equivalent_reflections:
-                #SHow times measured COUNTING equivalent (symmetrical) reflections.
-                pd.point_data.scalars = model.experiment.exp.reflections_times_measured_with_equivalents[mask, :]
+            param = display_thread.get_reflection_masking_params() #@type param ParamReflectionMasking
+            param_display = display_thread.get_reflection_display_params() #@type param_display ParamReflectionDisplay
+
+            if param_display.color_map == param_display.COLOR_BY_PREDICTED:
+                #--- Color using the predicted measurements ---
+                if param.show_equivalent_reflections:
+                    #SHow times measured COUNTING equivalent (symmetrical) reflections.
+                    pd.point_data.scalars = model.experiment.exp.reflections_times_measured_with_equivalents[mask, :]
+                else:
+                    # Show only the times measured for the exact reflection
+                    pd.point_data.scalars = model.experiment.exp.reflections_times_measured[mask, :]
+
             else:
-                # Show only the times measured for the exact reflection
-                pd.point_data.scalars = model.experiment.exp.reflections_times_measured[mask, :]
+                #--- Color using the real measurements ----
+                if param.show_equivalent_reflections:
+                    #SHow times measured COUNTING equivalent (symmetrical) reflections.
+                    pd.point_data.scalars = model.experiment.exp.reflections_times_real_measured_with_equivalents[mask, :]
+                else:
+                    # Show only the times measured for the exact reflection
+                    pd.point_data.scalars = model.experiment.exp.reflections_times_real_measured[mask, :]
+
+
             pd.point_data.scalars.name = 'scalars'
 
         return pd
@@ -890,9 +906,7 @@ class FrameQspaceView(wx.Frame):
         self.notebookView.AddPage(self.tabVolume, 'Volume Coverage View', select=True)
 
         #Create the reflections view options panel
-        self.tabReflections = panel_reflections_view_options.PanelReflectionsViewOptions(parent=self.notebookView, id=wx.NewId(),
-              name=u'tabReflections', pos=wx.Point(40, 16),
-              size=wx.Size(624, 120), style=wx.TAB_TRAVERSAL)
+        self.tabReflections = panel_reflections_view_options.PanelReflectionsViewOptions(parent=self.notebookView)
         #Add it to the notebook
         self.notebookView.AddPage(self.tabReflections, 'Reflections View', select=False)
 

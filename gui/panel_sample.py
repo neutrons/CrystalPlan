@@ -305,7 +305,7 @@ class PanelSample(wx.Panel):
             #Send message signaling a redraw of volume plots
             display_thread.handle_change_of_qspace(changed_sample_U_matrix=new_U)
 
-            #Now handle the reflections...
+            #Now handle the reflections, and warn if the auto-range is huge...
             (b,n) = self.range_settings.is_too_many()
             if b:
                 dlg =  wx.MessageDialog(self, "The number of reflections given by this range, %s, is very large. Are you sure?\nIf you click no, a default range of -5 to +5 HKL will be used instead, but you can increase the range later." % gui_utils.print_large_number(n),
