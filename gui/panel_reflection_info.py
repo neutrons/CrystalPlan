@@ -57,29 +57,22 @@ class PanelReflectionInfo(wx.Panel):
         parent.AddWindow(self.checkUseEquivalent, 0, border=0, flag= wx.ALIGN_CENTER_VERTICAL)
         
     def _init_coll_boxSizerAll_Items(self, parent):
-        # generated method, don't edit
-
         parent.AddSizer(self.flexGridSizerTop, 0, border=3,
               flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM | wx.EXPAND)
-        parent.AddSpacer(wx.Size(8, 8), border=0, flag=0)
-        parent.AddWindow(self.staticTextTimesMeasured, 0, border=4,
-              flag=wx.LEFT | wx.EXPAND)
-        parent.AddWindow(wx.StaticLine(parent=self), flag=wx.EXPAND)
-        parent.AddWindow(self.scrolledWindowMeasurements, 1, border=0,
-              flag=wx.SHRINK | wx.EXPAND)
-        parent.AddWindow(wx.StaticLine(parent=self), flag=wx.EXPAND)
+        parent.AddWindow(self.notebook, 1, border=0, flag=wx.EXPAND | wx.SHRINK)
 
     def _init_coll_gridSizerHKL_Items(self, parent):
-        # generated method, don't edit
-
         parent.AddWindow(self.textCtrlH, 1, border=0, flag=wx.EXPAND|wx.SHRINK)
         parent.AddWindow(self.textCtrlK, 1, border=0, flag=wx.EXPAND|wx.SHRINK)
         parent.AddWindow(self.textCtrlL, 1, border=0, flag=wx.EXPAND|wx.SHRINK)
 
     def _init_sizers(self):
         self.boxSizerAll = wx.BoxSizer(orient=wx.VERTICAL)
-        self.boxSizerScrollWindow = wx.BoxSizer(orient=wx.VERTICAL)
+        self.boxSizerPredicted = wx.BoxSizer(orient=wx.VERTICAL)
+        self.boxSizerReal = wx.BoxSizer(orient=wx.VERTICAL)
 
+        #The scroller with the default button
+        self.boxSizerScrollWindow = wx.BoxSizer(orient=wx.VERTICAL)
         self.boxSizerScrollWindow.AddWindow(self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
 
         self.flexGridSizerTop = wx.FlexGridSizer(cols=2, hgap=2, rows=3, vgap=3)
@@ -91,28 +84,62 @@ class PanelReflectionInfo(wx.Panel):
         self._init_coll_flexGridSizerTop_Items(self.flexGridSizerTop)
         self._init_coll_gridSizerHKL_Items(self.gridSizerHKL)
 
+        #The predicted and real windows
+        self.boxSizerPredicted.AddWindow(self.staticTextTimesMeasured, 0, border=4, flag=wx.LEFT | wx.EXPAND)
+        self.boxSizerPredicted.AddWindow(wx.StaticLine(parent=self.windowPredicted), flag=wx.EXPAND)
+        self.boxSizerPredicted.AddWindow(self.scrolledWindowMeasurements, 1, border=0, flag=wx.SHRINK | wx.EXPAND)
+        self.boxSizerReal.AddWindow(self.staticTextTimesRealMeasured, 0, border=4, flag=wx.LEFT | wx.EXPAND)
+        self.boxSizerReal.AddWindow(wx.StaticLine(parent=self.windowReal), flag=wx.EXPAND)
+        self.boxSizerReal.AddWindow(self.scrolledWindowRealMeasurements, proportion=1, border=0, flag=wx.SHRINK | wx.EXPAND)
+
+        self.windowPredicted.SetSizer(self.boxSizerPredicted)
+        self.windowReal.SetSizer(self.boxSizerReal)
         self.SetSizer(self.boxSizerAll)
         self.scrolledWindowMeasurements.SetSizer(self.boxSizerScrollWindow)
+        self.boxSizerPredicted.Layout()
+        self.boxSizerReal.Layout()
+        self.scrolledWindowMeasurements.Layout()
 
     def _init_ctrls(self, prnt):
-        # generated method, don't edit
         wx.Panel.__init__(self, id=wxID_PANELREFLECTIONINFO,
               name=u'PanelReflectionInfo', parent=prnt, pos=wx.Point(1874, 552),
               size=wx.Size(250, 394), style=wx.TAB_TRAVERSAL)
         self.SetClientSize(wx.Size(250, 394))
         self.SetAutoLayout(True)
 
+        #Must create notebook first
+        self.notebook = wx.Notebook(parent=self)
+        self.notebook.SetAutoLayout(False)
+
+        #Window holds the predicted measurement list
+        self.windowPredicted = wx.Panel(parent=self.notebook, id=wx.NewId())
+        self.windowPredicted.SetAutoLayout(False)
+
         self.scrolledWindowMeasurements = wx.ScrolledWindow(id=wxID_PANELREFLECTIONINFOSCROLLEDWINDOWMEASUREMENTS,
-              name=u'scrolledWindowMeasurements', parent=self, pos=wx.Point(0,
+              name=u'scrolledWindowMeasurements', parent=self.windowPredicted, pos=wx.Point(0,
               118), size=wx.Size(PanelReflectionMeasurement.DEFAULT_WIDTH, 50), style=wx.VSCROLL | wx.HSCROLL)
 
         self.staticTextTimesMeasured = wx.StaticText(id=wxID_PANELREFLECTIONINFOSTATICTEXTTIMESMEASURED,
-              label=u'Reflection was measured 3 times:',
-              name=u'staticTextTimesMeasured', parent=self, pos=wx.Point(4,
-              101), size=wx.Size(429, 17), style=wx.ALIGN_CENTRE)
+              label=u'Reflection was predicted 3 times:',
+              name=u'staticTextTimesMeasured', parent=self.windowPredicted, style=wx.ALIGN_CENTRE)
         self.staticTextTimesMeasured.Center(wx.HORIZONTAL)
         self.staticTextTimesMeasured.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,
               wx.BOLD, False, u'Sans'))
+
+        #Window holds the real measurement list
+        self.windowReal = wx.Panel(parent=self.notebook, id=wx.NewId(), pos=wx.Point(0,0), size=wx.Size(0,0))
+        self.windowReal.SetAutoLayout(False)
+
+        self.scrolledWindowRealMeasurements = wx.ScrolledWindow(id=wx.NewId(),
+            parent=self.windowReal, style=wx.VSCROLL | wx.HSCROLL)
+
+        self.staticTextTimesRealMeasured = wx.StaticText(id=wx.NewId(),
+                label=u'Reflection was measured 3 times:', pos=wx.Point(0, 0),
+                parent=self.windowReal, style=0*wx.ALIGN_CENTRE)
+        self.staticTextTimesRealMeasured.Center(wx.HORIZONTAL)
+        self.staticTextTimesRealMeasured.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,
+              wx.BOLD, False, u'Sans'))
+
 
         self.staticTextHKLLabel = wx.StaticText(id=wxID_PANELREFLECTIONINFOSTATICTEXTHKLLABEL,
               label=u'Enter HKL:', name=u'staticTextHKLLabel', parent=self,
@@ -178,6 +205,11 @@ class PanelReflectionInfo(wx.Panel):
               parent=self, pos=wx.Point(128, 62), size=wx.Size(200, 30), style=0)
         self.checkUseEquivalent.SetToolTipString("Include HKL peaks that are equivalent to the main HKL, based on crystal symmetry, in the list of measurements")
         self.checkUseEquivalent.Bind(wx.EVT_CHECKBOX, self.OnCheckUseEquivalent)
+
+
+        #Notebook holding the predicted/real
+        self.notebook.AddPage(self.windowPredicted, "Predicted", select=True)
+        self.notebook.AddPage(self.windowReal, "Real", select=False)
 
         self._init_sizers()
 

@@ -492,23 +492,28 @@ class QspaceViewController(HasTraits):
             self.warning_text_visible = False
         self.warning_text.visible = self.warning_text_visible
 
-
-        #Positions = our array of q-vectors.
-        # .T = transpose
-        pd.points = ref_q[:, mask].T
-
-        #Create the vertices
-        verts = np.arange(0, num, 1)
-        verts.shape = (num, 1)
-        pd.verts = verts
-        #Put the # of times measured here as the scalar data
-        if display_thread.get_reflection_masking_params().show_equivalent_reflections:
-            #SHow times measured COUNTING equivalent (symmetrical) reflections.
-            pd.point_data.scalars = model.experiment.exp.reflections_times_measured_with_equivalents[mask, :]
+        if num <= 0:
+            #Nothing to show!
+            return pd
+        
         else:
-            # Show only the times measured for the exact reflection
-            pd.point_data.scalars = model.experiment.exp.reflections_times_measured[mask, :]
-        pd.point_data.scalars.name = 'scalars'
+
+            #Positions = our array of q-vectors.
+            # .T = transpose
+            pd.points = ref_q[:, mask].T
+
+            #Create the vertices
+            verts = np.arange(0, num, 1)
+            verts.shape = (num, 1)
+            pd.verts = verts
+            #Put the # of times measured here as the scalar data
+            if display_thread.get_reflection_masking_params().show_equivalent_reflections:
+                #SHow times measured COUNTING equivalent (symmetrical) reflections.
+                pd.point_data.scalars = model.experiment.exp.reflections_times_measured_with_equivalents[mask, :]
+            else:
+                # Show only the times measured for the exact reflection
+                pd.point_data.scalars = model.experiment.exp.reflections_times_measured[mask, :]
+            pd.point_data.scalars.name = 'scalars'
 
         return pd
 

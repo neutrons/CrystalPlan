@@ -565,9 +565,12 @@ class Experiment:
     #========================================================================================================
 
     #-------------------------------------------------------------------------------
-    def automatic_hkl_range(self):
+    def automatic_hkl_range(self, check_only=False):
         """Automatically determine the correct HKL range of peaks that will fit
-        all peaks."""
+        all peaks.
+
+        Parameters
+            check_only: bool, set to True to just check how many peaks there are, and return them."""
         #This is the q we want
         qlim = self.inst.qlim
         #This the q of each reciprocal lattice vector
@@ -585,12 +588,17 @@ class Experiment:
                     corner_hkl[:, i] = hkl.flatten()
                     i += 1
         #Round them up
+        ranges = []
         corner_hkl = np.round(corner_hkl)
         for (i, field) in enumerate(['range_h', 'range_k', 'range_l']):
             index_min = np.min(corner_hkl[i,:])
             index_max = np.max(corner_hkl[i,:])
+            ranges.append( index_max - index_min + 1)
             #Set the range to these
-            setattr(self, field, (index_min, index_max) )
+            if not check_only:
+                setattr(self, field, (index_min, index_max) )
+        #Return the # of reflections
+        return ranges[0]*ranges[1]*ranges[2]
 
 
     #-------------------------------------------------------------------------------
@@ -692,6 +700,9 @@ class Experiment:
             if len(self.reflections_mask) != self.reflections_q_vector.shape[1]:
                 import warnings
                 warnings.warn("Warning! Non-matching size of reflections_q_vector and reflections_mask")
+                return None
+            elif len(self.reflections_mask)==0:
+                #No mask
                 return None
             q = self.reflections_q_vector[:, self.reflections_mask]
         else:
@@ -1859,10 +1870,13 @@ class Experiment:
         self.reflection_stats.redundant = np.sum(self.reflections_times_measured > 1)
         #Now do it with symmetry
         assert len(self.primary_reflections_mask)==len(self.reflections), "The primary reflections mask should be the same length as the reflections; otherwise, incorrect stats will be computed."
+        assert len(self.reflections_times_measured_with_equivalents)==len(self.reflections), "reflections_times_measured_with_equivalents is the right length."
         mask = self.primary_reflections_mask
-        self.reflection_stats_with_symmetry.total = np.sum(mask)
-        self.reflection_stats_with_symmetry.measured = np.sum(self.reflections_times_measured_with_equivalents[mask,:] > 0)
-        self.reflection_stats_with_symmetry.redundant = np.sum(self.reflections_times_measured_with_equivalents[mask,:] > 1)
+        if len(mask) > 0:
+            self.reflection_stats_with_symmetry.total = np.sum(mask)
+            self.reflection_stats_with_symmetry.measured = np.sum(self.reflections_times_measured_with_equivalents[mask,:] > 0)
+            self.reflection_stats_with_symmetry.redundant = np.sum(self.reflections_times_measured_with_equivalents[mask,:] > 1)
+
         #Stats using edge avoidance
         if edge_avoidance:
             self.calculate_reflection_coverage_stats_adjusted(edge_x, edge_y)

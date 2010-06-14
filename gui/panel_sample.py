@@ -73,7 +73,7 @@ class HKLRangeSettings(HasTraits):
         """Return True if the values entered make sense."""
         #The higher bound needs to be bigger for each.
         return self.automatic or \
-                ((self.h_range[0,1] >=self.h_range[0,0]) and \
+                ((self.h_range[0,1] >= self.h_range[0,0]) and \
                 (self.k_range[0,1] >= self.k_range[0,0]) and \
                 (self.l_range[0,1] >= self.l_range[0,0]))
 
@@ -84,13 +84,14 @@ class HKLRangeSettings(HasTraits):
             bool: true if the number of reflections given by the selection is very large.
             n: integer, number of reflections that will be shown.
         """
-        #TODO: Count automatic peaks
         if self.automatic:
-            return (False, 1e3)
-        
-        n = (self.h_range[0,1]-self.h_range[0,0]+1) * \
-            (self.k_range[0,1]-self.k_range[0,0]+1) * \
-            (self.l_range[0,1]-self.l_range[0,0]+1)
+            #Count (estimate) automatic peaks
+            n = model.experiment.exp.automatic_hkl_range(check_only=True)
+        else:
+            #Specified range
+            n = (self.h_range[0,1]-self.h_range[0,0]+1) * \
+                (self.k_range[0,1]-self.k_range[0,0]+1) * \
+                (self.l_range[0,1]-self.l_range[0,0]+1)
         return ((n > 1e5), int(n))
 
 
@@ -304,6 +305,20 @@ class PanelSample(wx.Panel):
             #Send message signaling a redraw of volume plots
             display_thread.handle_change_of_qspace(changed_sample_U_matrix=new_U)
 
+            #Now handle the reflections...
+            (b,n) = self.range_settings.is_too_many()
+            if b:
+                dlg =  wx.MessageDialog(self, "The number of reflections given by this range, %s, is very large. Are you sure?\nIf you click no, a default range of -5 to +5 HKL will be used instead, but you can increase the range later." % gui_utils.print_large_number(n),
+                                        "Too Many Reflections", wx.YES_NO | wx.ICON_INFORMATION)
+                res = dlg.ShowModal()
+                dlg.Destroy()
+                if res != wx.ID_YES:
+                    #Disable automatic if its on; put on smaller numbers.
+                    self.range_settings.automatic = False 
+                    self.range_settings.h_range = np.array( [-5,5] ).reshape(1,2)
+                    self.range_settings.k_range = np.array( [-5,5] ).reshape(1,2)
+                    self.range_settings.l_range = np.array( [-5,5] ).reshape(1,2)
+
             #Update the hkl range settings, especially for automatic settings
             self.apply_crystal_range()
         event.Skip()
@@ -317,13 +332,15 @@ class PanelSample(wx.Panel):
             return
         (b,n) = self.range_settings.is_too_many()
         if b:
-            dlg =  wx.MessageDialog(self, "The number of reflections given by this range, %d, is very large. Are you sure?" % n,
+            dlg =  wx.MessageDialog(self, "The number of reflections given by this range, %s, is very large. Are you sure?" % gui_utils.print_large_number(n),
                                     "Too Many Reflections", wx.YES_NO | wx.ICON_INFORMATION)
             res = dlg.ShowModal()
             dlg.Destroy()
             if res != wx.ID_YES:
+                self.range_settings.automatic = False #Disable automatic if its on
                 return
         #Do it!
+
         self.apply_crystal_range()
         event.Skip()
 
