@@ -12,6 +12,8 @@ import numpy as np
 #--- GUI Imports ---
 import gui_utils
 
+import model
+
 
 #Custom event
 DetectorClicked, EVT_DETECTOR_CLICKED = wx.lib.newevent.NewEvent()
@@ -50,12 +52,15 @@ class DetectorPlot(wx.Window):
         #Settings
         self.center_horizontal = kwargs.get("center_horizontal", False)
         self.center_vertical = kwargs.get("center_vertical", False)
+        self.align_right = kwargs.get("align_right", False)
         self.show_coordinates = kwargs.get("show_coordinates", False)
 
     #---------------------------------------------------------------------------
     def set_measurement(self, meas):
         """Set a measurement to be plotted"""
         self.meas = meas
+        if (meas.detector_num >= 0) and (meas.detector_num < len(model.instrument.inst.detectors)):
+            self.set_detector(model.instrument.inst.detectors[meas.detector_num])
         self.Refresh()
 
     #---------------------------------------------------------------------------
@@ -95,6 +100,9 @@ class DetectorPlot(wx.Window):
         self.xoffset = 0
         if self.center_horizontal:
             self.xoffset = (self.GetSize()[0] - self.plot_size.width)  / 2
+        elif self.align_right:
+            self.xoffset = (self.GetSize()[0] - self.plot_size.width)
+
 
         dc.DrawRectangle(self.xoffset, self.yoffset, self.plot_size.width, self.plot_size.height)
 
@@ -128,6 +136,7 @@ class DetectorPlot(wx.Window):
         length = self.plot_size.width/10
         #Get the radius in pixels from the peak width in mm
         r = self.plot_size.width * self.meas.peak_width / self.det_width
+        if r <= 0: r = 1
 
         def crosshairs():
             #Make crosshairs

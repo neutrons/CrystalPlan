@@ -2039,6 +2039,11 @@ class Experiment:
                     arr = line.split()
                     #Find the detector number, make it 0-based
                     detnum = int(arr[2]) - 1
+                    if detnum>=0 and detnum < len(self.inst.detectors):
+                        det = self.inst.detectors[detnum] 
+                    else:
+                        det = None
+
                     #Find the angles, convert to radians
                     (chi, phi, omega) =  [np.deg2rad(float(arr[i])) for i in xrange(3,6)]
                     angles = np.array( [phi, chi, omega] )
@@ -2061,11 +2066,19 @@ class Experiment:
                             rm = ReflectionRealMeasurement()
                             rm.angles = angles * 1.0 #Make sure to copy the numpy array
                             rm.detector_num = detnum
-                            rm.col = float(arr[5])
-                            rm.row = float(arr[6])
+                            col = float(arr[5])
+                            row = float(arr[6])
+                            #Convert to horizontal TODO!!!
+                            if not det is None:
+                                #@type det FlatDetector
+                                rm.horizontal = det.width * (det.xpixels/2-col)/det.xpixels
+                                rm.vertical = -det.height * (det.ypixels/2-row)/det.ypixels
+
                             rm.wavelength = float(arr[11])
                             rm.integrated = float(arr[14])
                             rm.sigI = float(arr[15])
+                            rm.measurement_num = int(arr[1]) #The peak #
+
                             #Add it
                             ref.real_measurements.append(rm)
             except IOError:
@@ -2586,8 +2599,8 @@ class TestExperiment(unittest.TestCase):
         rrm = ref.real_measurements[0]
         #Check one of them.
         assert np.allclose(rrm.angles, np.deg2rad([-59.37, 45.00, 150.49])), "Angles match. %s" % rrm.angles
-        assert np.allclose( [rrm.col], [217.40] ), "Col"
-        assert np.allclose( [rrm.row], [66.71] ), "Row"
+#        assert np.allclose( [rrm.col], [217.40] ), "Col"
+#        assert np.allclose( [rrm.row], [66.71] ), "Row"
         assert np.allclose( [rrm.wavelength], [3.368968]), "Wavelength"
         assert np.allclose( [rrm.integrated], [6069.83]), "Integrated"
         assert np.allclose( [rrm.sigI], [82.90]), "sigI"

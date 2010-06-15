@@ -16,7 +16,7 @@ import reflection_placer
 
 #--- Model Imports ---
 import model
-from model.reflections import ReflectionMeasurement, Reflection
+from model.reflections import ReflectionMeasurement, Reflection, ReflectionRealMeasurement
 
 
 
@@ -75,6 +75,8 @@ class PanelReflectionInfo(wx.Panel):
         self.boxSizerScrollWindow = wx.BoxSizer(orient=wx.VERTICAL)
         self.boxSizerScrollWindow.AddWindow(self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
 
+        self.boxSizerScrollWindowReal = wx.BoxSizer(orient=wx.VERTICAL)
+
         self.flexGridSizerTop = wx.FlexGridSizer(cols=2, hgap=2, rows=3, vgap=3)
         self.flexGridSizerTop.SetMinSize(wx.Size(100, 87))
 
@@ -85,10 +87,10 @@ class PanelReflectionInfo(wx.Panel):
         self._init_coll_gridSizerHKL_Items(self.gridSizerHKL)
 
         #The predicted and real windows
-        self.boxSizerPredicted.AddWindow(self.staticTextTimesMeasured, 0, border=4, flag=wx.LEFT | wx.EXPAND)
+#        self.boxSizerPredicted.AddWindow(self.staticTextTimesMeasured, 0, border=4, flag=wx.LEFT | wx.EXPAND)
         self.boxSizerPredicted.AddWindow(wx.StaticLine(parent=self.windowPredicted), flag=wx.EXPAND)
         self.boxSizerPredicted.AddWindow(self.scrolledWindowMeasurements, 1, border=0, flag=wx.SHRINK | wx.EXPAND)
-        self.boxSizerReal.AddWindow(self.staticTextTimesRealMeasured, 0, border=4, flag=wx.LEFT | wx.EXPAND)
+#        self.boxSizerReal.AddWindow(self.staticTextTimesRealMeasured, 0, border=4, flag=wx.LEFT | wx.EXPAND)
         self.boxSizerReal.AddWindow(wx.StaticLine(parent=self.windowReal), flag=wx.EXPAND)
         self.boxSizerReal.AddWindow(self.scrolledWindowRealMeasurements, proportion=1, border=0, flag=wx.SHRINK | wx.EXPAND)
 
@@ -96,6 +98,7 @@ class PanelReflectionInfo(wx.Panel):
         self.windowReal.SetSizer(self.boxSizerReal)
         self.SetSizer(self.boxSizerAll)
         self.scrolledWindowMeasurements.SetSizer(self.boxSizerScrollWindow)
+        self.scrolledWindowRealMeasurements.SetSizer(self.boxSizerScrollWindowReal)
         self.boxSizerPredicted.Layout()
         self.boxSizerReal.Layout()
         self.scrolledWindowMeasurements.Layout()
@@ -119,12 +122,20 @@ class PanelReflectionInfo(wx.Panel):
               name=u'scrolledWindowMeasurements', parent=self.windowPredicted, pos=wx.Point(0,
               118), size=wx.Size(PanelReflectionMeasurement.DEFAULT_WIDTH, 50), style=wx.VSCROLL | wx.HSCROLL)
 
-        self.staticTextTimesMeasured = wx.StaticText(id=wxID_PANELREFLECTIONINFOSTATICTEXTTIMESMEASURED,
-              label=u'Reflection was predicted 3 times:',
-              name=u'staticTextTimesMeasured', parent=self.windowPredicted, style=wx.ALIGN_CENTRE)
-        self.staticTextTimesMeasured.Center(wx.HORIZONTAL)
-        self.staticTextTimesMeasured.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,
-              wx.BOLD, False, u'Sans'))
+#        self.staticTextTimesMeasured = wx.StaticText(id=wxID_PANELREFLECTIONINFOSTATICTEXTTIMESMEASURED,
+#              label=u'Reflection was predicted 3 times:',
+#              name=u'staticTextTimesMeasured', parent=self.windowPredicted, style=wx.ALIGN_CENTRE)
+#        self.staticTextTimesMeasured.Center(wx.HORIZONTAL)
+#        self.staticTextTimesMeasured.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,
+#              wx.BOLD, False, u'Sans'))
+#
+#        self.staticTextTimesRealMeasured = wx.StaticText(id=wx.NewId(),
+#                label=u'Reflection was measured 3 times:', pos=wx.Point(0, 0),
+#                parent=self.windowReal, style=0*wx.ALIGN_CENTRE)
+#        self.staticTextTimesRealMeasured.Center(wx.HORIZONTAL)
+#        self.staticTextTimesRealMeasured.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,
+#              wx.BOLD, False, u'Sans'))
+
 
         #Window holds the real measurement list
         self.windowReal = wx.Panel(parent=self.notebook, id=wx.NewId(), pos=wx.Point(0,0), size=wx.Size(0,0))
@@ -133,12 +144,6 @@ class PanelReflectionInfo(wx.Panel):
         self.scrolledWindowRealMeasurements = wx.ScrolledWindow(id=wx.NewId(),
             parent=self.windowReal, style=wx.VSCROLL | wx.HSCROLL)
 
-        self.staticTextTimesRealMeasured = wx.StaticText(id=wx.NewId(),
-                label=u'Reflection was measured 3 times:', pos=wx.Point(0, 0),
-                parent=self.windowReal, style=0*wx.ALIGN_CENTRE)
-        self.staticTextTimesRealMeasured.Center(wx.HORIZONTAL)
-        self.staticTextTimesRealMeasured.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,
-              wx.BOLD, False, u'Sans'))
 
 
         self.staticTextHKLLabel = wx.StaticText(id=wxID_PANELREFLECTIONINFOSTATICTEXTHKLLABEL,
@@ -219,20 +224,21 @@ class PanelReflectionInfo(wx.Panel):
         #Attributes that should exist
         self.refl = None
         self._inside_set_reflection = False
-        self.hkl_static_texts = []
+        self.hkl_static_texts = [ [], [] ]
 
         #Fixing layout
         self.flexGridSizerTop.AddGrowableCol(1)
         #Settings to allow scrolling.
-        self.scrolledWindowMeasurements.SetAutoLayout(True)
-        self.scrolledWindowMeasurements.SetSizer(self.boxSizerScrollWindow)
-        self.scrolledWindowMeasurements.EnableScrolling(False, True)
-        self.scrolledWindowMeasurements.SetScrollRate(5, 10)
+        for scrollwin in [self.scrolledWindowMeasurements, self.scrolledWindowRealMeasurements]:
+            scrollwin.SetAutoLayout(True)
+            scrollwin.EnableScrolling(False, True)
+            scrollwin.SetScrollRate(5, 10)
+            
         self.boxSizerScrollWindow.SetVirtualSizeHints(self.scrolledWindowMeasurements)
-##        self.scrolledWindowMeasurementsself.boxSizerAll.SetSize((660, 400))
+    ##        scrollwinself.boxSizerAll.SetSize((660, 400))
 
         #Create an empty list of the measurement panels
-        self.measure_panels = []
+        self.measure_panels = [ [], [] ]
 
         #Bind text events
         self.hkl_textCtls = [self.textCtrlH, self.textCtrlK, self.textCtrlL]
@@ -296,87 +302,117 @@ class PanelReflectionInfo(wx.Panel):
 
         Parameters:
             refl: Reflection object being displayed. Can be None for no reflection.
+            real_mode: bool, True to do the real measurements, false for the predicted ones.
         """
+        #@type refl Reflection
+        
+        for real_mode in [False, True]:
 
-        min_panel_size = wx.Size(PanelReflectionMeasurement.DEFAULT_WIDTH, PanelReflectionMeasurement.DEFAULT_HEIGHT)
+            #Settings to reuse
+            scrollwin = [self.scrolledWindowMeasurements, self.scrolledWindowRealMeasurements][real_mode]
+            sizer = [self.boxSizerScrollWindow, self.boxSizerScrollWindowReal][real_mode]
 
-        #Do we look for equivalent reflections (due to symmetry)?
-        if self.checkUseEquivalent.GetValue():
-            refls = model.experiment.exp.get_equivalent_reflections(refl)
-        else:
-            #Make the single reflection into a list
-            refls = [refl]
-            
-        #Make sure there are no Nones in the list
-        while None in refls:
-            refls.remove(None)
+            min_panel_size = wx.Size(PanelReflectionMeasurement.DEFAULT_WIDTH, PanelReflectionMeasurement.DEFAULT_HEIGHT)
 
-        #Count the measurements
-        num_measurements = 0
-        for refl in refls:
-            num_measurements += len(refl.measurements)
+            #Do we look for equivalent reflections (due to symmetry)?
+            if self.checkUseEquivalent.GetValue():
+                refls = model.experiment.exp.get_equivalent_reflections(refl)
+            else:
+                #Make the single reflection into a list
+                refls = [refl]
+
+            #Make sure there are no Nones in the list
+            while None in refls:
+                refls.remove(None)
+
+            #Count the measurements
+            num_total_measurements = 0
+            for refl in refls:
+                if real_mode:
+                    num_total_measurements += len(refl.real_measurements)
+                    self.notebook.SetPageText(1, "Real Measurements: %d" % num_total_measurements)
+                else:
+                    num_total_measurements += len(refl.measurements)
+                    self.notebook.SetPageText(0, "Predicted: %d" % num_total_measurements)
 
 
-        #Neat trick to make the last word plural
-        self.staticTextTimesMeasured.SetLabel("Reflection was measured %d time%s:" % (num_measurements, ('s', '')[int(num_measurements==1)]) )
+            #Neat trick to make the last word plural
+#            if real_mode:
+#                self.staticTextTimesRealMeasured.SetLabel("Reflection was measured %d time%s:" % (num_total_measurements, ('s', '')[int(num_measurements==1)]) )
+#            else:
+#                self.staticTextTimesMeasured.SetLabel("Reflection was predicted %d time%s:" % (num_total_measurements, ('s', '')[int(num_measurements==1)]) )
 
-        #Remove all static text label
-        for txt in self.hkl_static_texts:
-            self.boxSizerScrollWindow.Remove(txt)
-            txt.Destroy()
-        self.hkl_static_texts = []
+            #Remove all static text label
+            for txt in self.hkl_static_texts[real_mode]:
+                sizer.Remove(txt)
+                txt.Destroy()
+            self.hkl_static_texts[real_mode] = []
 
-        #i counts the measurement number SHOWN in the windo
-        i = 0
-        for (reflection_number, refl) in enumerate(refls):
-            
-            #Add a static text label for the hkl
-            s = "As HKL %d,%d,%d:" % refl.hkl
-            if len(refl.measurements) == 0: s += " (not measured)"
-            txt = wx.StaticText(parent=self.scrolledWindowMeasurements, label=s)
-            self.hkl_static_texts.append(txt)
-            #Slip it in the right spot
-            self.boxSizerScrollWindow.InsertWindow(i+reflection_number+1, txt, 0, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
+            #i counts the measurement number SHOWN in the windo
+            i = 0
+            for (reflection_number, refl) in enumerate(refls):
+                #How many measurements in this one?
+                if real_mode:
+                    num_measurements = len(refl.real_measurements)
+                else:
+                    num_measurements = len(refl.measurements)
 
-            #Now do all the measurements
-            for refl_measurement_number in xrange(len(refl.measurements)):
-                if i >= len(self.measure_panels):
-                    #Need to create a new one
-                    new_panel = PanelReflectionMeasurement(self.scrolledWindowMeasurements)
-                    if (i % 2)==0:
-                        new_panel.SetBackgroundColour(gui_utils.TEXT_BACKGROUND_COLOUR_GOOD)
-                    self.boxSizerScrollWindow.AddWindow(new_panel, 1, border=2, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM | wx.EXPAND | wx.SHRINK)
-                    new_panel.SetClientSize(min_panel_size)
-                    new_panel.SetMinSize(min_panel_size)
-                    self.scrolledWindowMeasurements.SetMinSize(min_panel_size)
-                    self.boxSizerScrollWindow.SetMinSize(min_panel_size)
-                    self.measure_panels.append(new_panel)
-                #Make sure it can be seen
-                self.measure_panels[i].Show(True)
+                #Add a static text label for the hkl
+                s = "As HKL %d,%d,%d:" % refl.hkl
+                if num_measurements == 0:
+                     s += [" (not predicted)",  " (not measured)"][real_mode]
+                    
+                txt = wx.StaticText(parent=scrollwin, label=s)
+                self.hkl_static_texts[real_mode].append(txt)
+                #Slip it in the right spot
+                sizer.InsertWindow(i+reflection_number+[1,0][real_mode], txt, 0, border=4, flag=wx.EXPAND | wx.LEFT | wx.RIGHT)
 
-                #And set its data
-                meas = ReflectionMeasurement(refl, refl_measurement_number, divergence_deg=model.config.cfg.reflection_divergence_degrees)
-                self.measure_panels[i].set_measurement(refl, meas)
-                
-                #Next one in the list
-                i += 1
+                #Now do all the measurements
+                for refl_measurement_number in xrange(num_measurements):
+                    if i >= len(self.measure_panels[real_mode]):
+                        #Need to create a new one
+                        new_panel = PanelReflectionMeasurement(scrollwin)
+                        if (i % 2)==0:
+                            new_panel.SetBackgroundColour(gui_utils.TEXT_BACKGROUND_COLOUR_GOOD)
+                        sizer.AddWindow(new_panel, 1, border=2, flag=wx.LEFT | wx.RIGHT | wx.TOP | wx.BOTTOM | wx.EXPAND | wx.SHRINK)
+                        new_panel.SetClientSize(min_panel_size)
+                        new_panel.SetMinSize(min_panel_size)
+                        scrollwin.SetMinSize(min_panel_size)
+                        sizer.SetMinSize(min_panel_size)
+                        self.measure_panels[real_mode].append(new_panel)
+                    #Make sure it can be seen
+                    self.measure_panels[real_mode][i].Show(True)
 
-        #Now hide any excess ones
-        for i in xrange( num_measurements, len(self.measure_panels)):
-            self.measure_panels[i].Show(False)
+                    #And set its data
+                    if real_mode:
+                        meas = refl.real_measurements[refl_measurement_number]
+                    else:
+                        meas = ReflectionMeasurement(refl, refl_measurement_number, divergence_deg=model.config.cfg.reflection_divergence_degrees)
+                    self.measure_panels[real_mode][i].set_measurement(refl, meas)
 
-        if num_measurements==0:
-            self.buttonPlace.Show()
-        else:
-            self.buttonPlace.Hide()
+                    #Next one in the list
+                    i += 1
 
-        #For scrolling
-        self.boxSizerScrollWindow.Layout()
-        scroll_size = self.boxSizerScrollWindow.GetMinSize()
-#        scroll_size[0] = PanelReflectionMeasurement.MIN_WIDTH
-        self.scrolledWindowMeasurements.SetVirtualSize(scroll_size )
-        self.scrolledWindowMeasurements.Layout()
-        self.Update()
+            #Now hide any excess ones
+            for i in xrange( num_total_measurements, len(self.measure_panels[real_mode])):
+                self.measure_panels[real_mode][i].Show(False)
+
+            #The button.
+            if not real_mode:
+                if num_total_measurements==0:
+                    self.buttonPlace.Show()
+                else:
+                    self.buttonPlace.Hide()
+
+            #For scrolling
+            sizer.Layout()
+            scroll_size = sizer.GetMinSize()
+    #        scroll_size[0] = PanelReflectionMeasurement.MIN_WIDTH
+            scrollwin.SetVirtualSize(scroll_size )
+            scrollwin.Layout()
+            self.Update()
+
+        
 
     #----------------------------------------------------------------------------------
     def set_hkl(self, h, k, l, update_textboxes=True):
@@ -420,6 +456,7 @@ class PanelReflectionInfo(wx.Panel):
             self.textCtrlQ.SetValue( "%7.2f,%6.2f,%6.2f" % tuple(refl.q_vector.ravel()) )
             for ctl in self.hkl_textCtls:
                 ctl.SetBackgroundColour(gui_utils.TEXT_BACKGROUND_COLOUR_GOOD)
+
 
         #This'll update the measurements list
         self.set_reflection_measurements(refl)
@@ -483,8 +520,21 @@ if __name__ == "__main__":
     import gui_utils
     (app, pnl) = gui_utils.test_my_gui(PanelReflectionInfo)
     app.frame.SetClientSize(wx.Size(300, 500))
+    #@type refl Reflection
     refl = model.reflections.Reflection( (1,2,3), np.array([1,2,3]))
     for i in xrange(7):
         refl.measurements.append( (1,2,3,4,5,6) )
+    for i in xrange(4):
+        rrm = ReflectionRealMeasurement()
+        rrm.detector_num = i
+        rrm.integrated = i*11.0
+        rrm.sigI = i*0.5
+        rrm.wavelength = i+.23
+        rrm.distance = i+.45
+        rrm.horizontal = 10+i
+        rrm.vertical = -10-i
+        rrm.measurement_num = i+1000
+        refl.real_measurements.append(rrm)
+
     pnl.set_reflection_measurements(refl)
     app.MainLoop()

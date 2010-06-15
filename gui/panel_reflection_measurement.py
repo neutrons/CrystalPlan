@@ -55,8 +55,10 @@ class PanelReflectionMeasurement(wx.Panel):
         parent.AddWindow(self.staticTextWL, 0, border=0, flag=wx.SHRINK)
         parent.AddWindow(self.staticTextYLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
         parent.AddWindow(self.staticTextY, 0, border=0, flag=wx.SHRINK)
-        parent.AddSpacer(wx.Size(3,3))
-        parent.AddWindow(self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.RIGHT)
+        parent.AddWindow(self.staticTextIntegratedLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
+        #Spot 9
+#        parent.AddWindow(self.staticTextIntegrated, 0, border=0, flag=wx.ALIGN_RIGHT)
+#        parent.AddWindow(self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.RIGHT)
         parent.AddWindow(self.staticTextWidthLabel, 0, border=0, flag=wx.ALIGN_RIGHT|wx.SHRINK)
         parent.AddWindow(self.staticTextWidth, 0, border=0, flag=wx.SHRINK)
 
@@ -140,6 +142,12 @@ class PanelReflectionMeasurement(wx.Panel):
               pos=wx.Point(217, 39), size=wx.Size(110, 17), style=0)
         self.staticTextY.SetToolTipString(u'Vertical position of the reflection on the detector (0=center)')
 
+        self.staticTextIntegratedLabel = wx.StaticText(label=u'I:',
+                parent=self, style=0)
+        self.staticTextIntegrated = wx.StaticText(label=u'0.0 ct', parent=self, style=0)
+        self.staticTextIntegrated.SetToolTipString(u'Integrated counts under peak.')
+        self.staticTextIntegratedLabel.Hide()
+
         self.staticTextWL = wx.StaticText(id=wxID_PANELREFLECTIONMEASUREMENTSTATICTEXTWL,
               label=u'0.00 ang', name=u'staticTextWL', parent=self,
               pos=wx.Point(52, 39), style=0)
@@ -156,7 +164,6 @@ class PanelReflectionMeasurement(wx.Panel):
 
         self.staticTextWidth = wx.StaticText(label=u'   1.00 mm', name=u'staticTextWidth', parent=self,
               pos=wx.Point(217, 19), style=0)
-        self.staticTextWidth.SetToolTipString(u'Half-width of the peak on the detector.')
 
         #1/2 width unicode symbol
         self.staticTextWidthLabel = wx.StaticText(label=u'\u00BD-width:', name=u'staticTextWidthLabel', parent=self,
@@ -164,7 +171,7 @@ class PanelReflectionMeasurement(wx.Panel):
 
         self.detectorPlot = detector_plot.DetectorPlot(name=u'detectorPlot', parent=self,
               pos=wx.Point(52, 19), size=wx.Size(5, 5), style=0,
-              center_horizontal=False, center_vertical=False )
+              center_horizontal=False, center_vertical=False, align_right=True )
 
         self.buttonPlace = wx.Button(label=u'Place...',
               parent=self, pos=wx.Point(128, 62), size=wx.Size(75, 20), style=0)
@@ -181,20 +188,19 @@ class PanelReflectionMeasurement(wx.Panel):
         self.refl = None
         #Format string for displaying values
         self.fmt = "%7.2f"
+        self.fmt_counts = "%9.1f"
         #Set matching fonts
-        for ctl in [self.staticTextX, self.staticTextY, self.staticTextWL, self.staticTextDetector, self.staticTextWidth]:
+        for ctl in [self.staticTextX, self.staticTextY, self.staticTextWL,
+                    self.staticTextDetector, self.staticTextWidth, self.staticTextIntegrated]:
             ctl.SetFont(wx.Font(11, 76, wx.NORMAL, wx.NORMAL, False, u'Courier New'))
-        for ctl in [self.staticTextXLabel, self.staticTextYLabel, self.staticTextWLLabel, self.staticTextDetectorLabel, self.staticTextWidthLabel]:
+        for ctl in [self.staticTextXLabel, self.staticTextYLabel, self.staticTextWLLabel,
+                    self.staticTextDetectorLabel, self.staticTextWidthLabel, self.staticTextIntegratedLabel]:
             ctl.SetFont(wx.Font(11, 76, wx.NORMAL, wx.NORMAL, False, u'Courier New'))
 
     #---------------------------------------------------------------------------
     def set_measurement(self, refl, meas):
         """Make the panel display the given ReflectionMeasurement object 'meas'"""
         self.refl = refl
-        #@type meas: ReflectionMeasurement
-        self.meas = meas
-        #Also for the detector plot
-        self.detectorPlot.set_measurement(meas)
         if meas is None:
             self.staticTextAngles.SetLabel("None")
             self.staticTextWL.SetLabel("None")
@@ -204,8 +210,19 @@ class PanelReflectionMeasurement(wx.Panel):
             self.staticTextWidth.SetLabel("None")
             self.staticTextMeasurementNumber.SetLabel("---")
         else:
+#            if isinstance(meas, model.reflections.ReflectionRealMeasurement):
+#                self.set_real_measurement(refl, meas)
+#            else:
+#                self.set_predicted_measurement(refl, meas)
+#
+#        def set_predicted_measurement(self, refl, meas):
+            #@type meas: ReflectionMeasurement
+            self.meas = meas
+            #Also for the detector plot
+            self.detectorPlot.set_measurement(meas)
+
             fmt = self.fmt
-            hkl_str = "%d,%d,%d" % self.refl.hkl
+            hkl_str = "%d,%d,%d" % refl.hkl
             self.staticTextAngles.SetLabel(meas.make_sample_orientation_string() + " as HKL %s" % hkl_str )
 
             det_name = "None"
@@ -219,8 +236,37 @@ class PanelReflectionMeasurement(wx.Panel):
             self.staticTextWL.SetLabel((fmt % meas.wavelength) + u" \u212B") #Angstrom symbol
             self.staticTextX.SetLabel((fmt % meas.horizontal) + " mm")
             self.staticTextY.SetLabel((fmt % meas.vertical) + " mm")
-            self.staticTextWidth.SetLabel((fmt % meas.peak_width) + " mm")
             self.staticTextMeasurementNumber.SetLabel("#%d:" % meas.measurement_num)
+
+            #Remove these, if they are in there
+            try:
+                self.flexGridSizer1.RemoveWindow(self.staticTextIntegrated)
+                self.flexGridSizer1.RemoveWindow(self.buttonPlace)
+            except:
+                pass
+
+            if hasattr(meas, "integrated"):
+                #Real measurement
+                self.staticTextWidthLabel.SetLabel(" SigI:")
+                self.staticTextWidth.SetLabel((self.fmt_counts % meas.sigI))
+                self.staticTextWidth.SetToolTipString(u'Sigma I of the integrated peak intensity')
+                self.staticTextIntegrated.SetLabel((self.fmt_counts % meas.integrated))
+                self.flexGridSizer1.InsertWindow(9, self.staticTextIntegrated, 0, border=0, flag=wx.SHRINK)
+                self.staticTextIntegratedLabel.Show()
+                self.staticTextIntegrated.Show()
+                self.buttonPlace.Hide()
+            else:
+                #Predicted
+                self.staticTextWidthLabel.SetLabel("Width:")
+                self.staticTextWidth.SetLabel((fmt % meas.peak_width) + " mm")
+                self.staticTextWidth.SetToolTipString(u'Half-width of the peak on the detector.')
+                self.flexGridSizer1.InsertWindow(9, self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.RIGHT)
+                self.staticTextIntegratedLabel.Hide()
+                self.staticTextIntegrated.Hide()
+                self.buttonPlace.Show()
+
+
+
 
     def OnButtonPlace(self, event):
         self.last_placer_frame = reflection_placer.show_placer_frame(self, self.refl, self.meas)

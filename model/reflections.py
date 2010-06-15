@@ -247,7 +247,7 @@ class ReflectionMeasurement():
 #==================================================================
 #==================================================================
 #==================================================================
-class ReflectionRealMeasurement():
+class ReflectionRealMeasurement(ReflectionMeasurement):
     """Class holds info about a real peak measurement (loaded from an peaks or integrate file
     produced by ISAW)."""
     def __init__(self):
@@ -255,16 +255,27 @@ class ReflectionRealMeasurement():
         #The phi,chi,omega angles, in radians.
         self.angles = []
         self.detector_num = 0
-        self.row = 0
-        self.col = 0
         self.wavelength = 0
         self.distance = 0
         #Integrated peak
         self.integrated = 0
         #Sigma I (error on intensity)
         self.sigI = 1.0
+        #This won't be used
+        self.peak_width = 0
+        self.measurement_num = 0
+        #Position
+        self.horizontal = 0
+        self.vertical = 0
 
-
+    def make_sample_orientation_string(self):
+        """Return a friendly string of the sample orientation angles."""
+        if len(self.angles) >= 3:
+            (phi, chi, omega) = np.rad2deg(self.angles)
+            return "%.1f, %.1f, %.1f" % (phi, chi, omega)
+        else:
+            return ""
+        
 #================================================================================
 #============================ UNIT TESTING ======================================
 #================================================================================
