@@ -161,10 +161,15 @@ class Reflection():
             #@type rrm ReflectionRealMeasurement
             for rrm in ref.real_measurements:
                 if not rrm is None:
-                    #Don't divide by 0
-                    if rrm.sigI > 1e-8:
-                        if (rrm.integrated / rrm.sigI) > threshold:
-                            total += 1
+                    if threshold <= 0:
+                        #A zero or lower threshold = take all comers
+                        total += 1
+                    else:
+                        #Check the I/sigI value.
+                        #Avoid divide by 0
+                        if (rrm.sigI > 1e-8):
+                            if (rrm.integrated / rrm.sigI) > threshold:
+                                total += 1
 
         return total
 

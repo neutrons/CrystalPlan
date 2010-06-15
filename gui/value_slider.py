@@ -110,7 +110,7 @@ class ValueSlider(wx.Panel):
               name=u'textValue', parent=self, pos=wx.Point(80, 0),
               size=wx.Size(80, 27), style=wx.TE_PROCESS_ENTER, value=u'0')
         self.textValue.Bind(wx.EVT_TEXT, self.OnTextValueText)
-        self.textValue.Bind(wx.EVT_TEXT_ENTER, self.OnTextEnter)
+        self.textValue.Bind(wx.EVT_TEXT_ENTER, self.OnTextEnter) #Don't forget the wx.TE_PROCESS_ENTER otherwise it doesn't work.
         self.textValue.Bind(wx.EVT_KILL_FOCUS, self.OnTextEnter)
         self.textValue.Bind(wx.EVT_KEY_UP, self.OnTextValueKeyUp)
 

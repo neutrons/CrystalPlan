@@ -373,6 +373,9 @@ class QspaceViewController(HasTraits):
         self.points_module_surface.visible = False
         self.points_module_glyph.visible = False
 
+        #Get the color look-up table
+        self.points_lut = self.points_module_glyph.module_manager.scalar_lut_manager.lut.table.to_array()
+        self.points_lut_original = 1 * self.points_lut
 
         # ---- Simple outline for all of the data. -----
         self.outline = Outline()
@@ -445,6 +448,28 @@ class QspaceViewController(HasTraits):
         #Re-enable drawing
         self.scene.disable_render = False
 
+    #-----------------------------------------------------------------------------------------------
+    def set_points_lut(self, predicted):
+        """Set the look-up table (colormap).
+        Parameters:
+            predicted: bool, True for the "predicted" color map; measured otherwise"""
+        if not hasattr(self, 'points_lut'):
+            print "No LUT!"
+            return
+#        print "setting lut ", predicted
+        if predicted or True:
+            #Predicted style; copy the original
+            self.points_lut[:,:] = self.points_lut_original[:,:]
+        else:
+            #Measured style
+            self.points_lut[:,0] = 255-self.points_lut_original[:,0]
+            self.points_lut[:,1] = self.points_lut_original[:,1]
+            self.points_lut[:,2] = self.points_lut_original[:,2]
+#            self.points_lut[:,0] = np.arange(0,256,1)
+#            self.points_lut[:,1] = 0  #G
+#            self.points_lut[:,2] = 255  #B
+            self.points_lut[:,3] = 255  #alpha
+        
 
     #-----------------------------------------------------------------------------------------------
     def show_pipeline(self):
@@ -631,6 +656,9 @@ class QspaceViewController(HasTraits):
 
         #Generate a new data object to make
         self.point_data_src.data = self.make_point_data()
+
+        #Set the color map
+        self.set_points_lut(display.color_map == display.COLOR_BY_PREDICTED)
 
         if self.in_pixel_mode():
             # ------------ Pixel View -----------------------

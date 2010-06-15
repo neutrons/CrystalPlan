@@ -361,7 +361,7 @@ class PanelReflectionsViewOptions(wx.Panel):
         self.radioPredicted.SetValue(True)
 
         self.staticTextThreshold = wx.StaticText(label=u'I/sigI threshold', parent=self, style=0)
-        self.textThreshold = wx.TextCtrl(value=u'2.0', parent=self, style=0)
+        self.textThreshold = wx.TextCtrl(value=u'2.0', parent=self, style=wx.TE_PROCESS_ENTER)
         self.textThreshold.Bind(wx.EVT_TEXT_ENTER, self.OntextThreshold)
         self.textThreshold.Bind(wx.EVT_KILL_FOCUS, self.OnChangeMaskingSettings)
 
@@ -405,6 +405,7 @@ class PanelReflectionsViewOptions(wx.Panel):
         event.Skip()
 
     def OntextThreshold(self, event):
+        print "pressed enter>:?"
         self.controller.change_masking_settings()
         event.Skip()
 

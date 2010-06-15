@@ -670,11 +670,13 @@ class Experiment:
         #Clear the list of reflection times measured
         self.get_reflections_times_measured(clear_list=True)
 
+        #And if you had any peaks files loaded, reload them.
+        self.reload_peaks_files()
+
         #At this point, the reflections mask needs to be updated since the reflections changed.
         self.calculate_reflections_mask()
 
-        #And if you had any peaks files loaded, reload them.
-        self.reload_peaks_files()
+
 
 
     #-------------------------------------------------------------------------------
@@ -1007,9 +1009,7 @@ class Experiment:
         self.get_reflections_times_measured(None)
 
         #We make the array of how many times REALLY measured, for all the positions
-        refmask = self.params[PARAM_REFLECTION_MASKING] #@type refmask ParamReflectionMasking
-        if refmask is None: refmask = ParamReflectionMasking()
-        self.get_reflections_times_real_measured(refmask.threshold)
+        self.get_reflections_times_real_measured(None)
 
         #Continue on with masking
         self.calculate_reflections_mask()
@@ -1154,8 +1154,16 @@ class Experiment:
         -----------
             pos_param: a ParamPositions object holding which positions to keep in the calculation.
                 None means use all of them (default).
-            threshold: I/sigI threshold to consider a peak "measured"
+            threshold: I/sigI threshold to consider a peak "measured". Set None to use the last
+                saved parameter.
         """
+
+        #Find the threshold if not specified.
+        if threshold is None:
+            refmask = self.params[PARAM_REFLECTION_MASKING] #@type refmask ParamReflectionMasking
+            if refmask is None: refmask = ParamReflectionMasking()
+            threshold = refmask.threshold
+
         #Initialize the arrays
         rtm = np.zeros( (len(self.reflections), 1) )
         rtme = np.zeros( (len(self.reflections), 1) )
@@ -2086,6 +2094,9 @@ class Experiment:
                 print "Error loading peaks file: %s. File does not exist!" % filename
             else:
                 self.load_peaks_file(filename, append=True)
+
+        #Now, redo the stats
+        self.get_reflections_times_real_measured(None)
 
     #---------------------------------------------------------------------------------------------
     def compare_to_peaks_file(self, filename):

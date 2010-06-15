@@ -151,6 +151,9 @@ def check_for_changes():
                 reflections_recalculated = True
             elif not (ref_mask is None):
                 #Just the mask is changing
+                # The I/sigI threshold might be different
+                model.experiment.exp.get_reflections_times_real_measured(ref_mask.threshold)
+                #Now do the mask
                 model.experiment.exp.calculate_reflections_mask()
                 reflections_changed = True
 
