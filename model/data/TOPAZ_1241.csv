@@ -1,0 +1,21 @@
+#Title:,Natrolite Plan 8, 94 percent, done on June 10, 2010 at TOPAZ.
+#Comment:,
+#
+#"Goniometer used: TOPAZ Ambient Goniometer"
+#
+#"The first columns are the sample orientations:"
+#"     Phi, angle; unit is [deg]."
+#"     Omega, angle; unit is [deg]."
+#"     WL_Center, wavelength; unit is [ang]."
+#"Next are 2 columns for the stopping criterion parameters."
+#
+Phi,Omega,WL_Center,CountFor,CountValue,Comment
+-59.3717469541,150.488213188,2.56224814519,runtime,60,
+-7.75475220926,32.5332755439,2.25155489483,runtime,60,
+-151.98872594,179.999561914,2.19004065602,runtime,60,
+118.848615375,158.441549083,2.1,runtime,60,
+68.157915641,-135.679211613,2.38621253252,runtime,60,
+180.0,70.6180311009,2.1,runtime,60,
+59.5184911751,134.509261882,2.11131407164,runtime,60,
+-85.7694931208,180.0,2.1,runtime,60,
+
