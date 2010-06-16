@@ -405,7 +405,6 @@ class PanelReflectionsViewOptions(wx.Panel):
         event.Skip()
 
     def OntextThreshold(self, event):
-        print "pressed enter>:?"
         self.controller.change_masking_settings()
         event.Skip()
 

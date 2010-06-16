@@ -71,14 +71,7 @@ class StartupTraitsHandler(Handler):
     def apply(self):
         """Apply changes now."""
         #This sets up the new size q-space
-        print "0model.instrument.inst.qlim", model.instrument.inst.qlim
-        print "0model.instrument.inst.d_min", model.instrument.inst.d_min
-        print "0model.experiment.exp.inst.qlim", model.experiment.exp.inst.qlim
         model.instrument.inst.change_qspace_size(self.get_params_dictionary())
-
-        print "1model.instrument.inst.qlim", model.instrument.inst.qlim
-        print "1model.instrument.inst.d_min", model.instrument.inst.d_min
-        print "1model.experiment.exp.inst.qlim", model.experiment.exp.inst.qlim
 
         #Whenever the q-space changes, you need a new symmetry map.
         model.experiment.exp.initialize_volume_symmetry_map()

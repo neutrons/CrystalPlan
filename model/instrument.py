@@ -247,9 +247,13 @@ class Instrument:
     def __setstate__(self, d):
         """Set the state of experiment, using d as the settings dictionary."""
         self.initizalize()
+
+        #Things to NOT load; fix old files.
+        exclude_list = ['qlim']
         
         for (key, value) in d.items():
-            setattr(self, key, value)
+            if not (key in exclude_list):
+                setattr(self, key, value)
 
         #Fix the goniometer
         self.set_goniometer(self.goniometer)
