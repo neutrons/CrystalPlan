@@ -2591,7 +2591,7 @@ class TestExperiment(unittest.TestCase):
         e.crystal.make_ub_matrix()
         e.crystal.calculate_reciprocal()
         e.initialize_reflections()
-        errors = e.load_peaks_file("data/TOPAZ_1241.integrate", append=False)
+        errors = e.load_peaks_file("../model/data/TOPAZ_1241.integrate", append=False)
         #@type ref Reflection
         ref = e.get_reflection(5, 1, -1)
         assert len(ref.real_measurements)==2, "Found 2 real measurements for 5,1,-1"
