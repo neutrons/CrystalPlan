@@ -201,6 +201,11 @@ class PanelReflectionMeasurement(wx.Panel):
     def set_measurement(self, refl, meas):
         """Make the panel display the given ReflectionMeasurement object 'meas'"""
         self.refl = refl
+        #@type meas: ReflectionMeasurement
+        self.meas = meas
+        #Also for the detector plot
+        self.detectorPlot.set_measurement(meas)
+        
         if meas is None:
             self.staticTextAngles.SetLabel("None")
             self.staticTextWL.SetLabel("None")
@@ -210,17 +215,6 @@ class PanelReflectionMeasurement(wx.Panel):
             self.staticTextWidth.SetLabel("None")
             self.staticTextMeasurementNumber.SetLabel("---")
         else:
-#            if isinstance(meas, model.reflections.ReflectionRealMeasurement):
-#                self.set_real_measurement(refl, meas)
-#            else:
-#                self.set_predicted_measurement(refl, meas)
-#
-#        def set_predicted_measurement(self, refl, meas):
-            #@type meas: ReflectionMeasurement
-            self.meas = meas
-            #Also for the detector plot
-            self.detectorPlot.set_measurement(meas)
-
             fmt = self.fmt
             hkl_str = "%d,%d,%d" % refl.hkl
             self.staticTextAngles.SetLabel(meas.make_sample_orientation_string() + " as HKL %s" % hkl_str )
@@ -231,14 +225,13 @@ class PanelReflectionMeasurement(wx.Panel):
             except:
                 pass
 
-            #self.staticTextDetector.SetLabel("  %d %s" % (meas.detector_num, det_name))
             self.staticTextDetector.SetLabel(" %s" % (det_name))
             self.staticTextWL.SetLabel((fmt % meas.wavelength) + u" \u212B") #Angstrom symbol
             self.staticTextX.SetLabel((fmt % meas.horizontal) + " mm")
             self.staticTextY.SetLabel((fmt % meas.vertical) + " mm")
             self.staticTextMeasurementNumber.SetLabel("#%d:" % meas.measurement_num)
 
-            #Remove these, if they are in there
+            #Remove these windows, if they are in there
             try:
                 self.flexGridSizer1.RemoveWindow(self.staticTextIntegrated)
                 self.flexGridSizer1.RemoveWindow(self.buttonPlace)

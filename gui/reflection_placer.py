@@ -211,7 +211,8 @@ class ReflectionPlacer(HasTraits):
         #Default array
         self.angles_deg_string = "0, 0, 0"
         #Make a list of detectors
-        det_list = ["%d: %s" % (i, det.name) for (i, det) in enumerate(model.instrument.inst.detectors)]
+        det_list = ["%s" % (det.name) for (i, det) in enumerate(model.instrument.inst.detectors)]
+        #Create the trait that will use that list
         self.add_trait("detector", Enum( det_list ) )
         self.starting_angles = []
         if not refl is None:
@@ -348,13 +349,10 @@ class ReflectionPlacer(HasTraits):
     #------------------------------
     def get_detector(self):
         """Return a Detector object from the selected detector."""
-        s = self.detector.split(":")
-        if len(s)>0:
-            try:
-                det_num = int(s[0])
-                return model.instrument.inst.detectors[det_num]
-            except ValueError:
-                return None
+        s = self.detector
+        for det in model.instrument.inst.detectors:
+            if s == det.name:
+                return det
         return None
 
     #------------------------------
@@ -401,7 +399,7 @@ class ReflectionPlacer(HasTraits):
             self.wavelength_can_be_measured = False
         else:
             self.angles_deg = np.rad2deg(angles).reshape(1,len(angles))
-            self.angles_deg_string = string.join( ["%.2f" % (np.rad2deg(x)) for x in angles], ", ")
+            self.angles_deg_string =  model.instrument.inst.make_angles_string(angles)
             (allowed, reason) = model.instrument.inst.goniometer.are_angles_allowed(angles, return_reason=True)
             self.angles_allowed_bool = allowed
             if allowed:
@@ -418,8 +416,11 @@ class ReflectionPlacer(HasTraits):
         angles = np.deg2rad(self.angles_deg.flatten()).tolist()
         #Do the calculation
         poscov = model.instrument.inst.simulate_position(angles, sample_U_matrix=model.experiment.exp.crystal.get_u_matrix(), use_multiprocessing=False)
+        #Make sure the position list is updated in GUI
+        model.messages.send_message(model.messages.MSG_POSITION_LIST_CHANGED)
         #Add it to the list of selected items
         display_thread.select_additional_position_coverage(poscov, update_gui=True)
+
 
 
 
@@ -481,12 +482,12 @@ class FrameReflectionPlacer(wx.Frame):
     #---------------------------------------------------------------------------
     def __init__(self, parent, refl, meas):
         self._init_ctrls(parent)
-
-        angles_label = string.join([x.name for x in model.instrument.inst.angles], ", ") + " (degrees)"
+        #@type x AngleInfo
+        angles_label = ", ".join([(x.name) for x in model.instrument.inst.angles])
 
         viewTop = View( \
             Item("hkl", label="H,K,L of the reflection:", format_str="%d"),
-            Item("detector", label="Detector number:", format_str="%d"),
+            Item("detector", label="Detector name:", format_str="%d"),
             Group(Item("xy", label="X,Y coordinates on the detector face:", format_str="%.2f")),
             Group(Label("... or use the mouse to set the position by clicking below ...")),
             )
@@ -535,6 +536,7 @@ class FrameReflectionPlacer(wx.Frame):
         self.handler.changed_point(self.placer)
         event.Skip()
 
+    #------------------------------------------------------------
     def OnButtonAddOrientation(self, event):
         if (not self.placer.angles_allowed_bool) or (not self.placer.wavelength_can_be_measured):
             #Prompt the user to confirm, cause something is off
