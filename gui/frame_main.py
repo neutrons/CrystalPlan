@@ -40,23 +40,38 @@ import model
 ] = [wx.NewId() for _init_ctrls in range(7)]
 
 
-
+#
 class FrameMain(wx.Frame):
 
     #--------------------------------------------------------------------
     def _init_menuFile(self, parent):
         id = wx.NewId()
-        parent.Append(id=id, text=u'Save experiment to file...\tCtrl+S', kind=wx.ITEM_NORMAL, help='Make a CSV file containing the list of motor positions.')
+        parent.Append(id=id, text=u'Save experiment to file...\tCtrl+S', kind=wx.ITEM_NORMAL,
+                    help='Save the experiment to a .exp file so that it can be re-loaded later.')
         self.Bind(wx.EVT_MENU, self.OnMenuSave, id=id)
 
         id = wx.NewId()
-        parent.Append(id=id, text=u'Load experiment from file...\tCtrl+L', kind=wx.ITEM_NORMAL, help='Make a CSV file containing the list of motor positions.')
+        parent.Append(id=id, text=u'Load experiment from file...\tCtrl+L', kind=wx.ITEM_NORMAL,
+                    help='Load a .exp file.')
         self.Bind(wx.EVT_MENU, self.OnMenuLoad, id=id)
 
         parent.AppendSeparator()
 
         id = wx.NewId()
-        parent.Append(id=id, text=u'Save sample orientations to CSV file...\tCtrl+D', kind=wx.ITEM_NORMAL, help='Make a CSV file containing the list of motor positions.')
+        parent.Append(id=id, text=u'Load an ISAW .integrate or .peaks file...\tCtrl+I', kind=wx.ITEM_NORMAL,
+                    help='Load a peaks file from ISAW to compare predicted and real peaks.')
+        self.Bind(wx.EVT_MENU, self.OnMenuLoadIntegrate, id=id)
+
+        id = wx.NewId()
+        parent.Append(id=id, text=u'Load an ISAW UB matrix (.mat) file...\tCtrl+U', kind=wx.ITEM_NORMAL,
+                    help='Load a UB matrix file made by ISAW (goniometer-corrected; not by ISAWev).')
+        self.Bind(wx.EVT_MENU, self.OnMenuLoadUB, id=id)
+
+        parent.AppendSeparator()
+
+        id = wx.NewId()
+        parent.Append(id=id, text=u'Save sample orientations to CSV file...\tCtrl+D', kind=wx.ITEM_NORMAL,
+                    help='Make a CSV file containing the list of motor positions.')
         self.Bind(wx.EVT_MENU, self.OnMenuSaveToCSV, id=id)
 
         id = wx.NewId()
@@ -143,14 +158,47 @@ class FrameMain(wx.Frame):
         event.Skip()
 
     def OnMenuSave(self,event):
-        gui_utils.experiment_save_file_dialog(self)
+        gui_utils.save_experiment_file_dialog(self)
         event.Skip()
 
+    def OnMenuLoadIntegrate(self,event):
+        gui_utils.load_integrate_file_dialog(self)
+        event.Skip()
+
+    def OnMenuLoadUB(self,event):
+        self.load_ubmatrix_file_dialog(self)
+        event.Skip()
+
+    def load_ubmatrix_file_dialog(self, parent):
+        """Opens a dialog asking the user where to load the ubmatrix file."""
+        filters = 'ISAW UB matrix file (*.mat)|*.mat|All files (*)|*|'
+        (path, filename) = os.path.split(self.last_ubmatrix_path)
+        dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an ISAW (goniometer-corrected) .mat file', wildcard=filters, style=wx.OPEN )
+        if dialog.ShowModal() == wx.ID_OK:
+            filename = dialog.GetPath()
+            self.last_ubmatrix_path = filename
+            dialog.Destroy()
+        else:
+            #'Nothing was selected.
+            dialog.Destroy()
+            return None
+
+        #The old U matrix, before messing with it.
+        old_U = model.experiment.exp.crystal.get_u_matrix()
+        
+        #Load the file with no goniometer correction
+        model.experiment.exp.crystal.read_ISAW_ubmatrix_file(filename, angles=[0,0,0])
+        #TODO: Check if ISAW matrix file has line saying NOT GONIOMETER CORRECTED
+
+        #Now this handles updating all the gui etc.
+        self.tab_sample.OnReturningFromEditCrystal(old_U)
+
+
     def OnMenuLoad(self,event):
-        if not gui_utils.experiment_load_file_dialog(self) is None:
+        if not gui_utils.load_experiment_file_dialog(self) is None:
             self.RefreshAll()
-        #This message will make the experiment lists update, etc.
-        model.messages.send_message(model.messages.MSG_GONIOMETER_CHANGED, "")
+            #This message will make the experiment lists update, etc.
+            model.messages.send_message(model.messages.MSG_GONIOMETER_CHANGED, "")
         event.Skip()
 
     def OnMenuView3D(self, event):
@@ -283,6 +331,8 @@ class FrameMain(wx.Frame):
 
     #--------------------------------------------------------------------
     def __init__(self, parent):
+        self.last_ubmatrix_path = ''
+
         self._init_ctrls(parent)
         #Make the tabs for the notebook
         self.LoadNotebook()

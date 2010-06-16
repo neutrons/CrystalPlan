@@ -31,12 +31,6 @@ def save_configuration():
     #The model configuration
     xml_config = ET.SubElement(root,'config')
     xml_config.text = dumps(model.config.cfg)
-#    #The instrument
-#    xml_inst = ET.SubElement(root, 'instrument')
-#    xml_inst.text = dumps(model.instrument.inst)
-#    #The experiment
-#    xml_exp = ET.SubElement(root, 'experiment')
-#    xml_exp.text = dumps(model.experiment.exp)
     
     tree = ET.ElementTree(root)
     tree.write(filename)
@@ -94,7 +88,7 @@ def print_large_number(n,width=0,delim=',',decimal='.'):
 last_csv_path = ''
 def dialog_to_save_experiment_to_CSV(parent):
     """Opens a dialog asking the user where to save the experiment plan."""
-    filters = 'All files (*.*)|*.*|CSV files (*.csv)|*.csv'
+    filters = 'CSV files (*.csv)|*.csv|All files (*)|*'
     global last_csv_path
     (path, filename) = os.path.split(last_csv_path)
     dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Save the experiment plan to CSV file', wildcard=filters, style=wx.SAVE )
@@ -110,9 +104,9 @@ def dialog_to_save_experiment_to_CSV(parent):
     model.experiment.exp.save_sample_orientations_to_CSV_file(filename)
 
 last_experiment_path = ''
-def experiment_save_file_dialog(parent):
+def save_experiment_file_dialog(parent):
     """Opens a dialog asking the user where to save the experiment."""
-    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*.*)|*.*|'
+    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)
     dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Save the experiment plan to EXP file', wildcard=filters, style=wx.SAVE )
@@ -128,9 +122,9 @@ def experiment_save_file_dialog(parent):
     model.experiment.save_to_file(model.experiment.exp, filename)
     return filename
 
-def experiment_load_file_dialog(parent):
+def load_experiment_file_dialog(parent):
     """Opens a dialog asking the user where to load the experiment."""
-    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*.*)|*.*|'
+    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)
     dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an experiment plan from an EXP file', wildcard=filters, style=wx.OPEN )
@@ -148,7 +142,36 @@ def experiment_load_file_dialog(parent):
     model.instrument.inst = model.experiment.exp.inst
     #This hopefully redraws everything
     display_thread.handle_change_of_qspace()
+    #Make sure we select it all, by default.
+    display_thread.select_position_coverage(poscov_list=model.instrument.inst.positions, update_gui=True)
     return filename
+
+last_integrate_path = ''
+def load_integrate_file_dialog(parent):
+    """Opens a dialog asking the user where to load the integrate."""
+    filters = 'ISAW .integrate or .peaks files (*.peaks;*.integrate)|*.peaks;*.integrate|All files (*)|*|'
+    global last_integrate_path
+    (path, filename) = os.path.split(last_integrate_path)
+    dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an ISAW .integrate or .peaks file', wildcard=filters, style=wx.OPEN )
+    if dialog.ShowModal() == wx.ID_OK:
+        filename = dialog.GetPath()
+        last_integrate_path = filename
+        dialog.Destroy()
+    else:
+        #'Nothing was selected.
+        dialog.Destroy()
+        return None
+    #Now, ask if the file peaks should be appended
+    res = wx.MessageDialog(parent, "Do you wish to REPLACE the peaks to the current list of measured peaks?\nClick NO to append to the list.", "Replace Measured Peaks List?", wx.YES_NO | wx.YES_DEFAULT).ShowModal()
+    do_append = (res == wx.ID_NO)
+    print "do_append", do_append
+    #Load it
+    model.experiment.exp.load_peaks_file(filename, append=do_append)
+    #This hopefully redraws everything
+    display_thread.handle_change_of_qspace()
+    return filename
+
+
 
 
 # ===========================================================================================

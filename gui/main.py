@@ -168,9 +168,6 @@ def launch_gui(inelastic):
     model.experiment.exp = model.experiment.Experiment(model.instrument.inst)
     model.experiment.exp.crystal.point_group_name = model.crystals.get_point_group_names(long_name=True)[0]
 
-    #TODO temp
-    model.experiment.exp.real_measurement_filenames = ['../model/data/TOPAZ_1241.integrate']
-
     #Initialize what needs to.
     model.experiment.exp.initialize_volume_symmetry_map()
     model.experiment.exp.initialize_reflections()

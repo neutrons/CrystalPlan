@@ -357,18 +357,22 @@ class SliceControl(wx.PyControl):
     #-------------------------------------------------------------------------------
     def GetX(self, x):
         """Returns the x pixel position for the given plot x position."""
-        return (x-self.data_x[0])*self.scale_x + self.plot_x_offset
+        res = (x-self.data_x[0])*self.scale_x + self.plot_x_offset
+        if np.isnan(res): res = 0
+        return res
 
     def GetY(self, y):
         """Returns the y pixel position for the given plot y position."""
-        return y*self.scale_y + self.plot_y_offset
+        res = y*self.scale_y + self.plot_y_offset
+        if np.isnan(res): res = 0
+        return res
 
     def GetPlotX(self, x_pixel):
         """Returns the x plot coordinate given the pixel position.
         Limits to 0 at minimum."""
         if self.scale_x == 0: return 0
         x = (x_pixel - self.plot_x_offset) / self.scale_x
-        if x < 0:
+        if x < 0 or np.isnan(x):
             return 0
         else:
             return x
@@ -425,8 +429,14 @@ class SliceControl(wx.PyControl):
         else:
             dc.SetTextForeground(wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT))
 
+
         dc.SetFont(self.GetFont())
 
+        if np.any(np.isnan(self.data_x)) or np.any(np.isnan(self.data_y)):
+            #Invalid data! Go away, or you get errors.
+            dc.DrawText('Too few points in coverage slice; cannot plot.', 0,0)
+            return
+        
         #Now draw the data
         x = self.data_x
         xrange = 1.

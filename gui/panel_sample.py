@@ -293,35 +293,44 @@ class PanelSample(wx.Panel):
         old_U = model.experiment.exp.crystal.get_u_matrix()
         
         if dialog_edit_crystal.show_dialog(self, model.experiment.exp.crystal):
-            #Whenever the crystal changes, you need a new symmetry map.
-            model.experiment.exp.initialize_volume_symmetry_map()
+            self.OnReturningFromEditCrystal(old_U)
 
-            #User clicked okay, something (proably) changed
-            new_U = model.experiment.exp.crystal.get_u_matrix()
-            if not np.allclose(old_U, new_U):
-                #The sample mounting U changed, so we need to recalc all the 3D volume coverage
-                gui_utils.do_recalculation_with_progress_bar(new_U)
-                
-            #Send message signaling a redraw of volume plots
-            display_thread.handle_change_of_qspace(changed_sample_U_matrix=new_U)
-
-            #Now handle the reflections, and warn if the auto-range is huge...
-            (b,n) = self.range_settings.is_too_many()
-            if b:
-                dlg =  wx.MessageDialog(self, "The number of reflections given by this range, %s, is very large. Are you sure?\nIf you click no, a default range of -5 to +5 HKL will be used instead, but you can increase the range later." % gui_utils.print_large_number(n),
-                                        "Too Many Reflections", wx.YES_NO | wx.ICON_INFORMATION)
-                res = dlg.ShowModal()
-                dlg.Destroy()
-                if res != wx.ID_YES:
-                    #Disable automatic if its on; put on smaller numbers.
-                    self.range_settings.automatic = False 
-                    self.range_settings.h_range = np.array( [-5,5] ).reshape(1,2)
-                    self.range_settings.k_range = np.array( [-5,5] ).reshape(1,2)
-                    self.range_settings.l_range = np.array( [-5,5] ).reshape(1,2)
-
-            #Update the hkl range settings, especially for automatic settings
-            self.apply_crystal_range()
         event.Skip()
+
+    #---------------------------------------------------------------------------
+    def OnReturningFromEditCrystal(self, old_U):
+        """Call when changing the crystal, either from the button or from loading a UB file.
+        Model.exp.crystal needs to have changed before calling
+        """
+        #Whenever the crystal changes, you need a new symmetry map.
+        model.experiment.exp.initialize_volume_symmetry_map()
+
+        #User clicked okay, something (proably) changed
+        new_U = model.experiment.exp.crystal.get_u_matrix()
+        if not np.allclose(old_U, new_U):
+            #The sample mounting U changed, so we need to recalc all the 3D volume coverage
+            gui_utils.do_recalculation_with_progress_bar(new_U)
+
+        #Send message signaling a redraw of volume plots
+        display_thread.handle_change_of_qspace(changed_sample_U_matrix=new_U)
+
+        #Now handle the reflections, and warn if the auto-range is huge...
+        (b,n) = self.range_settings.is_too_many()
+        if b:
+            dlg =  wx.MessageDialog(self, "The number of reflections given by this range, %s, is very large. Are you sure?\nIf you click no, a default range of -5 to +5 HKL will be used instead, but you can increase the range later." % gui_utils.print_large_number(n),
+                                    "Too Many Reflections", wx.YES_NO | wx.ICON_INFORMATION)
+            res = dlg.ShowModal()
+            dlg.Destroy()
+            if res != wx.ID_YES:
+                #Disable automatic if its on; put on smaller numbers.
+                self.range_settings.automatic = False
+                self.range_settings.h_range = np.array( [-5,5] ).reshape(1,2)
+                self.range_settings.k_range = np.array( [-5,5] ).reshape(1,2)
+                self.range_settings.l_range = np.array( [-5,5] ).reshape(1,2)
+
+        #Update the hkl range settings, especially for automatic settings
+        self.apply_crystal_range()
+
 
 
     #---------------------------------------------------------------------------

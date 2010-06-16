@@ -71,7 +71,14 @@ class StartupTraitsHandler(Handler):
     def apply(self):
         """Apply changes now."""
         #This sets up the new size q-space
+        print "0model.instrument.inst.qlim", model.instrument.inst.qlim
+        print "0model.instrument.inst.d_min", model.instrument.inst.d_min
+        print "0model.experiment.exp.inst.qlim", model.experiment.exp.inst.qlim
         model.instrument.inst.change_qspace_size(self.get_params_dictionary())
+
+        print "1model.instrument.inst.qlim", model.instrument.inst.qlim
+        print "1model.instrument.inst.d_min", model.instrument.inst.d_min
+        print "1model.experiment.exp.inst.qlim", model.experiment.exp.inst.qlim
 
         #Whenever the q-space changes, you need a new symmetry map.
         model.experiment.exp.initialize_volume_symmetry_map()
@@ -104,6 +111,8 @@ class StartupTraitsHandler(Handler):
         params = {'instrument':self.instrument}
         #Merge with the ones from the StartupParameters object
         params.update(self.frame.params.get_params())
+        #This will serve to update the calculated points
+        self.check_validity()
         return params
 
 
@@ -161,7 +170,7 @@ class StartupParameters(HasTraits):
             )
             
 
-    useful_list = ['d_min', 'q_resolution', 'wl_min', 'wl_max']
+    useful_list = ['d_min', 'wl_min', 'wl_max', 'q_resolution']
     
     def get_params(self):
         """Returns a dictionary of the useful parameters saved."""

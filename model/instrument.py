@@ -168,25 +168,11 @@ class Instrument:
     """
 
 
-    #Minimum detectable wavelength in Angstroms
-    wl_min = .9
-    #And max
-    wl_max = 4
-
-    #The limits to d (interplanar spacing) to consider. In A^-1
-    d_min = 1
-    d_max = 5
-
-    #Resolution of the coverage map of q-space, in Angstroms^-1
-    q_resolution = 0.2
-    
     #The extents of defined q-space are -qlim to +qlim in the 3 axes, will be calculated from d_min
     @property
     def qlim(self):
         """Limit in defined q-space."""
         return 2*np.pi / self.d_min
-
-    verbose = True
 
     #========================================================================================================
     def initizalize (self):
@@ -206,6 +192,21 @@ class Instrument:
 
         #Default as verbose
         self.verbose = True
+
+        #Minimum detectable wavelength in Angstroms
+        self.wl_min = .9
+        #And max
+        self.wl_max = 4
+
+        #The limits to d (interplanar spacing) to consider. In A^-1
+        self.d_min = 1
+        self.d_max = 5
+
+        #Resolution of the coverage map of q-space, in Angstroms^-1
+        self.q_resolution = 0.2
+
+        self.verbose = True
+
         
     #========================================================================================================
     def __init__ (self, filename=None, params=dict()):
@@ -225,6 +226,7 @@ class Instrument:
         #Goniometer
         self.set_goniometer( goniometer.TopazAmbientGoniometer(), False )
 
+
     #========================================================================================================
     def __eq__(self, other):
         return utils.equal_objects(self, other)
@@ -237,8 +239,8 @@ class Instrument:
     #========================================================================================================
     def __getstate__(self):
         """Return a dictionary containing all the stuff to pickle."""
-        #Exclude all these attributes.
-        exclude_list = ['qspace_radius', 'detectors']
+        #Exclude all these attributes. Make sure to exclude properties!!!
+        exclude_list = ['qspace_radius', 'detectors', 'qlim']
         return utils.getstate_except(self, exclude_list)
 
     #========================================================================================================
@@ -329,17 +331,6 @@ class Instrument:
             raise
 
 
-#========================================================================================================
-    def set_parameters(self, params):
-        """Set some of the parameters in the instrument.
-        
-        Parameters:
-            params: a dictionary with the key as the name of the attribute."""
-        for (param, value) in params.items():
-            #Only set an attribute if the name exists already.
-            if hasattr(self, param):
-                setattr(self, param, value)
-
     #========================================================================================================
     def set_goniometer(self, gonio, different_angles=False):
         """Change the goniometer used by the instrument.
@@ -367,9 +358,21 @@ class Instrument:
         Calculations of spatial coverage will still need to be redone."""
         #Set these parameters
         self.set_parameters(params)
+        print "change_qspace_size", params
         
         #Start by recalculating the q-space array here.
         self.make_qspace()
+
+    #========================================================================================================
+    def set_parameters(self, params):
+        """Set some of the parameters in the instrument.
+
+        Parameters:
+            params: a dictionary with the key as the name of the attribute."""
+        for (param, value) in params.items():
+            #Only set an attribute if the name exists already.
+            if hasattr(self, param):
+                setattr(self, param, value)
 
     #========================================================================================================
     def sort_positions_by(self, angle_num):
@@ -387,10 +390,6 @@ class Instrument:
             ascending = not self.last_sort_ascending
             self.last_sort_ascending = ascending
         self.last_sort_angle_num = angle_num
-
-        #Find another angle to sort by
-        another_angle = 0
-        if angle_num == 0: another_angle = 1
 
         #Sort by all the angles, with the selected one at top
         decorated = []
