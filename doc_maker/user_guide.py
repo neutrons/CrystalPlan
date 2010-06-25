@@ -15,6 +15,7 @@ from threading import Thread
 
 import model
 import dialog_edit_crystal
+import display_thread
 import gui_utils
 import frame_optimizer
 
@@ -295,29 +296,9 @@ def pick_a_reflection():
 # - No loops or changes of indentation! (Use functions if you need to make a for loop)
 # - Finish with "#---END---\n"
 def user_guide_script():
+
+    #------- Initial --------------------------------------------
     #Shortcuts to the tested objects
-
-    #--- Automatic coverage optimizer ---
-    #@type te PanelExperiment
-    te = fm.tab_experiment
-    ca(click, te.buttonOptimizer)
-    wait(500)
-    #@type fo FrameOptimizer
-    fo = frame_optimizer.get_instance(fm)
-    wait(500)
-    fo.Raise()
-    ca(screenshot_of, fo.buttonStart, 'optim-buttonStart',  margin=6, gradient_edge=2)
-    ca(click, fo.buttonStart)
-    wait(500)
-    ca(screenshot_of, fo.buttonStop, 'optim-buttonStop',  margin=6, gradient_edge=2)
-    ca(screenshot_of, fo.buttonApply, 'optim-buttonApply',  margin=6, gradient_edge=2)
-    wait(2500)
-    ca(screenshot_frame, fo, 'frame_optimizer')
-    #Stop
-    ca(click, fo.buttonStop)
-    wait(500)
-    ca(screenshot_of, fo.buttonKeepGoing, 'optim-buttonKeepGoing',  margin=6, gradient_edge=2)
-
     #@type fm FrameMain
     #@type fv FrameQspaceView
     exp = model.experiment.exp
@@ -337,7 +318,6 @@ def user_guide_script():
 #    make_animated_tab_click(fm)
     #warnings.warn("Hey! Turn the animated tab maker back on!")
     
-
     # --------------------- Q-Space Tab --------------------
     ca(fm.notebook.SetSelection, 0)
     wait(100)
@@ -351,6 +331,8 @@ def user_guide_script():
     wait(100)
     ca(screenshot_of, fm.tab_startup.control, 'startup-traits', minheight=True, margin=10, gradient_edge=0)
     ca(screenshot_of, fm.tab_startup.buttonApply, 'startup-apply', margin=5)
+    ca(click, fm.tab_startup.buttonApply)
+    wait(1200)
 
     # ------------------------ Detectors tab ----------------------
     ca(fm.notebook.SetSelection, 1)
@@ -377,7 +359,7 @@ def user_guide_script():
 
     # ------------------------ goniometer tab ----------------------
     ca(fm.notebook.SetSelection, 2)
-    wait(50)
+    wait(250)
     #@type tg PanelGoniometer
     tg = fm.tab_goniometer
     ca(screenshot_of, tg.currentControl, 'goniometer-selected', minheight=True, margin=[10, 10, 40, 10], gradient_edge=4)
@@ -395,7 +377,7 @@ def user_guide_script():
 
     # ------------------------- Sample tab -----------------------
     ca(fm.notebook.SetSelection, 3)
-    wait(50)
+    wait(250)
     #@type ts PanelSample
     ts = fm.tab_sample
     ca(screenshot_of, ts.crystal_control, 'sample-info', margin=10, gradient_edge=0)
@@ -644,7 +626,7 @@ def user_guide_script():
     ca(pri.textCtrlH.SetValue, "3")
     ca(pri.textCtrlK.SetValue, "2")
     ca(pri.textCtrlL.SetValue, "-4")
-    wait(100)
+    wait(300)
     size = fri.GetSize()
     ca(fri.SetSize, wx.Size(size[0], 600))
     ca(screenshot_of, pri, 'ref_info2', margin=5, gradient_edge=0)
@@ -655,16 +637,32 @@ def user_guide_script():
     wait(150)
     ca(screenshot_of, pri, 'ref_info2-equivalent', margin=5, gradient_edge=0)
 
+
+    #--------------- Measured Reflections -------------
+    #@type tr PanelReflectionsViewOptions
+    tr = fv.tabReflections
+    #Load some peaks file
+    ca(model.experiment.exp.load_peaks_file, "../model/data/TOPAZ_1241.integrate", append=False)
+    wait(1000)
+    ca(display_thread.handle_change_of_qspace)
+    wait(1000)
+    ca(screenshot_of, tr.boxSizerColor, 'refl-measurements',  margin=6, gradient_edge=2)
+
+#---END---
+
+
+    #--------------- The Reflection Placer -------------
+
     #@type prm PanelReflectionMeasurement
-    prm = pri.measure_panels[0]
+    prm = pri.measure_panels[0][0]
     ca(screenshot_of, prm, 'prm', margin=5, gradient_edge=0)
     ca(screenshot_of, prm.buttonPlace, 'prm-buttonPlace', margin=5, gradient_edge=0)
     ca(click, prm.buttonPlace)
     wait(800)
+
     #@type frp FrameReflectionPlacer
     global frp
     frp = prm.last_placer_frame
-    #--------------- The Reflection Placer -------------
     #Wait for calculation to be done
     wait(3800)
     frp.placer.xy[0] = -5
@@ -674,6 +672,30 @@ def user_guide_script():
 
 #---END---
     
+
+    #--- Automatic coverage optimizer ---
+    #@type te PanelExperiment
+    te = fm.tab_experiment
+    ca(click, te.buttonOptimizer)
+    wait(500)
+    #@type fo FrameOptimizer
+    fo = frame_optimizer.get_instance(fm)
+    wait(500)
+    fo.Raise()
+    ca(screenshot_of, fo.buttonStart, 'optim-buttonStart',  margin=6, gradient_edge=2)
+    ca(click, fo.buttonStart)
+    wait(500)
+    ca(screenshot_of, fo.buttonStop, 'optim-buttonStop',  margin=6, gradient_edge=2)
+    ca(screenshot_of, fo.buttonApply, 'optim-buttonApply',  margin=6, gradient_edge=2)
+    wait(2500)
+    ca(screenshot_frame, fo, 'frame_optimizer')
+    #Stop
+    ca(click, fo.buttonStop)
+    wait(500)
+    ca(screenshot_of, fo.buttonKeepGoing, 'optim-buttonKeepGoing',  margin=6, gradient_edge=2)
+
+
+
 
 class FakeClickObject:
     """Class for faking clicks sent to the VTK (mayavi) window"""

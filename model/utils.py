@@ -68,10 +68,11 @@ def equal_objects(first, second):
             #No callable (don't pickle methods"
             if not hasattr(value, '__call__'):
 #                print "Key %s" % key
-                value2 = getattr(second, key)
-                if not equal_values(value, value2):
-                    #No match!
-                    print "... no match at %s. \n %s \n -------- vs --------- \n %s" % (key, value, value2)
-                    return False
+                if hasattr(second, key):
+                    value2 = getattr(second, key)
+                    if not equal_values(value, value2):
+                        #No match!
+                        print "... no match at %s. \n %s \n -------- vs --------- \n %s" % (key, value, value2)
+                        return False
     #If you get to this point, all were equal, return true.
     return True

@@ -79,7 +79,7 @@ text-align: left;
 <h1>CrystalPlan 1.1 User Guide</h1>
 by Janik Zikovsky (zikovskyjl@ornl.gov)<br />
 <br />
-Document started April 14, 2010; Last modified on June 09, 2010.
+Document started April 14, 2010; Last modified on June 25, 2010.
 <br />
 
   
@@ -110,7 +110,7 @@ Document started April 14, 2010; Last modified on June 09, 2010.
 <li><a href="#trying-sample-orientations">Trying Sample Orientations</a></li>
 <li><a href="#reciprocal-space-3d-viewer">The Reciprocal Space 3D Viewer</a></li>
 <li><a href="#goniometer-limits">Goniometer Limits</a></li>
-<li><a href="#adding-several-sample-orientations">Adding Several Sample Orientations</a>
+<li><a href="#adding-several-sample-orientations-">Adding Several Sample Orientations </a>
 <ol>
 <li><a href="#entering-lists-angles">Entering Lists of Angles</a></li>
 <li><a href="#checking-validity-orientations">Checking Validity of Orientations</a></li>
@@ -133,6 +133,7 @@ Document started April 14, 2010; Last modified on June 09, 2010.
 <li><a href="#using-crystal-symmetry">Using Crystal Symmetry</a></li>
 <li><a href="#parallel-projection">Parallel Projection</a></li>
 <li><a href="#selecting-reflections">Selecting Reflections</a></li>
+<li><a href="#comparing-real-measurements">Comparing to Real Measurements</a></li>
 <li><a href="#reflection-placer">The Reflection Placer</a></li>
 </ol>
 <li><a href="#automatic-coverage-optimizer">Automatic Coverage Optimizer</a>
@@ -149,6 +150,23 @@ Document started April 14, 2010; Last modified on June 09, 2010.
 </li>
 </ol>
 
+
+
+
+
+
+<h2>Quick Overview of CrystalPlan</h2>
+
+<ul>
+<li>CrystalPlan shows you what you expect to measure, in reciprocal space, in the <a href="#FrameQspaceView">3D viewer.</a></li>
+<li>First, you define <a href="#PanelStartup">how much of reciprocal space you expect to measure.</a></li>
+<li>Then, you enter or load your <a href="#PanelSample">crystal lattice parameters</a> as well as the UB matrix containing your sample's mounting orientation.</li>
+<li>Then you can <a href="#PanelTryPosition">try sample orientations</a> or <a href="#PanelAddPositions">add several</a>. </li>
+<li>As you do this, the 3D view updates to show you either the coverage as a <a href="#3d_volume">volume in reciprocal space</a> you've measured, or <a href="#3d_points">color-coded single crystal reflection peaks</a> indicating how many times each peak was measured.</li>
+<li>Coverage statistics (% of volume or # of peaks measured) are calculated for you, helping you determine if you have sufficient completeness.</li>
+<li>And the <a href="#FrameOptimizer">Automatic Coverage Optimizer</a> can make an experiment plan for you automatically.</li>
+<li>Browse your experiment plan in <a href="#PanelExperiment">this tab</a>, and save it to a file to actually run the experiment.</li>
+</ul>
 
 
 
@@ -175,7 +193,9 @@ Most of your workflow will occur by navigating between these notebook tabs:
 
 
 
+<a name="PanelStartup" />
 <h3 id='defining-reciprocal-space-interest-and-wavelengths'>2. Defining the Reciprocal Space of Interest and Wavelengths</h3>
+
 
 <p>Here you will set the general parameters of your experiment.</p>
 
@@ -203,7 +223,7 @@ button. Changing these settings requires re-doing a lot of calculations, which m
 
 
 
-
+<a name="PanelDetectors" />
 <h3 id='detectors'>3. Detectors</h3>
 
 Here, you ensure that CrystalPlan has the correct detector geometry loaded.
@@ -228,7 +248,7 @@ which displays them in a window like this one:
 
 
 
-
+<a name="PanelGoniometer" />
 <h3 id='goniometer'>4. Goniometer</h3>
 
 
@@ -262,7 +282,7 @@ use in your instrument.
 </ul>
 
 
-
+<a name="PanelSample" />
 <h3 id='sample-settings'>5. Sample Settings</h3>
 
 Now, you will want to enter or load in information about your sample: crystal lattice parameters, UB matrix, etc.
@@ -304,7 +324,7 @@ Clicking the
 </ul>
 <li>To learn how to calculate a UB matrix, please refer to ISAW's documentation. Using ISAW, you will be using the Initial Peaks wizard to locate and index the peaks. This method can be used to find both the lattice parameters and UB matrix, or you can specify the lattice parameters if known.</li>
 <li>You can also generate the same file using ISAWev (the ISAW event viewer), working directly from event data in reciprocal space. The procedure is the same (find and index the peaks) though the interface is a little different. Both methods generate exactly the same file format.</li>
-<li><font size="+1">However, the UB matrix output by ISAW <b>includes the orientation due to the goniometer</b> and not just the crystal mounting orientation.</font>
+<li><font size="+1">However, the UB matrix output by ISAWev <b>includes the orientation due to the goniometer</b> and not just the crystal mounting orientation.</font>
 </li>
 <ul>
 <li>The UB matrix needs to be corrected to account for this extra rotation.</li>
@@ -313,6 +333,7 @@ Clicking the
 <li>Enter these angles, in degrees, here:
 <img src="screenshots/dialog_edit_crystal-control_load_angles.png" />
 </li>
+<li>This is NOT necessary for ISAW, which DOES take into account the goniometer angles. Leave the angles at 0.0 for these UB matrices.</li>
 </ul>
 <li>A sample UB matrix file can be found in the "model/data/quartzub.txt" file. Click the 
 <img src="screenshots/dialog_edit_crystal-buttonReadUB.png" />
@@ -358,7 +379,7 @@ any changes you have made. All reflections are re-calculated.
 
 </ul>
 
-
+<a name="PanelTryPosition" />
 <h3 id='trying-sample-orientations'>6. Trying Sample Orientations</h3>
 
 <p>At this point, we have given the program all the information it needs to start predicting what we can measure. We will now tell it what sample orientations we will try.
@@ -381,7 +402,7 @@ any changes you have made. All reflections are re-calculated.
 
 
 
-
+<a name="FrameQspaceView" />
 <h3 id='reciprocal-space-3d-viewer'>7. The Reciprocal Space 3D Viewer</h3>
 
 <p>Congratulations on making it this far! We will now look at the result of 
@@ -467,8 +488,8 @@ the selected goniometer.
 
 
 
-
-<h3 id='adding-several-sample-orientations'>9. Adding Several Sample Orientations</h3>
+<a name="PanelAddPositions" />
+<h3 id='adding-several-sample-orientations-'>9. Adding Several Sample Orientations </h3>
 
 
 <p>Now, we will start building up an experiment plan by adding sample orientations.</p>
@@ -539,7 +560,7 @@ experiment plan (which we will see in the next section).</li>
 </ul>
 
 
-
+<a name="PanelExperiment" />
 <h3 id='experiment-plan'>10. The Experiment Plan</h3>
 
 <li>Switch to the "Experiment Plan" tab. Here, you see a grid with a list of all the sample orientations that have been calculated up to now:
@@ -583,8 +604,10 @@ experiment plan (which we will see in the next section).</li>
 </ul>
 <li>When you are happy with your experiment plan, click the
 <img src="screenshots/exp-buttonSaveToCSV.png" />
-button to make a CSV (comma-separated values) file containing the list of sample orientation and runtime criteria. This file can then be loaded on the DAS computers (using PyDas, for example) to run the experiment. 
+button to make a CSV (comma-separated values) file containing the list of sample orientation and runtime criteria. This file can then be loaded on the DAS computers (using PyDas, for example) to run the experiment. Note: CrystalPlan cannot re-load these CSV file; if you need to do this, you should ALSO save as a .exp file (see below). 
 </li>
+<li>You can also save your experiment to CrystalPlan experiment format (normal file extension: .exp), from the <b>File-&gt;Save Experiment to file Menu</b>. Later, you can re-load this using the <b>File-&gt;Load Experiment from file Menu</b>, and 
+continue your work. </li>
 <li>A very useful feature is the automatic coverage optimizer, covered in <a href="#FrameOptimizer">this section</a>. Click the
 <img src="screenshots/exp-buttonOptimizer.png" />
 button to open the window, or press Ctrl+O. 
@@ -595,7 +618,7 @@ button to open the window, or press Ctrl+O.
 
 
 
-
+<a name="3d_volume" />
 <h3 id='more-reciprocal-space-3d-viewer-options'>11. More Reciprocal Space 3D Viewer Options</h3>
 
 <p>Now that we have more sample orientations in our plan, we return to the 3D viewer and explore some of its options. Here is what the 3D view looks like with the 4 orientations we have calculated:</p>
@@ -702,15 +725,15 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 </ul>
 
 
-
+<a name="3d_points" />
 <h3 id='3d-reflections-view'>12. 3D Reflections View</h3>
-<a name="FrameQspaceView" />
+
 
 <p>Another way to measure your experimental coverage is by looking at single reflections, instead of viewing volume coverage in reciprocal space, as we have been doing before.</p>
 
 <ul><li>To switch to reflection view, clikc on the "Reflections View" tab. Instead of volumes, you now see a number of color-coded points:</li>
 <br /><img class="frameshot" src="screenshots/3d-reflections.png" />
-<li>The color-coding matches those in the volume view and the slice plot, with the addition of the dark blue peaks: those are peaks that were not measured.</li>
+<li>The color-coding matches those in the volume view and the slice plot, with the addition of the dark blue peaks: those are peaks that will not be measured.</li>
 </ul>
 
 <h4 id='how-display-reflections'>12.1. How to Display Reflections</h4> 
@@ -728,9 +751,9 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <h4 id='which-reflections-display'>12.2. Which Reflections to Display</h4> 
 
 <ul>
-<li>In the drop-down box <img src="screenshots/3drefs-view_option.png" />, you can pick whether to show all reflections, only those that have at least one measurement, or only the ones that were never measured.
+<li>In the drop-down box <img src="screenshots/3drefs-view_option.png" />, you can <i>mask out</i> reflections, leaving only the ones you want to see. 
 </li>
-<li>Here is what is shown if you select to show only the measured peaks
+<li>Here is what is shown if you select to show only the peaks that are predicted to be measured
 <br /><div align="center"><img src="screenshots/3drefs-measured.png" />
 <img src="screenshots/3drefs-panelStats-normal.png" />
 </div>
@@ -802,8 +825,38 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 
 </ul>
 
-<h4 id='reflection-placer'>12.6. The Reflection Placer</h4> 
+
+
+<a name="MeasuredReflections" />
+<h4 id='comparing-real-measurements'>12.6. Comparing to Real Measurements</h4> 
+
+<p>CrystalPlan allows you to compare your <i>predicted</i> measurements with the <i>actual</i> peaks found,
+after you have acquired and saved your data. 
+Remember to save your full experiment to a .exp file, using the <b>File-&gt;Save Experiment to file Menu</b>, 
+to make it easier to reload the predicted measurements after completing your experiment. 
+</p>
+
+<ul>
+<li>First, analyze your data using ISAW or ISAWev. You can generate a .peaks file (with the positions of the peaks only) or a .integrate file (with the integrated counts under the peaks also); CrystalPlan can load both.</li>
+<li>Use the <b>File-&gt;Load an ISAW .integrate or .peaks file</b> and browse to the file you created. You will be asked if you want to REPLACE or APPEND to the current measurements. Use APPEND if you need to consider several files, or REPLACE if one holds all your peaks.</li>
+<li>In the 3D viewer, under the Reflections View tab, you may have noticed this line:
+<img src="screenshots/refl-measurements.png" /><br /> 
+</li>
+<ul>
+<li>The "Color by" radio option allows you to change the color scale, using either the <i>predicted</i> number of measurements, or actually <i>measured</i> number.</li>
+<li>Crystal symmetry will be used in the same way for both color scales.</li>
+<li>The I/sigI threshold box allows you to specify what is the value of I/sigI (the intensity divided by its error) that is considered "measured". A value of 2.0 or 3.0 is typical; if you loaded a .peaks file (which has no intensity data), use 0.0 here otherwise no peaks will be visible.</li>
+<li>The drop-down box <img src="screenshots/3drefs-view_option.png" /> also has options to mask out peaks that were not measured. You can mix the color scale and masking; for example, it is particularly useful to plot all predicted peaks but use the color scale of measured peaks. That way, you can easily see which peaks were predicted but not measured.</li>
+</ul>
+<li>You can also view details of the actual measurements in the <b>Single Reflection Info</b> frame we saw previously. Each measurement at each HKL can be compared to its prediction. 
+</li>
+</ul>
+
+
+
 <a name="FrameReflectionPlacer" />
+<h4 id='reflection-placer'>12.7. The Reflection Placer</h4> 
+
 
 <ul>
 <li>Click the <img src="screenshots/prm-buttonPlace.png" /> to bring up the reflection placer window: 
@@ -820,9 +873,9 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 
 
 
-
-<h3 id='automatic-coverage-optimizer'>13. Automatic Coverage Optimizer</h3>
 <a name="FrameOptimizer" />
+<h3 id='automatic-coverage-optimizer'>13. Automatic Coverage Optimizer</h3>
+
 
 <p>The automatic coverage optimizer can automatically create an experiment plan (list of sample orientations) for you that satisfies your coverage requirements.</p>
 
