@@ -147,6 +147,17 @@ class ExperimentGridController():
 
         self.update_selection()
 
+#    #----------------------------------------------------------------------------------------
+#    def fix_editors(self):
+#        """Fix the cell editors for all columns and all rows.
+#        Call when loading an experiment, to ensure the column editors are ok."""
+#        # @type grid wx.grid.Grid
+#        grid = self.panel.gridExp
+#
+#        for row in xrange(0, grid.GetNumberRows()):
+#            grid.SetCellEditor(row, self.criterion_col, wx.grid.GridCellChoiceEditor(choices))
+
+
     #----------------------------------------------------------------------------------------
     def update_selection(self, message=None):
         """Updates the GUI to reflect all the selected positions in the latest parameters.
@@ -566,6 +577,9 @@ class PanelExperiment(wx.Panel):
         self.controller = ExperimentGridController(self)
         
     def Refresh(self):
+        #Delete all rows and refresh
+        self.gridExp.DeleteRows(0, self.gridExp.GetNumberRows())
+        self.controller.grid_setup()
         self.controller.update_grid()
 
     def OnGridExpGridCellLeftClick(self, event):
