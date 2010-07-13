@@ -867,7 +867,7 @@ class FrameQspaceView(wx.Frame):
 
     def _init_ctrls(self, prnt):
         wx.Frame.__init__(self, id=wxID_FRAMEQSPACEVIEW,
-              name=u'FrameQspaceView', parent=prnt, pos=wx.Point(398, 487),
+              name=u'FrameQspaceView', parent=prnt, pos=wx.Point(0, 0),
               size=wx.Size(800, 700), style=wx.DEFAULT_FRAME_STYLE,
               title=u'Reciprocal Space 3D Viewer')
         self.SetClientSize(wx.Size(800, 700))

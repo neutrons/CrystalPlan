@@ -2189,7 +2189,6 @@ def load_from_file(filename):
     datas = f.read()
     f.close()
     the_experiment = loads(datas)
-    #TODO: recalc all
     return the_experiment
 
 

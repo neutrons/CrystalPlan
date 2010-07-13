@@ -525,6 +525,7 @@ class Goniometer(HasTraits):
         """Given a list of angles (which may have more or less angles depending on goniometer type),
         return the equivalent (phi, chi, omega) in radians."""
         (phi, chi, omega) = angles[0:3]
+        return (phi, chi, omega)
 
 
 
@@ -956,6 +957,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         return the equivalent (phi, chi, omega) in radians."""
         (phi, omega) = angles[0:2]
         chi = self.chi
+        return (phi, chi, omega)
 
     #-------------------------------------------------------------------------------
     def make_q_rot_matrix(self, angles):

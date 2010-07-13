@@ -133,7 +133,8 @@ class DetectorView3D(wx.Frame):
                     
     #---------------------------------------------------------------------------------------------
     def __init__(self, parent, id):
-        wx.Frame.__init__(self, parent, id, 'Direct Space 3D View of Detectors', size=wx.Size(600, 500))
+        wx.Frame.__init__(self, parent, id, 'Direct Space 3D View of Detectors', size=wx.Size(600, 500),
+        pos=wx.Point(100,50))
         self.visualization = DetectorVisualization()
         #Create a control in the frame
         self.control = self.visualization.edit_traits(parent=self,
