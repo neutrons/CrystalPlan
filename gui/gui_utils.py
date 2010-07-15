@@ -89,6 +89,7 @@ last_csv_path = ''
 def dialog_to_save_experiment_to_CSV(parent):
     """Opens a dialog asking the user where to save the experiment plan."""
     filters = 'CSV files (*.csv)|*.csv|All files (*)|*'
+    if is_mac(): filters = '' #Filters tend to crash on mac
     global last_csv_path
     (path, filename) = os.path.split(last_csv_path)
     dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Save the experiment plan to CSV file', wildcard=filters, style=wx.SAVE )
@@ -107,6 +108,7 @@ last_experiment_path = ''
 def save_experiment_file_dialog(parent):
     """Opens a dialog asking the user where to save the experiment."""
     filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
+    if is_mac(): filters = '' #Filters tend to crash on mac
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)
     dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Save the experiment plan to EXP file', wildcard=filters, style=wx.SAVE )
@@ -125,6 +127,7 @@ def save_experiment_file_dialog(parent):
 def load_experiment_file_dialog(parent):
     """Opens a dialog asking the user where to load the experiment."""
     filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
+    if is_mac(): filters = '' #Filters tend to crash on mac
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)
     dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an experiment plan from an EXP file', wildcard=filters, style=wx.OPEN )
@@ -150,6 +153,7 @@ last_integrate_path = ''
 def load_integrate_file_dialog(parent):
     """Opens a dialog asking the user where to load the integrate."""
     filters = 'ISAW .integrate or .peaks files (*.peaks;*.integrate)|*.peaks;*.integrate|All files (*)|*|'
+    if is_mac(): filters = '' #Filters tend to crash on mac
     global last_integrate_path
     (path, filename) = os.path.split(last_integrate_path)
     dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an ISAW .integrate or .peaks file', wildcard=filters, style=wx.OPEN )

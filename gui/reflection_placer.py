@@ -161,7 +161,8 @@ class PlacerMapThread(Thread):
                 except:
                     #Unhandled exceptions get thrown to log and message boxes.
                     (type, value, traceback) = sys.exc_info()
-                    sys.excepthook(type, value, traceback, thread_information="reflection_placer.PlacerMapThread")
+                    print "Exception in PlacerMapThread:\n%s\n%s\n%s" % (type, value, traceback)
+                    #sys.excepthook(type, value, traceback, thread_information="reflection_placer.PlacerMapThread")
                 
             else:
                 #We just wait a bit

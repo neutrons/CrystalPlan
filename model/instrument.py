@@ -3,6 +3,7 @@
 Holds the Instrument class, settings and info about the instrument
 being used.
 """
+import os.path
 
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov
 # Version: $Id$
@@ -215,7 +216,7 @@ class Instrument:
         self.initizalize()
         
         if not (filename is None):
-            self.load_detectors_csv_file(filename)
+            self.load_detectors_file(filename)
         else:
             #Save it, for reloading
             self.detector_filename = filename
@@ -261,7 +262,7 @@ class Instrument:
         #Now, re-load the detectors
         #TODO: Check that the file still exists!
         if not self.detector_filename is None:
-            self.load_detectors_csv_file(self.detector_filename)
+            self.load_detectors_file(self.detector_filename)
         #Generate your q-space stuff
         self.make_qspace()
         #Re-calculate all the positions (with all detectors enabled)
@@ -293,19 +294,30 @@ class Instrument:
 
 
     #---------------------------------------------------------------------------------------------
-    def load_detectors_csv_file(self, filename):
-        """Load the detector geometry from a CSV file."""
-        #Save it, for reloading later.
-        self.detector_filename = filename
-
+    def load_detectors_file(self, filename):
+        """Load the detector geometry from a file; picks the method based on the file extension."""
         if not os.path.exists(filename):
             print "Error! The supplied detector filename '%s' does not exist. No detectors were loaded." % filename
             return
 
+        #Save it, for reloading later.
+        self.detector_filename = filename
+
+        (main, ext) = os.path.splitext(filename)
+        ext = ext.lower()
+        if ext == ".detcal":
+            self.load_detectors_detcal_file(filename)
+        else:
+            self.load_detectors_csv_file(filename)
+
+
+    #---------------------------------------------------------------------------------------------
+    def load_detectors_csv_file(self, filename):
+        """Load the detector geometry from a CSV file."""
         #Initialize members
         old_list = self.detectors
         self.detectors = list()
-        
+
         try:
             reader = csv.reader( open(filename) )
             count = 0
@@ -327,6 +339,50 @@ class Instrument:
                     #Calculate the pixel angles
                     det.calculate_pixel_angles()
                     self.detectors.append(det)
+                count = count + 1
+        except:
+            #Uh-oh! Let's go back to the original list
+            self.detectors = old_list
+            #And handle the error normally.
+            raise
+
+
+    #---------------------------------------------------------------------------------------------
+    def load_detectors_detcal_file(self, filename):
+        """Load the detector geometry from an ISAW .detcal file."""
+
+        #Initialize members
+        old_list = self.detectors
+        self.detectors = list()
+
+        try:
+            f = open(filename, 'r')
+            count = 0
+            for row in f.readlines():
+                if len(row) > 0:
+                    if row[0]=='5':
+                        #Only lines starting with 5 are real.
+                        #Convert to a list of floats
+                        values = [float(x) for x in row.split()]
+                        #Create the detector
+                        name = "%d" % values[1]
+                        #@type det FlatDetector
+                        det = FlatDetector( name )
+                        det.xpixels = int(values[3])
+                        det.ypixels = int(values[2])
+                        #Convert cm to mm
+                        det.width = values[4] * 10
+                        det.height = values[5] * 10
+                        det.distance = values[7] * 10
+                        #Vectors determining the center, and base, and up vectors
+                        center = np.array(values[8:11])*10.0
+                        #Looks like I need to flip the horizontal vector direction.
+                        base = -np.array(values[11:14])*10.0
+                        up = np.array(values[14:17])*10.0
+
+                        #Calculate the pixel angles using these vectors
+                        det.calculate_pixel_angles_using_vectors(center,base,up)
+                        self.detectors.append(det)
                 count = count + 1
         except:
             #Uh-oh! Let's go back to the original list
@@ -1771,6 +1827,8 @@ class TestInstrumentWithDetectors(unittest.TestCase):
         tst_inst2 = loads(datas)
         assert tst_inst==tst_inst2, "Matching instruments before and after file load."
 
+    def test_load_detcal(self):
+        self.tst_inst = Instrument("../instruments/TOPAZ_2010_06_08.detcal")
 
         
 
@@ -1782,9 +1840,9 @@ if __name__ == "__main__":
 #    suite = unittest.makeSuite(TestInelasticInstrument)
 #    unittest.TextTestRunner().run(suite)
 #
-    tst = TestInstrumentWithDetectors('test_pickle')
+    tst = TestInstrumentWithDetectors('test_load_detcal')
     tst.setUp()
-    tst.test_pickle()
+    tst.test_load_detcal()
 
 #    unittest.main()
 

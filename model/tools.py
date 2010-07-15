@@ -32,7 +32,7 @@ class PeakOffset:
     def __str__(self):
         return "Det %d offset of %.3f, %.3f; wl=%.3f." % (self.det_num, self.offset[0], self.offset[1], self.wavelength)
 
-#================================================================================
+#-------------------------------------------------------------------------------------
 def calculate_peak_offsets():
     """Calculates the offset between the predicted and the measured peak positions."""
     #@type e Experiment
@@ -70,7 +70,8 @@ def calculate_peak_offsets():
     return offsets
 
 
-def plot_peak_offsets(offsets):
+#-------------------------------------------------------------------------------------
+def plot_peak_offsets(offsets, filebase, doshow=False):
     """Plots the results of the peak offsets calculated."""
     from pylab import *
     #@type inst Instrument
@@ -91,51 +92,52 @@ def plot_peak_offsets(offsets):
             if po.det_num == det_num:
                 x = [po.measured[0], po.predicted[0]]
                 y = [po.measured[1], po.predicted[1]]
-                plot(x, y, '-k')
                 plot(po.predicted[0], po.predicted[1], 'r.')
+                plot(x, y, '-k')
                 text(po.predicted[0], po.predicted[1], ' %.1f' % po.wavelength, size=5, verticalalignment='center')
         xlim( -det.width/2, det.width/2)
         ylim( -det.height/2, det.height/2)
         #axis('equal')
         title('Detector %s' % det.name)
     #-- Save to files --
-    filebase = os.path.expanduser("~") + "/peak_offsets"
     for i in xrange((len(inst.detectors) + numperpage-1) / numperpage):
         figure(i)
         savefig( filebase + "_%d.pdf" % i, papertype="letter")
     #-- combine --
     os.system("pdftk %s_*.pdf cat output %s.pdf" % (filebase, filebase))
 
-#    show()
+    if doshow:
+        show()
 
+#-------------------------------------------------------------------------------------
+def save_offsets_to_csv(offsets, filename):
+    """Save a list of offsets to a comma-sep file."""
+    import csv
+    f =  open(filename, 'w')
+    w = csv.writer(f)
+    #Write the header
+    w.writerow(["DetNum", "IsawX", "IsawY", "PredictedX", "PredictedY", "DiffX", "DiffY", "Wavelength_angstrom"])
+    #@type po PeakOffset
+    for po in offsets:
+        w.writerow([po.det_num, po.measured[0], po.measured[1], po.predicted[0], po.predicted[1], po.offset[0], po.offset[1], po.wavelength])
+    f.close()
+        
 
-
-#================================================================================
-#============================ UNIT TESTING ======================================
-#================================================================================
-import unittest
-
-#==================================================================
-class TestOffset(unittest.TestCase):
-    """Systems test, integrating various parts of program."""
-    #----------------------------------------------------
-    def setUp(self):
-        pass
-
-    def test_offset(self):
-        experiment.exp = experiment.load_from_file("data/TOPAZ_1241.exp")
-        instrument.inst = experiment.exp.inst
-        #@type e Experiment
-        e = experiment.exp
-        e.initialize_reflections()
-        e.recalculate_reflections(e.inst.positions, None)
-        self.assertEquals(len(e.reflections), 9481)
-        self.assertEquals(np.sum((e.reflections_times_measured > 0)), 3427)
-        offsets = calculate_peak_offsets()
-        plot_peak_offsets(offsets)
 
 #==================================================================
 if __name__ == "__main__":
-    unittest.main()
+    #Demo run
+    experiment.exp = experiment.load_from_file("data/TOPAZ_1241_detcal.exp")
+    instrument.inst = experiment.exp.inst
+    #@type e Experiment
+    e = experiment.exp
+    e.initialize_reflections()
+    e.recalculate_reflections(e.inst.positions, None)
+    assert len(e.reflections) == 9481
+    #self.assertEquals(np.sum((e.reflections_times_measured > 0)), 3427)
+    offsets = calculate_peak_offsets()
+    filebase = os.path.expanduser("~") + "/peak_offsets"
+    plot_peak_offsets(offsets, filebase, doshow=False)
+    save_offsets_to_csv(offsets, filebase + ".csv")
 
 

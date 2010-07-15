@@ -74,6 +74,8 @@ class DetectorVisualization(HasTraits):
         rad=None
         #Plot between each corner and connect back to 1st corner
         lines(det.corners+[det.corners[0]], color=col, tube_radius=rad, mlab=self.scene.mlab)
+        #Plot the normal, out of the center
+#        lines([det.base_point.flatten(), (det.base_point+det.normal*det.width/2).flatten()], color=col, tube_radius=rad, mlab=self.scene.mlab)
         #Find the middle and put text there
         center = det.pixels[:, det.xpixels/2,  det.ypixels/2]
         text3d(center, det.name, font_size=15, color=col, mlab=self.scene.mlab)
@@ -180,13 +182,15 @@ class DetectorListController:
 
     #----------------------------------------------------------------------------------------
     def load_detectors_dialog(self):
-        """Open a dialog to load detectors from a CSV file."""
+        """Open a dialog to load detectors from a CSV/detcal file."""
         filename = model.config.cfg.default_detector_filename
         (path, ignored) = os.path.split( os.path.abspath(filename) )
-        filters = 'CSV files (*.csv)|*.csv|All files (*.*)|*.*|'
-        filters = '' #TODO: This is needed on Mac, for some reason the filters crashes otherwise.
+        filters = 'CSV or detcal files|*.csv;*.detcal|CSV files (*.csv)|*.csv|detcal files (*.detcal)|*.csv|All files (*.*)|*.*|'
+        if gui_utils.is_mac():
+            filters = '' #This is needed on Mac, for some reason the filters crashes otherwise.
         print 'opening dialog for path', path, filename
-        dialog = wx.FileDialog ( None, defaultFile=filename, defaultDir=path, message='Choose a CSV file describing the detector geometry', wildcard=filters, style=wx.OPEN )
+        dialog = wx.FileDialog ( None, defaultFile=filename, defaultDir=path, message='Choose a .csv or .detcal file describing the detector geometry', wildcard=filters, style=wx.OPEN )
+        dialog.SetFilterIndex(0)
         if dialog.ShowModal() == wx.ID_OK:
             filename = dialog.GetPath()
             dialog.Destroy()
@@ -199,14 +203,14 @@ class DetectorListController:
 
     #----------------------------------------------------------------------------------------
     def load_detector_file(self, filename):
-        """Load detectors from a CSV file."""
+        """Load detectors from a file."""
         #Load if it exists
         if not os.path.exists(filename):
             wx.MessageDialog(self, "File '%s' was not found!" % filename, 'Error', wx.OK | wx.ICON_ERROR).ShowModal()
         else:
             old_detectors = model.instrument.inst.detectors
             try:
-                model.instrument.inst.load_detectors_csv_file(filename)
+                model.instrument.inst.load_detectors_file(filename)
                 #Save as the next default
                 model.config.cfg.default_detector_filename = filename
                 #Send a message saying that the detector list has changed
@@ -470,7 +474,7 @@ class PanelDetectors(wx.Panel):
         self.buttonOptimize.Bind(wx.EVT_BUTTON, self.OnButtonOptimizeButton,
               id=wxID_PANELDETECTORSBUTTONOPTIMIZE)
 
-        self.buttonLoadDetectors = wx.Button(label=u'  Load Detectors CSV file  ',
+        self.buttonLoadDetectors = wx.Button(label=u'  Load Detectors CSV/detcal file  ',
                 name=u'buttonLoadDetectors', parent=self,
                 pos=wx.Point(207, 25), style=0)
         self.buttonLoadDetectors.Bind(wx.EVT_BUTTON, self.OnButtonLoadDetectors)

@@ -108,7 +108,8 @@ class FlatDetector(Detector):
         #aka: the rotation of the detector around the center_vector.
         self.rotation = 0
 
-        #Vector normal to the surface; along with one corner, defines the plane equation.
+        #Vector normal to the surface, pointing away from the sample.
+        #   along with one corner, defines the plane equation.
         self.normal = None
 
         #Vector defining the horizontal (or X-axis) direction in the plane (normalized)
@@ -508,16 +509,70 @@ class FlatDetector(Detector):
         self.horizontal /= vector_length(self.horizontal)
 
         #Normal vector: take a vector pointing in positive Z, and the do the same rotation as all the pixels.
-        self.normal = np.dot(rot,  column([0,0,1]))
+        self.normal = column(np.cross(self.horizontal.flatten(), self.vertical.flatten() ))
+        assert np.allclose(vector_length(self.normal), 1.0), "normal vector is normalized."
+        #Another way to calculate the normal. Compare it
+        other_normal = np.dot(rot,  column([0,0,1])).flatten()
+        assert np.allclose(self.normal.flatten(), other_normal), "Match between two methods of calculating normals. %s vs %s" % (self.normal.flatten(), other_normal)
 
         #Now, we calculate the azimuth and elevation angle of each pixel.
-        #Distance to origin
-        #d = np.sqrt(np.sum(np.square(pixels), 0))
-
         x=pixels[0,:]
         y=pixels[1,:]
         z=pixels[2,:]
 
+        self.azimuthal_angle = np.reshape( np.arctan2(x, z), (self.ypixels, self.xpixels) )
+        self.elevation_angle = np.reshape( np.arctan(y / np.sqrt(x**2 + z**2)), (self.ypixels, self.xpixels) )
+
+
+
+    #-------------------------------------------------------------------------------
+    def calculate_pixel_angles_using_vectors(self, center, base, up):
+        """Calculate the pixels using specified vectors:
+        Parameters
+            center: position of center in mm
+            base: horizontal direction
+            up: vertical direction
+        """
+        #Normalize
+        base /= vector_length(base)
+        up /= vector_length(up)
+        #Save the vectors
+        self.base_point = column(center)
+        self.horizontal = column(base)
+        self.vertical = column(up)
+        #Calculate the normal vector
+        self.normal = np.cross(self.vertical.flatten(), self.horizontal.flatten())
+        self.normal /= vector_length(self.normal)
+        self.normal = column(self.normal)
+        assert np.allclose(vector_length(self.normal), 1.0), "Normal vector is normalized to length 1.0"
+
+        #Now let's make the pixels
+        x = np.linspace(-self.width/2, self.width/2, self.xpixels)
+        y = np.linspace(-self.height/2, self.height/2, self.ypixels)
+        #Starting x, y, z position
+        (px, py) = np.meshgrid(x,y)
+
+        #XY is the horizontal, vertical position
+        px = px.flatten()
+        py = py.flatten()
+
+        #Multiply by the base vectors and add the center
+        pixels = px*self.horizontal + py*self.vertical + self.base_point
+
+        #Save em - for plotting, mostly. Indices go Z, Y, X
+        self.pixels = np.reshape(pixels, (3, self.ypixels, self.xpixels) )
+
+        #Save the corners
+        self.corners = list()
+        self.corners.append(self.pixels[:,  0,  0]) #One corner
+        self.corners.append(self.pixels[:,  0, -1]) #The end in X
+        self.corners.append(self.pixels[:, -1, -1]) #Max x and Y
+        self.corners.append(self.pixels[:, -1,  0]) #The end in Y
+
+        #Now, we calculate the azimuth and elevation angle of each pixel.
+        x=pixels[0,:]
+        y=pixels[1,:]
+        z=pixels[2,:]
         self.azimuthal_angle = np.reshape( np.arctan2(x, z), (self.ypixels, self.xpixels) )
         self.elevation_angle = np.reshape( np.arctan(y / np.sqrt(x**2 + z**2)), (self.ypixels, self.xpixels) )
 
@@ -534,11 +589,15 @@ class FlatDetector(Detector):
         Returns:
             3x1 column vector of the beam direction, normalized.
         """
-        #Make a column array of the pixel position, with the z given by the
-        #   detector to sample distance
-        pixel = np.array([ [horizontal], [vertical], [self.distance] ])
-        #Perform the appropriate rotation, calculated before
-        pixel = np.dot(self.pixel_rotation_matrix , pixel)
+        #Use the vectors to build the direction
+        pixel = horizontal * self.horizontal + vertical * self.vertical + self.base_point
+
+#        #Make a column array of the pixel position, with the z given by the
+#        #   detector to sample distance
+#        pixel = np.array([ [horizontal], [vertical], [self.distance] ])
+#        #Perform the appropriate rotation, calculated before
+#        pixel = np.dot(self.pixel_rotation_matrix , pixel)
+
         #Normalize
         pixel = pixel / vector_length(pixel)
         return pixel

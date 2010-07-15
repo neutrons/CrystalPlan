@@ -98,10 +98,14 @@ class FrameMain(wx.Frame):
         parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Other...')
         self.Bind(wx.EVT_MENU, self.OnMenu, id=id)
 
-    def _init_menuOptimize(self, parent):
+    def _init_menuTools(self, parent):
         id = wx.NewId()
         parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Automatic Coverage Optimizer...\tCtrl+O')
         self.Bind(wx.EVT_MENU, self.OnMenuOptimizePositions, id=id)
+
+        id = wx.NewId()
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Compare measured to predicted peak positions...')
+        self.Bind(wx.EVT_MENU, self.OnMenuComparePeaks, id=id)
 
 
     def _init_menuHelp(self, parent):
@@ -137,9 +141,9 @@ class FrameMain(wx.Frame):
 #        self._init_menuParameters(self.menuParameters)
 #        bar.Append(self.menuParameters, "&Parameters")
 
-        self.menuOptimize = wx.Menu()
-        self._init_menuOptimize(self.menuOptimize)
-        bar.Append(self.menuOptimize, "&Optimization")
+        self.menuTools = wx.Menu()
+        self._init_menuTools(self.menuTools)
+        bar.Append(self.menuTools, "&Tools")
 
         self.menuHelp = wx.Menu()
         self._init_menuHelp(self.menuHelp)
@@ -281,6 +285,29 @@ class FrameMain(wx.Frame):
         frm.Show()
         frm.Raise()
         event.Skip()
+
+    def OnMenuComparePeaks(self, event):
+        #First, do the calculation.
+        offsets = model.tools.calculate_peak_offsets()
+        if len(offsets) == 0:
+            wx.MessageDialog(self, "No peaks were found to have any equivalent predicted peaks. Make sure you have loaded a .integrate file and that your list of sample orientations matches the one in the .integrate file.").ShowModal()
+            return
+        #Prompt for a file
+        global last_csv_path
+        (path, filename) = os.path.split( os.path.expanduser("~") + "/peak_offsets" )
+        dialog = wx.FileDialog ( self, defaultFile=filename, defaultDir=path, message='Enter the base file to save to (no extension)', wildcard='*', style=wx.SAVE )
+        if dialog.ShowModal() == wx.ID_OK:
+            filename = dialog.GetPath()
+            dialog.Destroy()
+            #Do the figure and csv file
+            model.tools.save_offsets_to_csv(offsets, filename + '.csv')
+            model.tools.plot_peak_offsets(offsets, filename, doshow=False)
+            wx.MessageDialog(self, "Offsets were saved to '%s*.pdf' and '%s.csv'." % (filename, filename)).ShowModal()
+            return
+        else:
+            #'Nothing was selected.
+            dialog.Destroy()
+            return
 
     def OnMenu(self, event):
         event.Skip()
