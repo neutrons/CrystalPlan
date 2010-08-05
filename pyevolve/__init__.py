@@ -19,7 +19,7 @@ __all__ = ["Consts", "Crossovers", "DBAdapters", "FunctionSlot",
 __version__ =  '0.6rc1'
 __author__ =  'Christian S. Perone'
 
-import pyevolve.Consts
+import Consts
 import sys
 
 if sys.version_info[:2] < Consts.CDefPythonRequire:

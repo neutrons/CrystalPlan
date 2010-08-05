@@ -9,8 +9,6 @@ import os.path
 import wx
 import wx.gizmos
 import sys
-import doc_maker
-import doc_maker.screenshots
 import os
 
 #--- GUI Imports ---
@@ -26,7 +24,6 @@ import frame_qspace_view
 import frame_reflection_info
 import dialog_preferences
 import CrystalPlan_version
-import doc_maker.user_guide
 import display_thread
 import frame_optimizer
 
@@ -117,11 +114,11 @@ class FrameMain(wx.Frame):
         parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'About %s...' % CrystalPlan_version.package_name)
         self.Bind(wx.EVT_MENU, self.OnMenuAbout, id=id)
 
-        parent.AppendSeparator()
-
-        id = wx.NewId()
-        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Generate User Guide (ADVANCED)\tCtrl+H')
-        self.Bind(wx.EVT_MENU, self.OnMenuGenerateUserGuide, id=id)
+#        parent.AppendSeparator()
+#
+#        id = wx.NewId()
+#        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Generate User Guide (ADVANCED)\tCtrl+H')
+#        self.Bind(wx.EVT_MENU, self.OnMenuGenerateUserGuide, id=id)
 
 
     def _init_menus(self):
@@ -136,10 +133,6 @@ class FrameMain(wx.Frame):
         self.menuView = wx.Menu()
         self._init_menuView(self.menuView)
         bar.Append(self.menuView,"&View")
-
-#        self.menuParameters = wx.Menu()
-#        self._init_menuParameters(self.menuParameters)
-#        bar.Append(self.menuParameters, "&Parameters")
 
         self.menuTools = wx.Menu()
         self._init_menuTools(self.menuTools)
@@ -234,7 +227,8 @@ class FrameMain(wx.Frame):
         
         if not gui_utils.is_mac():
             #Some of these are not natively mac-supported, not including them makes it look better on mac
-            info.SetIcon(wx.Icon(CrystalPlan_version.icon_file, wx.BITMAP_TYPE_PNG))
+            icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file)
+            info.SetIcon(wx.Icon( icon_file, wx.BITMAP_TYPE_PNG))
             info.SetLicence(CrystalPlan_version.license)
             info.SetWebSite(CrystalPlan_version.url)
 
@@ -267,10 +261,9 @@ class FrameMain(wx.Frame):
         event.Skip()
 
     def OnMenuGenerateUserGuide(self, event):
-#        gui_utils.find_parent_frame(self.tab_add.staticTextHelp)
-#        doc_maker.screenshots.animated_screenshot( self.tab_detectors.frame3d, self.tab_detectors.frame3d.visualization.scene)
-#        fq = frame_qspace_view.get_instance(self)
-#        doc_maker.screenshots.animated_screenshot( fq.controller.scene, "../docs/qspace_rotate.png" )
+        import doc_maker
+        import doc_maker.screenshots
+        import doc_maker.user_guide
 
         #Make the user guide screenshots
         if hasattr(self, 'user_guide_thread'):
@@ -371,7 +364,8 @@ class FrameMain(wx.Frame):
         self.count = 0
 
         #Set the icon
-        self.SetIcon( wx.Icon(CrystalPlan_version.icon_file, wx.BITMAP_TYPE_PNG) )
+        icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file)
+        self.SetIcon( wx.Icon(icon_file, wx.BITMAP_TYPE_PNG) )
         
     #--------------------------------------------------------------------
     def LoadNotebook(self):

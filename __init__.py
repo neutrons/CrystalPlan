@@ -13,3 +13,11 @@ import sys
 import os
 (head, tail) = os.path.split(__file__)
 sys.path.insert(0, head)
+
+#Import the sub-modules: needed when running the installed script version.
+import model
+import gui
+import pyevolve
+
+#And the stuff in here
+import CrystalPlan_version

@@ -14,4 +14,4 @@ Version: $Id$
 
 #Simply import and launch the GUI
 import CrystalPlan.gui.main
-CrystalPlan.gui.main.launch_gui()
+CrystalPlan.gui.main.handle_arguments_and_launch(InstalledVersion=True)

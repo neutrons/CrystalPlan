@@ -926,7 +926,9 @@ class FrameQspaceView(wx.Frame):
     def __init__(self, parent):
         self._init_ctrls(parent)
         #Set the icon
-        self.SetIcon( wx.Icon(CrystalPlan_version.icon_file_3d, wx.BITMAP_TYPE_PNG) )
+        import os
+        icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file_3d)
+        self.SetIcon( wx.Icon(icon_file, wx.BITMAP_TYPE_PNG) )
 
         #Create the qspace options panel
         self.tabVolume = panel_qspace_options.PanelQspaceOptions(parent=self.notebookView)

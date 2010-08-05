@@ -503,7 +503,11 @@ class FrameOptimizer(wx.Frame):
               style=wx.DEFAULT_FRAME_STYLE, title=u'Automatic Coverage Optimizer')
         self.SetClientSize(wx.Size(900, 800))
         self.Bind(wx.EVT_CLOSE, self.controller.close_form)
-        self.SetIcon( wx.Icon(CrystalPlan_version.icon_file_optimizer, wx.BITMAP_TYPE_PNG) )
+
+        #Little icon
+        import os
+        icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file_optimizer)
+        self.SetIcon( wx.Icon(icon_file, wx.BITMAP_TYPE_PNG) )
 
         self.splitterMain = wx.SplitterWindow(id=wxID_FRAMEOPTIMIZERSPLITTERMAIN,
               name=u'splitterMain', parent=self, pos=wx.Point(8, 8),

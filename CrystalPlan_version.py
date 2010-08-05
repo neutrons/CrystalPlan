@@ -16,7 +16,7 @@
 #            revision = re.match("Revision: (\d+)", line).group(1)
 #    return revision
 
-version = '1.1-a'
+version = '1.1'
 package_name = 'CrystalPlan'
 description = \
 """CrystalPlan is an experiment planning tool for crystallography. You can choose an instrument and supply your sample's lattice parameters to simulate which reflections will be measured, by which detectors and at what wavelengths."""
@@ -27,7 +27,7 @@ author_email = "zikovskyjl@ornl.gov"
 url = 'http://neutronsr.us'
 copyright = '(C) 2010'
 
-#Path to icons, relative to gui scripts
+#Path to icons, relative to gui scripts path
 icon_file = "icons/CrystalPlan_icon.png"
 icon_file_config = "icons/CrystalPlan_icon_config.png"
 icon_file_3d = "icons/CrystalPlan_icon_3d.png"

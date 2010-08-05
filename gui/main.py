@@ -10,6 +10,7 @@ Includes GUI launcher, logger, error handler."""
 from __future__ import with_statement
 import sys
 import os
+import os.path
 import traceback
 import datetime
 from optparse import OptionParser
@@ -128,6 +129,8 @@ def launch_gui(inelastic):
 
     Parameters:
         inelastic: boolean, to indicate whether the instrument is for inelastic scattering."""
+
+    import CrystalPlan_version
         
     #Since imports take a while, print out this status line first.
     print "-------------- %s %s GUI is starting -----------------" % (CrystalPlan_version.package_name, CrystalPlan_version.version)
@@ -199,8 +202,16 @@ def launch_gui(inelastic):
 
 
 
-#---------------- MAIN -------------------------------------------
-if __name__=="__main__":
+def handle_arguments_and_launch(InstalledVersion):
+    #Parameter: InstalledVersion: True if launching from the installed crystalplan.py scrip
+    #           False if launching from the gui/ folder
+
+#    if InstalledVersion:
+#        import CrystalPlan
+#        print dir(CrystalPlan)
+#        from CrystalPlan import *
+#        print "Version ", CrystalPlan_version.version
+#    else:
     #Manipulate the PYTHONPATH to put model directly in view of it
     #   This way, "import model" works.
     sys.path.insert(0, "..")
@@ -208,7 +219,6 @@ if __name__=="__main__":
 
     # --- Handle Command Line Arguments -----
 #    usage = "---- Welcome to " + CrystalPlan_version.package_name + " v." + CrystalPlan_version.version + " ----\n\nUsage: %prog [options] arg1 arg2"
-
     parser = OptionParser(prog=CrystalPlan_version.package_name+".py", version="%s v.%s" % (CrystalPlan_version.package_name, CrystalPlan_version.version))
     parser.add_option("-t", "--test", dest="test",
                      action="store_true", default=False,
@@ -220,9 +230,11 @@ if __name__=="__main__":
 
     if options.test:
         #Run unit tests
-#        print "Clearing your .python26_compiled folder, to ensure full tests."
-#        os.remove(os.path.join(os.getenv('HOME'), '.python26_compiled/*'))
-        os.chdir("../model")
+        if InstalledVersion:
+            #Go to the model dir.
+            os.chdir( os.path.join( os.path.dirname(__file__), "../model"))
+        else:
+            os.chdir("../model")
         os.system("python test_all.py")
     else:
         #Start the GUI
@@ -230,3 +242,7 @@ if __name__=="__main__":
 
 
 
+
+#---------------- MAIN -------------------------------------------
+if __name__=="__main__":
+    handle_arguments_and_launch(InstalledVersion=False)

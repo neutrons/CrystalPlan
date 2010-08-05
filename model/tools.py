@@ -5,7 +5,6 @@
 # Version: $Id: crystal_calc.py 1325 2010-06-09 20:39:26Z 8oz $
 
 #--- General Imports ---
-from pylab import matplotlib
 import numpy as np
 from numpy import array, sin, cos, pi, sign
 from scipy import weave
@@ -73,7 +72,7 @@ def calculate_peak_offsets():
 #-------------------------------------------------------------------------------------
 def plot_peak_offsets(offsets, filebase, doshow=False):
     """Plots the results of the peak offsets calculated."""
-    from pylab import *
+    from pylab import figure, clf, xlim, ylim, savefig, plot, text, show, figtext, subplot, title
     #@type inst Instrument
     inst = instrument.inst
     numperpage = 6
@@ -137,7 +136,7 @@ if __name__ == "__main__":
     #self.assertEquals(np.sum((e.reflections_times_measured > 0)), 3427)
     offsets = calculate_peak_offsets()
     filebase = os.path.expanduser("~") + "/peak_offsets"
-    plot_peak_offsets(offsets, filebase, doshow=False)
+    plot_peak_offsets(offsets, filebase, doshow=True)
     save_offsets_to_csv(offsets, filebase + ".csv")
 
 

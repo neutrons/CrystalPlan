@@ -72,7 +72,7 @@ def equal_objects(first, second):
                     value2 = getattr(second, key)
                     if not equal_values(value, value2):
                         #No match!
-                        print "... no match at %s. \n %s \n -------- vs --------- \n %s" % (key, value, value2)
+                        #print "... no match at %s. \n %s \n -------- vs --------- \n %s" % (key, value, value2)
                         return False
     #If you get to this point, all were equal, return true.
     return True

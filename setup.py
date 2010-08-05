@@ -11,12 +11,14 @@ import CrystalPlan_version
 
 #Two packages: the GUI and the model code
 packages = find_packages()
-packages = ['CrystalPlan', 'CrystalPlan.model', 'CrystalPlan.gui', 'CrystalPlan.model.pygene']
-package_dir = {'CrystalPlan': '.',  'CrystalPlan.model':'model', 'CrystalPlan.gui':'gui', 'CrystalPlan.model.pygene':'model/pygene'}
+packages = ['CrystalPlan', 'CrystalPlan.model',  'CrystalPlan.pyevolve', 'CrystalPlan.gui', 'CrystalPlan.model.pygene']
+package_dir = {'CrystalPlan': '.',  'CrystalPlan.pyevolve':'pyevolve', 'CrystalPlan.model':'model', 'CrystalPlan.gui':'gui', 'CrystalPlan.model.pygene':'model/pygene'}
 #data_files = [ ('instruments', './instruments/*.csv'), ('instruments', './instruments/*.xls') ]
 data_files = []
-package_data = {'CrystalPlan':['instruments/*.xls', 'instruments/*.csv'],
-    'CrystalPlan.model.data':['*.*']
+package_data = {'CrystalPlan':['instruments/*.xls', 'instruments/*.csv', 'instruments/*.detcal',
+                               'docs/*.*', 'docs/animations/*.*', 'docs/eq/*.*', 'docs/screenshots/*.*' ],
+    'CrystalPlan.model':['data/*.*'],
+    'CrystalPlan.gui':['icons/*.png']
 }
 scripts = ['crystalplan.py']
 
