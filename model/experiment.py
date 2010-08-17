@@ -2577,10 +2577,12 @@ class TestExperiment(unittest.TestCase):
         e.params[PARAM_POSITIONS] = pos_param
         e.calculate_coverage(None, None)
         #Now save to a file.
-        save_to_file(e, "test_save.exp")
+        test_filename = "~/test_save.exp"
+        save_to_file(e, test_filename)
         print "Pickled size is", os.path.getsize("test_save.exp")
         #Load it out
-        e2 = load_from_file("test_save.exp")
+        e2 = load_from_file(test_filename)
+        os.remove(test_filename)
 #        assert e==e2, "Experiment matches before/after loading."
 
     def test_load_peaks(self):
