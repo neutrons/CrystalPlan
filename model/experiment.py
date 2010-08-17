@@ -2577,7 +2577,7 @@ class TestExperiment(unittest.TestCase):
         e.params[PARAM_POSITIONS] = pos_param
         e.calculate_coverage(None, None)
         #Now save to a file.
-        test_filename = "~/test_save.exp"
+        test_filename = os.path.expanduser("~") + "/test_save.exp"
         save_to_file(e, test_filename)
         print "Pickled size is", os.path.getsize("test_save.exp")
         #Load it out
