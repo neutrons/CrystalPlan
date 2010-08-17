@@ -674,6 +674,7 @@ def test_hits_detector():
 
 #---------------------------------------------------------------------
 def test_hits_detector_inlineC():
+    import time
     det = FlatDetector("test_detector")
     det.calculate_pixel_angles()
 
@@ -683,7 +684,7 @@ def test_hits_detector_inlineC():
     print "Looking at an array of", az_list.shape, " shape. # of points = ", az_list.size
 
     t = time.time()
-    (h1,v1,d1) = det.detector_coord(az_list_rad, elev_list_rad)
+#    (h1,v1,d1) = det.detector_coord(az_list_rad, elev_list_rad)
 
     t1 = time.time()-t
     t = time.time()
