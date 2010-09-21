@@ -1,0 +1,13 @@
+#TeXlipse project settings
+#Tue Sep 21 11:19:11 EDT 2010
+builderNum=2
+outputDir=
+makeIndSty=
+bibrefDir=
+outputFormat=pdf
+tempDir=tmp
+mainTexFile=paper.tex
+outputFile=CrystalPlan_paper.pdf
+langSpell=en
+markDer=true
+srcDir=
