@@ -19,38 +19,7 @@
                                   %   FE - feature articles
                                   %   ST - structural communications
                                   %   XC - crystallization communications
-                                  % (Following categories rarely in LaTeX)
-                                  %   AA - abstracts
-                                  %   AD - addenda and errata
-                                  %   BC - books received
-                                  %   BR - book reviews
-                                  %   CA - cif applications
-                                  %   CE - current events
-                                  %   CI - inorganic compounds
-                                  %   CM - metal-organic compounds
-                                  %   CN - cryocrystallography papers
-                                  %   CO - organic compounds
-                                  %   CP - computer programs
-                                  %   CR - crystallographers
-                                  %   CS - scientific comment
-                                  %   ED - editorial
-                                  %   EI - inorganic compounds
-                                  %   EM - metal-organic compounds
-                                  %   EO - organic compounds
-                                  %   FI - inorganic compounds
-                                  %   FM - metal-organic compounds
-                                  %   FO - organic compounds
-                                  %   IP - issue preface
-                                  %   IU - iucr
-                                  %   LE - letters to the editor
-                                  %   LN - laboratory notes
-                                  %   ME - forthcoming meetings/short courses
-                                  %   MR - meeting reports
-                                  %   NN - notes and news
-                                  %   NP - new commercial products
-                                  %   OB - obituaries
-                                  %   SR - software reviews
-                                  %   TE - teaching and education
+
 
      \paperlang{english}          % Can be english, french, german or russian
      %-------------------------------------------------------------------------
@@ -76,23 +45,22 @@
      \journalreceived{0 XXXXXXX 0000}
      \journalaccepted{0 XXXXXXX 0000}
      \journalonline{0 XXXXXXX 0000}
+  
 
 \begin{document}                  % DO NOT DELETE THIS LINE
 
-     %-------------------------------------------------------------------------
-     % The introductory (header) part of the paper
-     %-------------------------------------------------------------------------
-
-     % The title of the paper. Use \shorttitle to indicate an abbreviated title
-     % for use in running heads (you will need to uncomment it).
+ %-------------------------------------------------------------------------
+ % The introductory (header) part of the paper
+ %-------------------------------------------------------------------------
 
 \title{CrystalPlan: an Experiment Planning Tool for Crystallography}
+
 \shorttitle{CrystalPlan: an Experiment Planning Tool}
 
-     % Authors' names and addresses. Use \cauthor for the main (contact) author.
-     % Use \author for all other authors. Use \aff for authors' affiliations.
-     % Use lower-case letters in square brackets to link authors to their
-     % affiliations; if there is only one affiliation address, remove the [a].
+ % Authors' names and addresses. Use \cauthor for the main (contact) author.
+ % Use \author for all other authors. Use \aff for authors' affiliations.
+ % Use lower-case letters in square brackets to link authors to their
+ % affiliations; if there is only one affiliation address, remove the [a].
 
 \cauthor[a]{Janik}{Zikovsky}{zikovskyjl@ornl.gov}{address if different from
 \aff}
@@ -105,17 +73,12 @@
 MS-6477, Oak Ridge, TN 37831-6477
 \country{USA}}
 
-     % Use \shortauthor to indicate an abbreviated author list for use in
-     % running heads (you will need to uncomment it).
+ % Use \shortauthor to indicate an abbreviated author list for use in
+ % running heads (you will need to uncomment it).
 
 \shortauthor{Zikovsky et al.}
 
 
-     % Keywords (required for Journal of Synchrotron Radiation only)
-     % Use the \keyword macro for each word or phrase, e.g. 
-     % \keyword{X-ray diffraction}\keyword{muscle}
-
-%\keyword{keyword}
 
 
 \maketitle                        % DO NOT DELETE THIS LINE
@@ -142,19 +105,20 @@ presented.
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-%---------------------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 \section{Introduction}
 
-The TOPAZ beamline at the Spallation Neutron Source (SNS) at Oak Ridge National Lab (ORNL),
-currently finishing commissioning, is a neutron time-of-flight instrument designed to 
-acquire single-crystal diffraction data of small-to-moderate sized unit cells with high throughput. 
-The final design calls for an array of 48 detectors covering a large fraction of
-$2\pi$ steradians; however as of this writing, only 14 of the 48 detectors are
-installed. In order to have sufficient data to perform a fit, an experimenter will
-typically want to measure $ > 85\%$ of the peaks within a certain
-range of d-spacings. However, TOPAZ's complex geometry makes it very difficult to 
-come up with an effective set of sample orientations that will
-cover all the required peaks without unnecessary redundancy.
+The TOPAZ beamline at the Spallation Neutron Source (SNS) at Oak Ridge National
+Lab (ORNL), currently finishing commissioning, is a neutron time-of-flight
+instrument designed to acquire single-crystal diffraction data of
+small-to-moderate sized unit cells with high throughput. The final design calls
+for an array of 48 detectors covering a large fraction of  $2\pi$ steradians;
+however as of this writing, only 14 of the 48 detectors are installed. In order
+to have sufficient data to perform a fit, an experimenter will  typically want
+to measure $ > 85\%$ of the peaks within a certain range of d-spacings. 
+However, TOPAZ's complex geometry makes it very difficult to come up with an
+effective set of sample orientations that will cover all the required peaks
+without unnecessary redundancy. 
 
 
 Existing software tools [ADD SOME NAMES HERE – see my notes from ACA2010] 
@@ -190,7 +154,7 @@ completely separate from eventual GUI elements. This makes it possible to run
 calculations using Python scripts, if desired. Unit tests for each part of the
 calculations are used to ensure consistent results on different platforms and
 systems.    
-
+ 
 
 \subsection{Instrument Configuration}
 
@@ -207,9 +171,9 @@ each detector.
 CrystalPlan is designed to be able to use a variety of sample orientation
 goniometers. A base Goniometer class is subclassed for specific types of
 goniometers, allowing a unified API: in a way, it is a “universal goniometer”,
-which uses the conventional goniometer angles of phi, chi, omega as defined in
-[REF XXX]. Each class inheriting from Goniometer can convert the desired phi,
-chi, omega angles to the internal motor positions it requires. The API allows
+which uses the conventional goniometer angles of $\phi$, $\chi$, $\omega$ as
+defined in \cite{knuth84}. Each class inheriting from Goniometer can convert
+the desired phi, chi, omega angles to the internal motor positions it requires. The API allows
 for limited goniometers: for example, TOPAZ is currently equipped with a
 goniometer where chi is fixed at 45 degrees. CrystalPlan handles this by
 limiting the available sample orientation angles accessible to the user.        
@@ -251,7 +215,8 @@ are used to to find two q vectors, which point in the same direction. At the
 high wavelength we find qmin, and the low wavelength limit scattering off of qmax.
 Since the instrument has a wide bandwidth, we fill in the 3D q-space matrix by
 filling all points from qmin to the  qmax, for all pixels in the face of the
-detector. This quickly defines a volume of coverage, as shown in Figure X.  
+detector. This quickly defines a volume of coverage, as shown in Figure
+\ref{fig:volume_coverage}.
 
 
 To reduce memory usage yet allow for quickly trying different detector
@@ -265,9 +230,9 @@ detectors are disabled, for example.
 
 \subsection{Crystal Parameters and Single Reflection Coverage}
 
-Crystal lattice parameters (lengths a,b,c and angles alpha, beta, gamma) are
-typed in or loaded from the ISAW UB matrix file. CrystalPlan then generates a
-list of HKL peaks with d-spacings larger than the $d_{min}$ specified. For each
+Crystal lattice parameters (lengths $a$, $b$, $c$ and angles $\alpha$, $\beta$,
+$\gamma$) are typed in or loaded from the ISAW UB matrix file. CrystalPlan then
+generates a list of HKL peaks with d-spacings larger than the $d_{min}$ specified. For each
 sample orientation being simulated and for each peak, a function calculates at
 what wavelength lambda and in which direction it scatters. If the wavelength is
 within range of the limits of the instrument, the beam direction is projected
@@ -285,11 +250,11 @@ graphically display coverage and calculate statistics such as redundancy.
 
 When entering the lattice parameters, the crystal's point group symmetry can
 also be entered. This information is then used to calculate the increased
-measurement redundancy. A list of n 3x3 multiplication matrices is generated
-based on the point group; any {hkl} vector can be multiplied by these matrices
+measurement redundancy. A list of $n$ $3\times3$ multiplication matrices is
+generated based on the point group; any {hkl} vector can be multiplied by these matrices
 to find the n equivalent hkl reflections; for example, for orthorombic (mmm)
-symmetry, n=8 and 8 multiplication matrices are generated, which multiply {hkl}
-to give {±h, ±k, ±l}.              
+symmetry, $n=8$ and 8 multiplication matrices are generated, which multiply
+{hkl} to give {±h, ±k, ±l}.              
 
 For the single reflections, each hkl is tracked separately, but a primary hkl is
 found that points to a list of equivalent hkls. The GUI can then display either
@@ -310,8 +275,8 @@ simulate; however, finding an optimal plan by trial and error would be very time
 consuming. To make the process easier, CrystalPlan includes an Automatic
 Coverage Optimizer, which takes as its inputs the desired number of sample
 orientations and uses a genetic algorithm to find a solution that satisfies a
-user-specified coverage criterion (for example, the user may ask for 85% of
-peaks to be measured, or for 90% of q-volume).           
+user-specified coverage criterion (for example, the user may ask for $85\%$ of
+peaks to be measured, or for $90\%$ of q-volume).           
 
 Genetic algorithms have been covered in the literature before, see e.g ref
 [INSERT REFERENCE HERE]. In this application, the genes consist of goniometer
@@ -361,8 +326,8 @@ plots use matplotlib, and the 3D visualization elements use the Mayavi2 toolkit
 for Python, itself based on VTK. All of these libraries are open-source.       
 
 \subsubsection{Main Program Workflow}
-Some screenshots of the GUI are shown in Figure Y. The main window consists of a
-series of tabs, with workflow proceeding from left to right:  
+Some screenshots of the GUI are shown in Figure \ref{fig:screenshots}. The main
+window consists of a series of tabs, with workflow proceeding from left to right:  
 
 \begin{itemize}
   \item Q-Space tab: define the volume of interest (minimum d-spacing) and
@@ -389,8 +354,8 @@ begin a run.
 
 
 \subsubsection{Reciprocal Space Coverage Visualization}
-Figures Z -a shows a screenshot of the reciprocal space coverage 3D interface.
-The 3D view can represent q-space in two ways: volume coverage, or single-peak
+Figure \ref{fig:volume_view}a) shows a screenshot of the reciprocal space
+coverage 3D interface. The 3D view can represent q-space in two ways: volume coverage, or single-peak
 coverage.  
 
 The volume coverage shows a solid isosurface representing the volume measured at
@@ -398,12 +363,13 @@ least once. Redundant regions can also be shown using semi-transparent
 isosurfaces; or the coverage can be inverted, showing non-measured volumes only;
 or sliced between user-selectable $q_{min}$ and $q_{max}$.        
 
-The reflections view (Figure ZZ-a) displays each hkl as a small sphere; the
-color of which indicates the number of times the hkl is predicted to be measured
+The reflections view (Figure \ref{fig:refl_view}a) displays each hkl as a
+small sphere; the color of which indicates the number of times the hkl is predicted to be measured
 in the current experiment plan.       
 
-Both views can take into crystal symmetry in their display (Figures Z-b and
-ZZ-b), using the techniques described previously.   
+Both views can take into crystal symmetry in their display (Figures
+\ref{fig:volume_view}b and \ref{fig:refl_view}b), using the techniques described
+previously.
  
 Finally, both views display quick coverage statistics, showing the percentage of
 volume (or of the number of peaks) measured, as well as the proportion of
@@ -460,18 +426,20 @@ DE-AC05-00OR22725 for the U.S. Department of Energy, Office of Science.
 
      % References are at the end of the document, between \begin{references}
      % and \end{references} tags. Each reference is in a \reference entry.
+\bibliographystyle{iucr}     
+\bibliography{crystalplan}   
 
-\begin{references}
-\reference{Author, A. \& Author, B. (1984). \emph{Journal} \textbf{Vol}, 
-first page--last page.}
-\end{references}
+%\begin{references}
+%\reference{Author, A. \& Author, B. (1984). \emph{Journal} \textbf{Vol}, 
+%first page--last page.}
+%\end{references}
 
-     %-------------------------------------------------------------------------
-     % TABLES AND FIGURES SHOULD BE INSERTED AFTER THE MAIN BODY OF THE TEXT
-     %-------------------------------------------------------------------------
+ %-------------------------------------------------------------------------
+ % TABLES AND FIGURES SHOULD BE INSERTED AFTER THE MAIN BODY OF THE TEXT
+ %-------------------------------------------------------------------------
 
-     % Simple tables should use the tabular environment according to this
-     % model
+ % Simple tables should use the tabular environment according to this
+ % model
 
 \begin{table}
 \caption{Caption to table}
@@ -487,13 +455,48 @@ first page--last page.}
 
 
 
-     % Postscript figures can be included with multiple figure blocks
+ % Postscript figures can be included with multiple figure blocks
 
 \begin{figure}
-\caption{Caption describing figure.}
+\caption{volume coverage}
 %\includegraphics{fig1.ps}
+\label{fig:volume_coverage}
 \end{figure}
 
+\
+\begin{figure}
+\caption{Screenshots of the main GUI}
+%\includegraphics{fig1.ps}
+\label{fig:screenshots}
+\end{figure}
+
+
+
+
+\begin{figure}
+\caption{Volume coverage in reciprocal space view: a) without crystal symmetry;
+b) with crystal symmetry}
+%\includegraphics{fig1.ps}
+\label{fig:volume_view}
+\end{figure}
+
+
+\begin{figure}
+\caption{Coverage of single-crystal reflections in reciprocal space: a) without
+crystal symmetry; b) with crystal symmetry}
+%\includegraphics{fig1.ps}
+\label{fig:refl_view}
+\end{figure}
+
+
+
+
+
+\begin{figure}
+\caption{figureeeeee}
+%\includegraphics{fig1.ps}
+\label{fig:screenshots}
+\end{figure}
 
 
 
