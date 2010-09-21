@@ -121,12 +121,12 @@ effective set of sample orientations that will cover all the required peaks
 without unnecessary redundancy. 
 
 
-Existing software tools [ADD SOME NAMES HERE – see my notes from ACA2010] 
-were designed for X-ray experiments where a single incident
-wavelength and a large number of sample orientations or sweeps are used to
-collect data. These programs cannot be used for TOPAZ, 
-since as a time-of-flight instrument, it is able to collect data
-from a wide bandwidth of incident neutrons. 
+Existing diffraction experiment planning software programs (for example,
+CrysAlis Pro from Oxford Diffraction; DIFFRAC from Bruker AXS) were designed for
+X-ray experiments where a single  incident wavelength and a large number of
+sample orientations or sweeps are used to collect data. 
+These programs cannot be used for TOPAZ, since as a time-of-flight instrument, 
+it is able to collect data from a wide bandwidth of incident neutrons. 
 Additionally, this means that relatively few sample orientations are needed in
 order to complete a measurement: whereas an X-ray measurement might have
 hundreds or thousands of individual frames, a TOPAZ run may have as few as 10.   
@@ -137,7 +137,8 @@ planning their experiments. By quickly making an experimental plan that will be
 sufficient for the needs of the scientist (enough peaks measured), but without
 spending time needlessly measuring the same region in reciprocal space,
 CrystalPlan will greatly increase the scientific productivity and throughput of
-TOPAZ. More users will be able to measure more samples, faster. 
+TOPAZ and other beamlines. More users will be able to measure more samples in
+less time.
 
 %---------------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------------
@@ -153,7 +154,7 @@ The calculation code of CrystalPlan is placed in a model layer and kept
 completely separate from eventual GUI elements. This makes it possible to run
 calculations using Python scripts, if desired. Unit tests for each part of the
 calculations are used to ensure consistent results on different platforms and
-systems.    
+systems.     
  
 
 \subsection{Instrument Configuration}
@@ -170,23 +171,23 @@ each detector.
 
 CrystalPlan is designed to be able to use a variety of sample orientation
 goniometers. A base Goniometer class is subclassed for specific types of
-goniometers, allowing a unified API: in a way, it is a “universal goniometer”,
-which uses the conventional goniometer angles of $\phi$, $\chi$, $\omega$ as
-defined in \cite{knuth84}. Each class inheriting from Goniometer can convert
+goniometers, allowing a unified API. This base class acts as a \emph{universal
+goniometer},
+which uses the conventional goniometer angles of
+$\phi$, $\chi$, $\omega$ as defined in \cite{busing67}.
+Each class inheriting from Goniometer can convert
 the desired phi, chi, omega angles to the internal motor positions it requires. The API allows
 for limited goniometers: for example, TOPAZ is currently equipped with a
 goniometer where chi is fixed at 45 degrees. CrystalPlan handles this by
 limiting the available sample orientation angles accessible to the user.        
- 
-The data analysis program ISAW is used to calculate the the sample mounting
-orientation UB matrix, which is saved to a text file along with the lattice
+   
+From an initial data set, the data analysis program ISAW \cite{Tao2006} is used
+to calculate the the sample mounting orientation UB matrix, which is saved to a text file along with the lattice
 parameters. CrystalPlan can load this UB matrix file and will use that UB matrix
 in coverage calculations.
-
+   
   
-\subsection{Volume coverage}
-
-\subsubsection{Reciprocal Space Representation}
+\subsection{Reciprocal Space Representation.}
 
 The reciprocal space to be measured is divided into a cubic 3D matrix, the size
 of which is determined by the user, who specifies the minimum d-spacing
@@ -201,8 +202,7 @@ each sample orientation is calculated and saved in memory. This means that the
 total coverage matrix can be computed by simply adding multiple 3D matrices
 corresponding to each sample orientation. 
  
-\subsubsection{Calculating Coverage of One Sample Orientation}
-
+\subsection{Calculating Coverage of One Sample Orientation}
 
 For each sample orientation, a rotation matrix combining the sample's mounting
 orientation (the U matrix loaded from ISAW) and the goniometer rotation
@@ -251,20 +251,21 @@ graphically display coverage and calculate statistics such as redundancy.
 When entering the lattice parameters, the crystal's point group symmetry can
 also be entered. This information is then used to calculate the increased
 measurement redundancy. A list of $n$ $3\times3$ multiplication matrices is
-generated based on the point group; any {hkl} vector can be multiplied by these matrices
-to find the n equivalent hkl reflections; for example, for orthorombic (mmm)
-symmetry, $n=8$ and 8 multiplication matrices are generated, which multiply
-{hkl} to give {±h, ±k, ±l}.              
+generated based on the point group; any $hkl$ vector can be multiplied by
+these matrices to find the $n$ equivalent $hkl$ reflections; for example, for
+orthorombic (mmm) symmetry, $n=8$ and 8 multiplication matrices are generated, which multiply
+$hkl$ to give $\pm h$, $\pm k$, $\pm l$.              
 
 For the single reflections, each hkl is tracked separately, but a primary hkl is
 found that points to a list of equivalent hkls. The GUI can then display either
 all hkl, ignoring crystal symmetry; or combine them to display only part of the
 reflections.             
 
-In volume coverage mode, a 4D matrix is generated where each voxel has a list of
-n corresponding equivalent voxels. This allows CrystalPlan to quickly compute a
-volume coverage map that takes into account crystal symmetry: at each voxel, n
-original voxels are checked to see if any of them were measured.         
+In volume coverage mode, a 4D matrix is generated where each voxel has a list
+with $n$ entries, each pointing to a corresponding equivalent voxels. This
+allows CrystalPlan to quickly compute a volume coverage map that takes into
+account crystal symmetry: at each voxel, all $n$ voxels are checked to
+see if any of them were measured. 
 
 
 
@@ -316,7 +317,7 @@ the pure Python version (which can still be used, in case of incompatibilities).
 
 \subsection{Graphical User Interface}
 
-\subsubsection{Design}
+\subsubsection{Design.}
 
 An attractive and easy-to-use GUI was considered an important part of
 CrystalPlan, since the program is meant to be used interactively as a guide to
@@ -325,7 +326,7 @@ cross-platform GUI toolkit, as well as the Enthought Traits GUI. Some of the 2D
 plots use matplotlib, and the 3D visualization elements use the Mayavi2 toolkit
 for Python, itself based on VTK. All of these libraries are open-source.       
 
-\subsubsection{Main Program Workflow}
+\subsubsection{Main Program Workflow.}
 Some screenshots of the GUI are shown in Figure \ref{fig:screenshots}. The main
 window consists of a series of tabs, with workflow proceeding from left to right:  
 
@@ -353,7 +354,7 @@ begin a run.
 
 
 
-\subsubsection{Reciprocal Space Coverage Visualization}
+\subsubsection{Reciprocal Space Coverage Visualization.}
 Figure \ref{fig:volume_view}a) shows a screenshot of the reciprocal space
 coverage 3D interface. The 3D view can represent q-space in two ways: volume coverage, or single-peak
 coverage.  
