@@ -5,6 +5,7 @@
 % Version 1.4 (11 May 2009)
 %------------------------------------------------------------------------------
 
+
 \documentclass{iucr}              % DO NOT DELETE THIS LINE
 
      %-------------------------------------------------------------------------
@@ -45,6 +46,8 @@
      \journalreceived{0 XXXXXXX 0000}
      \journalaccepted{0 XXXXXXX 0000}
      \journalonline{0 XXXXXXX 0000}
+  
+\usepackage[pdftex]{graphicx}
   
 
 \begin{document}                  % DO NOT DELETE THIS LINE
@@ -145,17 +148,15 @@ less time.
 %---------------------------------------------------------------------------------------
 \section{Architecture}
 
-The program needs to be cross-platform, and run equally well on Linux, Mac OS
-and Windows, although Linux is our primary target operating system. Another
-design goal was to use of open-source software and toolkits as much as possible. 
+Crystal plan is designed with these capabilities:
 
-
-The calculation code of CrystalPlan is placed in a model layer and kept
-completely separate from eventual GUI elements. This makes it possible to run
-calculations using Python scripts, if desired. Unit tests for each part of the
-calculations are used to ensure consistent results on different platforms and
-systems.     
- 
+\begin{itemize}
+  \item Load an instrument geometry.
+  \item Calculate the orientation of a crystal at different goniometer settings.
+  \item Calculate the coverage of these orientations in reciprocal space.
+  \item Take crystal symmetries into account.
+  \item Optimize the experiment plan.
+\end{itemize}
 
 \subsection{Instrument Configuration}
 
@@ -164,15 +165,16 @@ dimensions; this handles the detector types in use at SNS (Anger cameras and
 8-pack tube detectors), but the software could easily be extended for more
 complicated detector shapes as needed. The detector configuration is loaded from
 a text file containing the location, size, orientation and number of pixels of
-each detector. 
+each detector. Other settings to be set for an instrument include the
+detectable range of neutron/x-ray wavelength.
 
 
 \subsection{Sample Orientation}
 
 CrystalPlan is designed to be able to use a variety of sample orientation
 goniometers. A base Goniometer class is subclassed for specific types of
-goniometers, allowing a unified API. This base class acts as a \emph{universal
-goniometer},
+goniometers, allowing a unified interface. This base class acts as a
+\emph{universal goniometer},
 which uses the conventional goniometer angles of
 $\phi$, $\chi$, $\omega$ as defined in \cite{busing67}.
 Each class inheriting from Goniometer can convert
@@ -193,7 +195,8 @@ The reciprocal space to be measured is divided into a cubic 3D matrix, the size
 of which is determined by the user, who specifies the minimum d-spacing
 ($d_{min}$, in $\AA$) that he or she is interested in. The resolution of the 3D
 matrix is also specified (in $\AA^{-1}$), which determines the number of points to be
-modeled. Machine memory limits the resolution that can be achieved.    
+modeled. Available machine memory limits the resolution that can be achieved in
+practice.
 
 Each point of the reciprocal space 3D matrix holds an integer representing the 
 number of times that voxel of q-space has been measured – this is the total
@@ -209,14 +212,14 @@ orientation (the U matrix loaded from ISAW) and the goniometer rotation
 ($\Phi$, $\Xi$, $\Omega$) is computed. The coverage in reciprocal space is
 computed in this way: for each pixel in the face of a detector, the direction of
 the scattered beam is known. Then, two incident beam vectors are considered,
-corresponding to the low and high wavelength limits of the detectors and/or
-source. The scattered beam direction and the two possible incident beam vectors
-are used to to find two q vectors, which point in the same direction. At the
-high wavelength we find qmin, and the low wavelength limit scattering off of qmax.
-Since the instrument has a wide bandwidth, we fill in the 3D q-space matrix by
-filling all points from qmin to the  qmax, for all pixels in the face of the
-detector. This quickly defines a volume of coverage, as shown in Figure
-\ref{fig:volume_coverage}.
+corresponding to the $\lambda_{min}$ and $\lambda_{max}$ wavelength limits
+of the detectors and/or source. The scattered beam direction and the two possible incident beam vectors
+are used to to find two $q$ vectors, which point in the same direction. At the
+high wavelength we find $q_{min}$, and the low wavelength limit scattering off
+of $q_{max}$. Since the instrument has a wide bandwidth, we fill in the 3D q-space
+matrix by filling all points from $q_{min}$ to the $q_{max}$, for all pixels in
+the face of the detector. This quickly defines a volume of coverage, as shown
+schematically in two dimensions in Figure \ref{fig:ewald_fig}.
 
 
 To reduce memory usage yet allow for quickly trying different detector
@@ -232,17 +235,18 @@ detectors are disabled, for example.
 
 Crystal lattice parameters (lengths $a$, $b$, $c$ and angles $\alpha$, $\beta$,
 $\gamma$) are typed in or loaded from the ISAW UB matrix file. CrystalPlan then
-generates a list of HKL peaks with d-spacings larger than the $d_{min}$ specified. For each
-sample orientation being simulated and for each peak, a function calculates at
-what wavelength lambda and in which direction it scatters. If the wavelength is
-within range of the limits of the instrument, the beam direction is projected
+generates a list of $hkl$ peaks with d-spacings larger than the $d_{min}$
+specified. For each sample orientation being simulated and for each peak, a function calculates at
+what wavelength $\lambda$ and in which direction it scatters. If $\lambda$ 
+is within range of the limits of the instrument, the beam direction is projected
 onto each detector face to determine where, on each detector surface, it will be
 measured. 
  
-Each HKL peak is a separate object that holds a list of simulated measurements,
-including which detector measured it, at what position on the detector face, at
-what wavelength, and for which sample orientation. These data will be used to
-graphically display coverage and calculate statistics such as redundancy.            
+Each $hkl$ peak is a separate object that holds a list of predicted
+measurements, including which detector measured it, at what position on the
+detector face, at what wavelength, and for which sample orientation. These data
+will be used to  graphically display coverage and calculate statistics such as
+redundancy. 
 
 
 
@@ -256,10 +260,10 @@ these matrices to find the $n$ equivalent $hkl$ reflections; for example, for
 orthorombic (mmm) symmetry, $n=8$ and 8 multiplication matrices are generated, which multiply
 $hkl$ to give $\pm h$, $\pm k$, $\pm l$.              
 
-For the single reflections, each hkl is tracked separately, but a primary hkl is
-found that points to a list of equivalent hkls. The GUI can then display either
-all hkl, ignoring crystal symmetry; or combine them to display only part of the
-reflections.             
+For the single reflections, each $hkl$ is tracked separately, but a primary
+$hkl$ is found that points to a list of equivalent $hkl$'s. The GUI can then display
+either all $hkl$, ignoring crystal symmetry; or combine them to display only part of
+the reflections.             
 
 In volume coverage mode, a 4D matrix is generated where each voxel has a list
 with $n$ entries, each pointing to a corresponding equivalent voxels. This
@@ -284,9 +288,9 @@ Genetic algorithms have been covered in the literature before, see e.g ref
 angles. For instance, if a goniometer has freedom in 3 angles and the user
 requests a 10 different sample orientations, then each individual has 30 genes.
 The initial population is created randomly and is made to evolve using mutations
-and crossover. For each individual set of sample orientations, the coverage
-statistics are computed (taking crystal symmetry into account if desired), and
-this is used as the fitness of the given individual in the normal genetic
+and crossover. Individuals whose goniometer angles turn out to be impossible to
+reach are eliminated. For each individual set of sample orientations, the
+coverage statistics are computed (taking crystal symmetry into account if desired), and this is used as the fitness of the given individual in the normal genetic
 algorithm process.             
 
 The Automatic Coverage Optimizer can find an acceptable solution (if any is
@@ -304,16 +308,30 @@ hours, this feature can result in significant beam-time savings.
 \section{Implementation}
 
 
+
+
 \subsection{Language and Libraries}
 
-CrystalPlan was written in Python, a powerful, open, cross-platform scripting
-language. Python was chosen for its ease of cross-platform deployment, and for
+The program needs to be cross-platform, and run equally well on Linux, Mac OS
+and Windows, although Linux is our primary target operating system. Another
+design goal was to use of open-source software and toolkits as much as possible. 
+
+To this end, CrystalPlan was written in Python, a powerful, open, cross-platform
+scripting language. Python was chosen for its ease of cross-platform deployment, and for
 its attractive language features. The numpy and scipy libraries (two
 open-source, commonly installed Python libraries) were used for many of the
 calculations. Some of the critical calculations were also written with inline C
 code, which speed up some calculations by up to $400\times$ as compared with
 the pure Python version (which can still be used, in case of incompatibilities).       
 
+\subsection{Code Layout}
+
+The calculation code of CrystalPlan is placed in a model layer and kept
+completely separate from eventual GUI elements. This makes it possible to run
+calculations using Python scripts, if desired. Unit tests for each part of the
+calculations are used to ensure consistent results on different platforms and
+systems.     
+ 
 
 \subsection{Graphical User Interface}
 
@@ -459,18 +477,27 @@ DE-AC05-00OR22725 for the U.S. Department of Energy, Office of Science.
  % Postscript figures can be included with multiple figure blocks
 
 \begin{figure}
-\caption{volume coverage}
-%\includegraphics{fig1.ps}
-\label{fig:volume_coverage}
+\caption{Ewald sphere construction showing reciprocal-space detector coverage
+for a wide-bandwidth Laue diffractometer. The smaller blue circle represents the
+$1/\lambda_{max}$ limit of measurement, with the larger green circle
+representing $1/\lambda_{min}$. The origin of reciprocal space (000) is common to both
+spheres, but the sample position in the construction (S1 or S2) depends on
+$\lambda$. The angular coverage of the detector is represented by the dashed
+wedge, and projects onto each sphere of radius $1/\lambda$ an arc. The red wedge
+between the two $\lambda$ is built by projecting straight lines between the
+$q_{min}$ and $q_{max}$ limits, giving the volume in reciprocal space that is
+measured at a single sample oriention. }
+%\includegraphics[bb=0in 0in 2in 2in, width=2in]{ewald_fig.pdf} 
+\label{fig:ewald_fig} 
 \end{figure}
-
-\
+ 
+  
 \begin{figure}
 \caption{Screenshots of the main GUI}
 %\includegraphics{fig1.ps}
 \label{fig:screenshots}
 \end{figure}
-
+ 
 
 
 
@@ -488,17 +515,6 @@ crystal symmetry; b) with crystal symmetry}
 %\includegraphics{fig1.ps}
 \label{fig:refl_view}
 \end{figure}
-
-
-
-
-
-\begin{figure}
-\caption{figureeeeee}
-%\includegraphics{fig1.ps}
-\label{fig:screenshots}
-\end{figure}
-
 
 
 \end{document}                    % DO NOT DELETE THIS LINE
