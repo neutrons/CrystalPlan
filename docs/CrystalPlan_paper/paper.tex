@@ -347,25 +347,26 @@ plots use matplotlib, and the 3D visualization elements use the Mayavi2 toolkit
 for Python, itself based on VTK. All of these libraries are open-source.       
 
 \subsubsection{Main Program Workflow.}
-Some screenshots of the GUI are shown in Figure \ref{fig:screenshots}. The main
-window consists of a series of tabs, with workflow proceeding from left to right:  
+A screenshot of the main window GUI is shown in Figure \ref{fig:screenshots}.
+The main window consists of a series of tabs, with workflow proceeding
+intuitively from left to right:
 
 \begin{itemize}
-  \item Q-Space tab: define the volume of interest (minimum d-spacing) and
-resolution of reciprocal space. Detectors tab: load instrument detector geometry
-files, and enable or disable individual detectors. Goniometer tab: to choose the
+  	\item Q-Space tab: define the volume of interest (minimum d-spacing) and
+resolution of reciprocal space. 
+ 	\item Detectors tab: load instrument detector geometry
+files, and enable or disable individual detectors. 
+	\item Goniometer tab: to choose the
 goniometer and degrees of orientation freedom of the instrument.
-   
-  \item Sample tab: enter or load the crystal's lattice parameters and UB matrix.
-
-  \item Try an Orientation tab: interactively rotate a sample and observe the
+  	\item Sample tab: enter or load the crystal's lattice parameters and UB
+  matrix.
+  	\item Try an Orientation tab: interactively rotate a sample and observe the
   changes in coverage in real-time.
-   
-  \item Add Orientations tab: type in a list of sample orientation angles to add
-  to the experiment plan.
+  	\item Add Orientations tab: type in a list of sample orientation angles to
+  add to the experiment plan.
  
-  \item Experiment Plan tab: a list of the previously calculated sample orientations.
-Here you can manage the orientations you will use in the experiment: add,
+  	\item Experiment Plan tab: a list of the previously calculated sample
+orientations. Here you can manage the orientations you will use in the experiment: add,
 delete, or temporarily disable them to see the effect on coverage. Once
 complete, the plan can be sent to the SNS data acquisition computers in order to
 begin a run.
@@ -377,32 +378,64 @@ begin a run.
 \subsubsection{Reciprocal Space Coverage Visualization.}
 Figure \ref{fig:volume_view}a) shows a screenshot of the reciprocal space
 coverage 3D interface. The 3D view can represent q-space in two ways: volume coverage, or single-peak
-coverage.  
+coverage. The view shown can be rotated, translated or zoomed using the mouse or
+keyboard.
 
 The volume coverage shows a solid isosurface representing the volume measured at
 least once. Redundant regions can also be shown using semi-transparent
 isosurfaces; or the coverage can be inverted, showing non-measured volumes only;
 or sliced between user-selectable $q_{min}$ and $q_{max}$.        
 
-The reflections view (Figure \ref{fig:refl_view}a) displays each hkl as a
-small sphere; the color of which indicates the number of times the hkl is predicted to be measured
-in the current experiment plan.       
+The reflections view (Figure \ref{fig:refl_view}a) displays each $hkl$ as a
+small sphere; the color of which indicates the number of times the $hkl$ is
+predicted to be measured in the current experiment plan.        
 
-Both views can take into crystal symmetry in their display (Figures
-\ref{fig:volume_view}b and \ref{fig:refl_view}b), using the techniques described
-previously.
+Both views can take into crystal symmetry in their display using the techniques
+described previously. 
+The volume coverage (Figures \ref{fig:volume_view}b) fills in the sphere of
+coverage; 
+whereas the single reflection view (Figure \ref{fig:refl_view}b) leaves only
+the primary reflections (one eight of the total, in this example).
  
-Finally, both views display quick coverage statistics, showing the percentage of
-volume (or of the number of peaks) measured, as well as the proportion of
-redundancy (voxels or peaks measured 2 or more times).     
+Finally, both views display quick coverage statistics in the lower right
+corner, showing the percentage of volume (or of the number of peaks) measured,
+as well as the proportion of redundancy (voxels or peaks measured 2 or more
+times). 
+
+\subsubsection{Single Reflection View.}
+Figure \ref{fig:single_reflection} shows a screenshot of the GUI allowing one to
+observe in detail the predicted measurements of a particular peak, by clicking
+in the 3D view or by typing in the $hkl$ values. The position on the detector
+and wavelength of measurement are displayed. An additional window (not shown) allows the user to place the peak on a particular
+position on a detector by automatically finding the necessary sample orientation
+angles. This is used, for example, to center important peaks in the most
+sensitive part of a detector.
 
 \section{Sample Use Case}
 
 
+
+
 \section{Conclusions and Future Development}
 
+We have described CrystalPlan, a software program designed to quickly produce
+efficient experiment plans for wide bandwidth time-of-flight Laue
+diffractometers. This program will help maximize scientific productivity at SNS
+beamlines such as TOPAZ.
 
-Live data processing    …  interface with ISAW … InelasCasetic instruments ??
+One planned future development for CrystalPlan include extending the software
+to help predict coverage in inelastic neutron scattering experiments. Another
+desired feature is the introduction of feedback loops to help determine the
+right time to end data acquisition at a particular sample orientation.
+CrystalPlan would interface with data analysis software such as ISAW and use
+recently developped capabilities for real-time data analysis to monitor
+the  signal to noise ratio on particular peaks. When the signal becomes
+sufficient, the sample will automatically be moved to the next sample
+orientation, further minimizing data acquisition time. Combined with advanced
+sample changers coming on-line at TOPAZ, this will allow for extremely
+efficient, unattended data acquisition.
+
+
 
 
 
@@ -491,8 +524,8 @@ $q_{min}$ and $q_{max}$ limits, giving the volume in reciprocal space that is
 measured at a single sample oriention. }
 
 %\includegraphics[bb=0in 0in 8in 6in, scale=0.20]{ewald_fig.pdf}
-\includegraphics[width=3in]{ewald_fig.ps}  
-    
+\includegraphics[width=3.5in]{ewald_fig.ps}
+     
 \label{fig:ewald_fig} 
 \end{figure} 
  
@@ -521,6 +554,13 @@ b) with crystal symmetry}
 crystal symmetry; b) with crystal symmetry}
 %\includegraphics{fig1.ps}
 \label{fig:refl_view}
+\end{figure}
+
+\begin{figure}
+\caption{GUI showing details of the predicted measurement positions for a
+single $hkl$.}
+\includegraphics[width=2.5in]{single_reflection_2.eps}
+\label{fig:single_reflection}
 \end{figure}
 
 
