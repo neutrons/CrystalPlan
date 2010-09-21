@@ -6,7 +6,7 @@
 %------------------------------------------------------------------------------
 
 
-\documentclass{iucr}              % DO NOT DELETE THIS LINE
+\documentclass[final]{iucr}              % DO NOT DELETE THIS LINE
 
      %-------------------------------------------------------------------------
      % Information about the type of paper
@@ -47,7 +47,9 @@
      \journalaccepted{0 XXXXXXX 0000}
      \journalonline{0 XXXXXXX 0000}
   
-\usepackage[pdftex]{graphicx}
+\usepackage{graphicx}
+%\usepackage[pdftex]{graphicx}
+%\DeclareGraphicsExtensions{.pdf,.png,.jpg}
   
 
 \begin{document}                  % DO NOT DELETE THIS LINE
@@ -487,14 +489,19 @@ wedge, and projects onto each sphere of radius $1/\lambda$ an arc. The red wedge
 between the two $\lambda$ is built by projecting straight lines between the
 $q_{min}$ and $q_{max}$ limits, giving the volume in reciprocal space that is
 measured at a single sample oriention. }
-%\includegraphics[bb=0in 0in 2in 2in, width=2in]{ewald_fig.pdf} 
+
+%\includegraphics[bb=0in 0in 8in 6in, scale=0.20]{ewald_fig.pdf}
+\includegraphics[width=3in]{ewald_fig.ps}  
+    
 \label{fig:ewald_fig} 
-\end{figure}
+\end{figure} 
  
   
 \begin{figure}
-\caption{Screenshots of the main GUI}
-%\includegraphics{fig1.ps}
+\caption{Screenshot of the main GUI window. Six more interface windows (not
+shown) are presented to the user when he or she clicks on the tabs at the
+top of the main window.}
+\includegraphics{main_gui.eps}
 \label{fig:screenshots}
 \end{figure}
  

@@ -8,7 +8,8 @@
 from pylab import *
 
 clf()
-
+# Fill up the axes
+axes([0,0,1,1])
 theta = arange(0, 2*pi, 0.01)
 
 i1 = 100
@@ -81,4 +82,5 @@ yticks( [])
 
 savefig("ewald_fig.png", dpi=300)
 savefig("ewald_fig.pdf")
+savefig("ewald_fig.ps")
 
