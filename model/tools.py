@@ -21,12 +21,13 @@ from numpy_utils import column, rotation_matrix, vector_length, normalize_vector
 #================================================================================
 class PeakOffset:
     """Class holds info about the offset between predicted and real measurement position"""
-    def __init__(self, det_num, wavelength, pred_h, pred_v, real_h, real_v):
+    def __init__(self, det_num, wavelength_predicted, wavelength_measured, pred_h, pred_v, real_h, real_v):
         self.det_num = det_num
         self.predicted = np.array([pred_h, pred_v])
         self.measured = np.array([real_h, real_v])
         self.offset = self.measured-self.predicted
-        self.wavelength = wavelength
+        self.wavelength_predicted = wavelength_predicted
+        self.wavelength_measured = wavelength_measured
         
     def __str__(self):
         return "Det %d offset of %.3f, %.3f; wl=%.3f." % (self.det_num, self.offset[0], self.offset[1], self.wavelength)
@@ -61,7 +62,7 @@ def calculate_peak_offsets():
                             pred_angles = np.array(gon.get_phi_chi_omega(poscov.angles))
                             if np.allclose(pred_angles, np.array(rrm.angles), atol=1e-2):
                                 #Great, you found a match
-                                po = PeakOffset(rm.detector_num, rrm.wavelength, rm.horizontal, rm.vertical, rrm.horizontal, rrm.vertical)
+                                po = PeakOffset(rm.detector_num, rm.wavelength, rrm.wavelength, rm.horizontal, rm.vertical, rrm.horizontal, rrm.vertical)
                                 offsets.append(po)
                                 #print po
 
@@ -76,6 +77,23 @@ def plot_peak_offsets(offsets, filebase, doshow=False):
     #@type inst Instrument
     inst = instrument.inst
     numperpage = 6
+
+    # Initialize some stats
+    rms = 0
+    rms_wl = 0
+    #@type po PeakOffset
+    for po in offsets:
+        #Square of the error distance
+        error = (po.measured[0]- po.predicted[0])**2 + (po.measured[1]- po.predicted[1])**2
+        rms += error
+        error = (po.wavelength_measured - po.wavelength_predicted)**2
+        rms_wl += error
+    # Now do the root-mean
+    rms = (rms/ len(offsets))**0.5
+    rms_wl = (rms_wl/ len(offsets))**0.5
+    print "Peak offsets RMS error is ", rms
+    print "Peak offsets RMS wavelength error is ", rms_wl
+
     #@type det FlatDetector
     for (det_num, det) in enumerate(inst.detectors):
         if det_num % numperpage == 0:
@@ -93,7 +111,7 @@ def plot_peak_offsets(offsets, filebase, doshow=False):
                 y = [po.measured[1], po.predicted[1]]
                 plot(po.predicted[0], po.predicted[1], 'r.')
                 plot(x, y, '-k')
-                text(po.predicted[0], po.predicted[1], ' %.1f' % po.wavelength, size=5, verticalalignment='center')
+                text(po.predicted[0], po.predicted[1], ' %.1f' % po.wavelength_measured, size=5, verticalalignment='center')
         xlim( -det.width/2, det.width/2)
         ylim( -det.height/2, det.height/2)
         #axis('equal')
@@ -115,10 +133,10 @@ def save_offsets_to_csv(offsets, filename):
     f =  open(filename, 'w')
     w = csv.writer(f)
     #Write the header
-    w.writerow(["DetNum", "IsawX", "IsawY", "PredictedX", "PredictedY", "DiffX", "DiffY", "Wavelength_angstrom"])
+    w.writerow(["DetNum", "IsawX", "IsawY", "PredictedX", "PredictedY", "DiffX", "DiffY", "Measured Wavelength_angstrom", "Predicted WL ang"])
     #@type po PeakOffset
     for po in offsets:
-        w.writerow([po.det_num, po.measured[0], po.measured[1], po.predicted[0], po.predicted[1], po.offset[0], po.offset[1], po.wavelength])
+        w.writerow([po.det_num, po.measured[0], po.measured[1], po.predicted[0], po.predicted[1], po.offset[0], po.offset[1], po.wavelength_measured, po.wavelength_predicted])
     f.close()
         
 

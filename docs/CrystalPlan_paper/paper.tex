@@ -6,7 +6,7 @@
 %------------------------------------------------------------------------------
 
 
-\documentclass[final]{iucr}              % DO NOT DELETE THIS LINE
+\documentclass[draft]{iucr}              % DO NOT DELETE THIS LINE
 
      %-------------------------------------------------------------------------
      % Information about the type of paper
@@ -48,6 +48,8 @@
      \journalonline{0 XXXXXXX 0000}
   
 \usepackage{graphicx}
+\usepackage{gensymb}
+\usepackage[version=3]{mhchem} 
 %\usepackage[pdftex]{graphicx}
 %\DeclareGraphicsExtensions{.pdf,.png,.jpg}
   
@@ -211,7 +213,7 @@ corresponding to each sample orientation.
 
 For each sample orientation, a rotation matrix combining the sample's mounting
 orientation (the U matrix loaded from ISAW) and the goniometer rotation
-($\Phi$, $\Xi$, $\Omega$) is computed. The coverage in reciprocal space is
+($\Phi$, $\chi$, $\Omega$) is computed. The coverage in reciprocal space is
 computed in this way: for each pixel in the face of a detector, the direction of
 the scattered beam is known. Then, two incident beam vectors are considered,
 corresponding to the $\lambda_{min}$ and $\lambda_{max}$ wavelength limits
@@ -411,10 +413,39 @@ position on a detector by automatically finding the necessary sample orientation
 angles. This is used, for example, to center important peaks in the most
 sensitive part of a detector.
 
+
+%---------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------
+
 \section{Sample Use Case}
 
+As part of the TOPAZ beamline commissioning process, a Natrolite
+(\ce{Na2Al2Si3O10} $\cdot$ \ce{2H2O}) single crystal was measured on a fixed
+$45\degree\ \chi$ goniometer at room temperature and ambient atmosphere. An initial short run was processed using
+ISAW to determine the UB matrix and cell parameters of the crystal. 
+
+The resulting UB matrix was loaded into CrystalPlan, where the Automatic
+Coverage Optimizer was used to generate an experiment plan with 8 sample
+orientations that covered 95\% of the peaks, taking into account the crystal
+symmetry (orthorombic or mmm). The plan was left to run unattended overnight.    
+
+Peaks were integrated using ISAW, and the resulting .integrate file was loaded
+into CrystalPlan for comparison. The predicted and actual measurement
+positions on each detector face were compared for the 554 integrated peaks
+found. Very good agreement was found; the
+RMS difference between the predicted and actual measurement wavelength was only
+0.016 $\AA$, whereas the RMS of the detector position error was
+7.6 mm. Inspecting the offsets showed that the main contributor to this error was a
+slight misalignment of the goniometer, which CrystalPlan can help diagnose. 
+
+%NOTE: Check on this misalignment of goniometer business - is that really the
+% cause?
 
 
+%---------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------
 
 \section{Conclusions and Future Development}
 
@@ -495,33 +526,21 @@ DE-AC05-00OR22725 for the U.S. Department of Energy, Office of Science.
  % Simple tables should use the tabular environment according to this
  % model
 
-\begin{table}
-\caption{Caption to table}
-\begin{tabular}{llcr}      % Alignment for each cell: l=left, c=center, r=right
- HEADING    & FOR        & EACH       & COLUMN     \\
-\hline
- entry      & entry      & entry      & entry      \\
- entry      & entry      & entry      & entry      \\
- entry      & entry      & entry      & entry      \\
-\end{tabular}
-\end{table}
-
-
 
 
  % Postscript figures can be included with multiple figure blocks
 
 \begin{figure}
-\caption{Ewald sphere construction showing reciprocal-space detector coverage
+\caption{2D Ewald sphere construction showing reciprocal-space detector coverage
 for a wide-bandwidth Laue diffractometer. The smaller blue circle represents the
 $1/\lambda_{max}$ limit of measurement, with the larger green circle
 representing $1/\lambda_{min}$. The origin of reciprocal space (000) is common to both
-spheres, but the sample position in the construction (S1 or S2) depends on
-$\lambda$. The angular coverage of the detector is represented by the dashed
-wedge, and projects onto each sphere of radius $1/\lambda$ an arc. The red wedge
-between the two $\lambda$ is built by projecting straight lines between the
-$q_{min}$ and $q_{max}$ limits, giving the volume in reciprocal space that is
-measured at a single sample oriention. }
+spheres, but the ``virtual" sample position in the construction (S1 or S2)
+depends on $\lambda$. The angular coverage of the detector is represented by the dashed
+wedge, and projects an arc onto each sphere of radius $1/\lambda$. The
+red wedge between the two $\lambda$ is built by projecting straight lines between the
+$q_{min}$ and $q_{max}$ limits for each pixel on the detector face, giving the
+volume in reciprocal space that is measured at a single sample oriention. }
 
 %\includegraphics[bb=0in 0in 8in 6in, scale=0.20]{ewald_fig.pdf}
 \includegraphics[width=3.5in]{ewald_fig.ps}
