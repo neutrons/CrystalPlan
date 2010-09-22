@@ -6,7 +6,7 @@
 %------------------------------------------------------------------------------
 
 
-\documentclass[draft]{iucr}              % DO NOT DELETE THIS LINE
+\documentclass[final]{iucr}              % DO NOT DELETE THIS LINE
 
      %-------------------------------------------------------------------------
      % Information about the type of paper
@@ -48,10 +48,15 @@
      \journalonline{0 XXXXXXX 0000}
   
 \usepackage{graphicx}
-\usepackage{gensymb}
-\usepackage[version=3]{mhchem} 
+\usepackage{gensymb} %General symbols
+\usepackage[version=3]{mhchem} %For chemical formulae
+\usepackage{subfigure} 
+
 %\usepackage[pdftex]{graphicx}
 %\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+
+%quick angstrom define
+\newcommand{\ang}{$\mathrm{\AA} $}
   
 
 \begin{document}                  % DO NOT DELETE THIS LINE
@@ -152,14 +157,15 @@ less time.
 %---------------------------------------------------------------------------------------
 \section{Architecture}
 
-Crystal plan is designed with these capabilities:
+CrystalPlan is designed with these capabilities:
 
 \begin{itemize}
   \item Load an instrument geometry.
   \item Calculate the orientation of a crystal at different goniometer settings.
-  \item Calculate the coverage of these orientations in reciprocal space.
+  \item Calculate the coverage of these orientations in reciprocal space,
+  in volume and for single peaks.
   \item Take crystal symmetries into account.
-  \item Optimize the experiment plan.
+  \item Optimize the experiment plan automatically.
 \end{itemize}
 
 \subsection{Instrument Configuration}
@@ -197,9 +203,9 @@ in coverage calculations.
 
 The reciprocal space to be measured is divided into a cubic 3D matrix, the size
 of which is determined by the user, who specifies the minimum d-spacing
-($d_{min}$, in $\AA$) that he or she is interested in. The resolution of the 3D
-matrix is also specified (in $\AA^{-1}$), which determines the number of points to be
-modeled. Available machine memory limits the resolution that can be achieved in
+($d_{min}$, in \ang) that he or she is interested in. The resolution of the
+3D matrix is also specified (in \ang$^{-1}$), which determines the number of
+points to be modeled. Available machine memory limits the resolution that can be achieved in
 practice.
 
 Each point of the reciprocal space 3D matrix holds an integer representing the 
@@ -261,8 +267,8 @@ also be entered. This information is then used to calculate the increased
 measurement redundancy. A list of $n$ $3\times3$ multiplication matrices is
 generated based on the point group; any $hkl$ vector can be multiplied by
 these matrices to find the $n$ equivalent $hkl$ reflections; for example, for
-orthorombic (mmm) symmetry, $n=8$ and 8 multiplication matrices are generated, which multiply
-$hkl$ to give $\pm h$, $\pm k$, $\pm l$.              
+orthorombic (mmm) symmetry, $n=8$; therefore 8 multiplication matrices are
+generated that multiply $hkl$ to give $\pm h$, $\pm k$, $\pm l$.              
 
 For the single reflections, each $hkl$ is tracked separately, but a primary
 $hkl$ is found that points to a list of equivalent $hkl$'s. The GUI can then display
@@ -422,8 +428,9 @@ sensitive part of a detector.
 
 As part of the TOPAZ beamline commissioning process, a Natrolite
 (\ce{Na2Al2Si3O10} $\cdot$ \ce{2H2O}) single crystal was measured on a fixed
-$45\degree\ \chi$ goniometer at room temperature and ambient atmosphere. An initial short run was processed using
-ISAW to determine the UB matrix and cell parameters of the crystal. 
+$45\degree\ \chi$ goniometer at room temperature and ambient atmosphere. An
+initial short run (wavelength range from $\sim0.5$ \ang\ to $3.5$ \ang)
+was processed using ISAW to determine the UB matrix and cell parameters of the crystal.
 
 The resulting UB matrix was loaded into CrystalPlan, where the Automatic
 Coverage Optimizer was used to generate an experiment plan with 8 sample
@@ -435,7 +442,7 @@ into CrystalPlan for comparison. The predicted and actual measurement
 positions on each detector face were compared for the 554 integrated peaks
 found. Very good agreement was found; the
 RMS difference between the predicted and actual measurement wavelength was only
-0.016 $\AA$, whereas the RMS of the detector position error was
+0.016 \ang, whereas the RMS of the detector position error was
 7.6 mm. Inspecting the offsets showed that the main contributor to this error was a
 slight misalignment of the goniometer, which CrystalPlan can help diagnose. 
 
@@ -561,17 +568,29 @@ top of the main window.}
 
 
 \begin{figure}
-\caption{Volume coverage in reciprocal space view: a) without crystal symmetry;
-b) with crystal symmetry}
-%\includegraphics{fig1.ps}
+\caption{Sample screenshot showing the 3D view of the predicted coverage of
+reciprocal space volume for 3 sample orientations and 14 detectors in TOPAZ, from 0.9 \ang\ to 4.0\ang:
+a) without crystal symmetry, 17\% coverage; b) with crystal symmetry (mmm 8-fold
+symmetry), coverage increases to 65\%. }
+\includegraphics{volume_nosym.eps}
+a)
+\includegraphics{volume_sym.eps}
+b)
 \label{fig:volume_view}
 \end{figure}
 
 
 \begin{figure}
-\caption{Coverage of single-crystal reflections in reciprocal space: a) without
-crystal symmetry; b) with crystal symmetry}
-%\includegraphics{fig1.ps}
+\caption{Sample screenshot showing the 3D view of single-crystal reflection
+measurements. Each sphere represents an $hkl$ peak, color-coded to indicate the
+number of measurements (dark blue: 0, cyan: 1, green: 2, etc.). 
+a) without crystal symmetry, 2375 of 9481 reflections are measured, or 25\%.
+b) with crystal symmetry, 1276 of 1427 primary reflections are measured, or
+89\%, and redundancy is also increased. }
+\includegraphics{refl_nosym.eps}
+a)
+\includegraphics{refl_sym.eps}
+b)
 \label{fig:refl_view}
 \end{figure}
 
