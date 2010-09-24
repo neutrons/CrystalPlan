@@ -107,7 +107,9 @@ space in a single-crystal diffraction time-of-flight experiment. CrystalPlan can
 help a user build an experiment plan that will acquire the most data possible, 
 with sufficient coverage but limited redundancy, therefore increasing scientific 
 productivity. 
-An attractive GUI including a 3D viewer and an automated coverage optimizer 
+A user friendly GUI including a 3D viewer, an automated coverage optimizer,
+and an option to reorient the crystal for the measurement 
+of selected hkls on specific detector positions 
 are among its useful features. 
 A sample use case of the program with the TOPAZ beamline at SNS will be
 presented. 
@@ -122,26 +124,28 @@ presented.
 
 The TOPAZ beamline at the Spallation Neutron Source (SNS) at Oak Ridge National
 Lab (ORNL), currently finishing commissioning, is a neutron time-of-flight
-instrument designed to acquire single-crystal diffraction data of
-small-to-moderate sized unit cells with high throughput. The final design calls
-for an array of 48 detectors covering a large fraction of  $2\pi$ steradians;
-however as of this writing, only 14 of the 48 detectors are installed. In order
-to have sufficient data to perform a fit, an experimenter will  typically want
+Laue instrument with high wavelength resolution. It is designed to acquire
+single-crystal diffraction data of small-to-moderate sized unit cells with  high
+throughput. The final design calls for an array of 48 detectors covering a large
+fraction of $2\pi$ steradians. However as of this writing, only 14 of the 48
+detectors are installed, giving only a fraction of $2\pi$ steradian coverage. 
+In order to have sufficient data to perform a fit, an experimenter will typically want
 to measure $ > 85\%$ of the peaks within a certain range of d-spacings. 
-However, TOPAZ's complex geometry makes it very difficult to come up with an
-effective set of sample orientations that will cover all the required peaks
-without unnecessary redundancy. 
+However, wide wavelength band combined with TOPAZ's complex
+geometry makes it very difficult to come up with an effective set of sample
+orientations that will cover all the required peaks without unnecessary redundancy. 
 
 
 Existing diffraction experiment planning software programs (for example,
-CrysAlis Pro from Oxford Diffraction; DIFFRAC from Bruker AXS) were designed for
+CrysAlis Pro from Oxford Diffraction; COSMO from Bruker AXS) were designed for
 X-ray experiments where a single  incident wavelength and a large number of
 sample orientations or sweeps are used to collect data. 
-These programs cannot be used for TOPAZ, since as a time-of-flight instrument, 
-it is able to collect data from a wide bandwidth of incident neutrons. 
+These programs are not suitable for TOPAZ, since as a time-of-flight instrument, 
+it is able to collect data from a wide bandwidth of
+incident neutrons, using a stationary crystal. 
 Additionally, this means that relatively few sample orientations are needed in
 order to complete a measurement: whereas an X-ray measurement might have
-hundreds or thousands of individual frames, a TOPAZ run may have as few as 10.   
+hundreds or thousands of individual frames, a TOPAZ run may have as few as 10. 
 
 
 The goal of CrystalPlan was to make an easy-to-use software tool to aid users in
@@ -434,17 +438,20 @@ was processed using ISAW to determine the UB matrix and cell parameters of the c
 
 The resulting UB matrix was loaded into CrystalPlan, where the Automatic
 Coverage Optimizer was used to generate an experiment plan with 8 sample
-orientations that covered 95\% of the peaks, taking into account the crystal
-symmetry (orthorombic or mmm). The plan was left to run unattended overnight.    
+orientations (Figure \ref{fig:natrolite_gui}a) that covered 97\% of the peaks,
+taking into account the crystal symmetry (orthorombic or mmm) (Figure
+\ref{fig:natrolite_gui}b). The plan was left to run unattended overnight.
 
 Peaks were integrated using ISAW, and the resulting .integrate file was loaded
 into CrystalPlan for comparison. The predicted and actual measurement
 positions on each detector face were compared for the 554 integrated peaks
 found. Very good agreement was found; the
 RMS difference between the predicted and actual measurement wavelength was only
-0.016 \ang, whereas the RMS of the detector position error was
-7.6 mm. Inspecting the offsets showed that the main contributor to this error was a
-slight misalignment of the goniometer, which CrystalPlan can help diagnose. 
+0.016 \ang. Inspecting the detector position offsets showed that the main
+contributor to this error was a slight misalignment of the goniometer, which
+CrystalPlan can help diagnose. 
+
+%, whereas the RMS of the detector position error was 7.6 mm.
 
 %NOTE: Check on this misalignment of goniometer business - is that really the
 % cause?
@@ -599,6 +606,18 @@ b)
 single $hkl$.}
 \includegraphics[width=2.5in]{single_reflection_2.eps}
 \label{fig:single_reflection}
+\end{figure}
+
+
+\begin{figure}
+\caption{a) Screenshot of the Natrolite experiment plan generated using the
+Automatic coverage Optimizer. b) Screenshot of the resulting coverage
+statistics.}
+\includegraphics[width=3.5in]{Plan8List.eps}
+a)
+\includegraphics[width=3.5in]{NatCoverage.eps}
+b)
+\label{fig:natrolite_gui}
 \end{figure}
 
 
