@@ -909,7 +909,8 @@ class LimitedGoniometer(Goniometer):
 class TopazAmbientGoniometer(LimitedGoniometer):
     """Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."""
 
-    chi = Float(np.pi/4, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
+    #Chi is -135 degrees as of October 2010.
+    chi = Float(-0.75*np.pi, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
     
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
