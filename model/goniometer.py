@@ -933,7 +933,8 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         self.name = "TOPAZ Ambient Goniometer"
         self.description = "Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."
 
-        self.chi = np.pi/4 #+45 degrees
+        #Chi is -135 degrees as of October 2010.
+        self.chi = -0.75*np.pi 
 
         #Make the angle info object
         self.gonio_angles = [
