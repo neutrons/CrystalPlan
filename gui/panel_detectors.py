@@ -185,7 +185,7 @@ class DetectorListController:
         """Open a dialog to load detectors from a CSV/detcal file."""
         filename = model.config.cfg.default_detector_filename
         (path, ignored) = os.path.split( os.path.abspath(filename) )
-        filters = 'CSV or detcal files|*.csv;*.detcal|CSV files (*.csv)|*.csv|detcal files (*.detcal)|*.csv|All files (*.*)|*.*|'
+        filters = 'CSV or detcal files|*.csv;*.detcal|CSV files (*.csv)|*.csv|detcal files (*.detcal)|*.csv|All files (*)|*|'
         if gui_utils.is_mac():
             filters = '' #This is needed on Mac, for some reason the filters crashes otherwise.
         print 'opening dialog for path', path, filename
