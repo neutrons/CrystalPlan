@@ -949,7 +949,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         {
             // #Chi needs to be exactly pi/4
             // printf("chi is %f\\n", chi);
-            return absolute(chi - PI/4);
+            return absolute(chi - (-0.75*PI) );
         }
         """
 
