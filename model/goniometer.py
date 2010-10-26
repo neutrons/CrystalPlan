@@ -909,8 +909,8 @@ class LimitedGoniometer(Goniometer):
 class TopazAmbientGoniometer(LimitedGoniometer):
     """Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."""
 
-    #Chi is -135 degrees as of October 2010.
-    chi = Float(-0.75*np.pi, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
+    #Chi is +135 degrees as of October 2010.
+    chi = Float(+0.75*np.pi, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
     
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
@@ -931,10 +931,10 @@ class TopazAmbientGoniometer(LimitedGoniometer):
 
         #Some info about the goniometer
         self.name = "TOPAZ Ambient Goniometer"
-        self.description = "Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."
+        self.description = "Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +135 degrees."
 
-        #Chi is -135 degrees as of October 2010.
-        self.chi = -0.75*np.pi 
+        #Chi is +135 degrees as of October 2010.
+        self.chi = +0.75*np.pi 
 
         #Make the angle info object
         self.gonio_angles = [
@@ -947,9 +947,9 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         self.fitness_function_c_code = """
         FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
         {
-            // #Chi needs to be exactly pi/4
+            // #Chi needs to be exactly +135 degrees
             // printf("chi is %f\\n", chi);
-            return absolute(chi - (-0.75*PI) );
+            return absolute(chi - (+0.75*PI) );
         }
         """
 
