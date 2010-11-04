@@ -10,6 +10,7 @@ goniometer.
 #--- General Imports ---
 import wx
 import copy
+import dialog_goniometer_angles
 
 #--- GUI Imports ---
 import gui_utils
@@ -41,17 +42,15 @@ class PanelGoniometerController():
         #Select the 1st one by default
         self.selected = model.goniometer.goniometers[0]
 
-
-    #------------------------------------------------------------------
-    def update_current(self):
-        gon = copy.copy(model.instrument.inst.goniometer)
-        self.current_gon_copy = gon
+    def show_current_gon_copy(self):
+        """ Updates the GUI with whatever is in
+        self.current_gon_copy """
         if not self.panel.currentControl is None:
-            #Remove the existing one
+            # Remove the existing one
             self.panel.boxSizerAll.Remove(self.panel.currentControl)
             self.panel.currentControl.Destroy()
 
-        if gon is None:
+        if self.current_gon_copy is None:
             self.panel.staticTextCurrentGonio.SetLabel("None selected!")
         else:
             self.panel.staticTextCurrentGonio.SetLabel('') #(gon.name)
@@ -59,6 +58,13 @@ class PanelGoniometerController():
             self.panel.boxSizerAll.Insert(2, self.panel.currentControl, 0, flag=wx.EXPAND | wx.SHRINK)
 
         self.panel.boxSizerAll.Layout()
+
+    #------------------------------------------------------------------
+    def update_current(self):
+        # Start by making a full copy of the current goniometer
+        gon = copy.deepcopy(model.instrument.inst.goniometer)
+        self.current_gon_copy = gon
+        self.show_current_gon_copy()
 
     #------------------------------------------------------------------
     def update_selection(self):
@@ -98,14 +104,9 @@ class PanelGoniometerController():
     #------------------------------------------------------------------
     def edit_angles(self, event):
         """Open dialog to change the angles"""
-        view = View(
-            Label('In this advanced view, you can change the settings of each angle controlled by the goniometer.'),
-            Item('gonio_angles', editor=ListEditor(rows=3)),
-            Label('This "angle" controls the center of the wavelength bandwidth.'),
-            Item('wl_angles', editor=ListEditor(rows=3)),
-            buttons=[OKButton, CancelButton]
-            )
-        result = self.current_gon_copy.configure_traits(self.panel, view=view)
+        # The dialog will change the object in place, unless cancelled
+        dialog_goniometer_angles.show_dialog(self.panel, self.current_gon_copy)
+        # Refresh the view, in case something was modified
         self.panel.currentControl.Refresh()
 
 
@@ -200,7 +201,7 @@ class PanelGoniometer(wx.Panel):
         # generated method, don't edit
         wx.Panel.__init__(self, id=wxID_PANELGONIOMETER,
               name=u'PanelGoniometer', parent=prnt, pos=wx.Point(637, 307), style=wx.TAB_TRAVERSAL)
-        self.SetClientSize(wx.Size(426, 518))
+        self.SetClientSize(wx.Size(626, 618))
 
         self.staticTextTitle = wx.StaticText(id=wxID_PANELGONIOMETERSTATICTEXTTITLE,
               label=u'Available Goniometers:', name=u'staticTextTitle',

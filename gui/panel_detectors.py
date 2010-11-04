@@ -15,10 +15,10 @@ import numpy as np
 #--- GUI Imports ---
 import display_thread
 import gui_utils
+from enthought.traits.api import HasTraits, Range, Instance, on_trait_change
+from enthought.traits.ui.api import View, Item, HGroup
 try:
     from mlab_utils import *
-    from enthought.traits.api import HasTraits, Range, Instance, on_trait_change
-    from enthought.traits.ui.api import View, Item, HGroup
     from enthought.tvtk.pyface.scene_editor import SceneEditor
     from enthought.mayavi.tools.mlab_scene_model import MlabSceneModel
     from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
