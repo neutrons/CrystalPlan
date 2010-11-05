@@ -540,10 +540,12 @@ class LimitedGoniometer(Goniometer):
     def __init__(self, wavelength_control=False, *args, **kwargs):
         Goniometer.__init__(self, wavelength_control, *args, **kwargs)
 
+    #-------------------------------------------------------------------------
+    def get_fitness_function_c_code(self):
         #C code for the fitness of phi,chi, omega.
         # OVERWRITE THIS FOR SUBCLASSES!
         #   Don't change the # of parameters - the search code always gives you phi, chi, omega.
-        self.fitness_function_c_code = """
+        return """
         FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
         {
             return absolute(chi) + absolute(omega) + absolute(phi)/10000.0;
@@ -660,8 +662,9 @@ class LimitedGoniometer(Goniometer):
             else { return value; }
         }
         """
+        
         #Add the function for the fitness
-        support += self.fitness_function_c_code
+        support += self.get_fitness_function_c_code()
 
         code = """
         FLOAT rot_angle;
@@ -774,7 +777,7 @@ class LimitedGoniometer(Goniometer):
         """
         #Workaround for bug in weave, where it ignores any changes in the support code.
         code += "\n\n // " + self.__class__.__name__ + "\n"
-        code += "/* " + self.fitness_function_c_code + " */"
+        code += "/* " + self.get_fitness_function_c_code() + " */"
 
         #List of fitnesses
         fitnesses = []
@@ -924,6 +927,18 @@ class TopazAmbientGoniometer(LimitedGoniometer):
             (self.chi == other.chi)
 
     #-------------------------------------------------------------------------
+    def get_fitness_function_c_code(self):
+        """Generate a bit of C code that gives the fitness of phi,chi, omega"""
+        s = """
+        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+        {
+            // #Chi needs to be exactly this many radians
+            return absolute(chi - (%f) );
+        }
+        """ % (self.chi)
+        return s
+
+    #-------------------------------------------------------------------------
     def __init__(self, wavelength_control=False):
         """Constructor"""
         #Init the base class
@@ -941,17 +956,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
             AngleInfo('Phi'),
             AngleInfo('Omega'),
             ]
-
-        #C code for the fitness of phi,chi, omega
-        #TODO: Modify this when chi_fixed changes.
-        self.fitness_function_c_code = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            // #Chi needs to be exactly +135 degrees
-            // printf("chi is %f\\n", chi);
-            return absolute(chi - (+0.75*PI) );
-        }
-        """
+            
 
     #-------------------------------------------------------------------------------
     def get_phi_chi_omega(self, angles):
