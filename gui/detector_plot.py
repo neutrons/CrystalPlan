@@ -59,6 +59,7 @@ class DetectorPlot(wx.Window):
     def set_measurement(self, meas):
         """Set a measurement to be plotted"""
         self.meas = meas
+        #Extract the detector from the measurement object
         if (meas.detector_num >= 0) and (meas.detector_num < len(model.instrument.inst.detectors)):
             self.set_detector(model.instrument.inst.detectors[meas.detector_num])
         self.Refresh()
@@ -67,6 +68,12 @@ class DetectorPlot(wx.Window):
     def set_detector(self, detector):
         """Set the detector to be plotted."""
         self.detector = detector
+
+        if self.detector is None:
+            (self.det_width, self.det_height) = (150., 150.)
+        else:
+            (self.det_width, self.det_height) = (self.detector.width, self.detector.height)
+
         self.Refresh()
 
     #---------------------------------------------------------------------------
@@ -209,4 +216,8 @@ if __name__ == "__main__":
     import gui_utils
     (app, pnl) = gui_utils.test_my_gui(DetectorPlot)
     app.frame.SetClientSize(wx.Size(500, 700))
+    det = model.detectors.FlatDetector("Modified det")
+    det.width = 250
+    det.height = 125
+    pnl.set_detector(det)
     app.MainLoop()

@@ -844,7 +844,10 @@ class LimitedGoniometer(Goniometer):
         initial_R = numpy_utils.rotation_matrix_around_vector(rotation_axis, angle)
 
         result_vec = np.dot(initial_R, column(starting_vec)).flatten()
-        assert np.allclose( result_vec, ending_vec), "initial rotation matrix makes the correct rotation. Got %s, expected %s" % ( result_vec, ending_vec)
+        #Check that the matrices match, but not if all are NaN
+        #if not np.any(np.isnan(result_vec) and np.isnan(ending_vec)):
+        if not np.any(np.isnan(result_vec)):
+            assert np.allclose( result_vec, ending_vec), "initial rotation matrix makes the correct rotation. Got %s, expected %s" % ( result_vec, ending_vec)
 
 
         def optimize(start, stop, step):

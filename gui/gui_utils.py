@@ -325,7 +325,9 @@ def scale_to_fit(source, target):
         wx.Size() containing the scaled size
         ratio: what to multiply the source to get to the resized size
     """
-    ratio = max( [source.width / float(target.width), source.height / float(target.height)] )
+    ratio = max( [float(source.width) / float(target.width), float(source.height) / float(target.height)] )
+    # Avoid divide by zero
+    if (ratio == 0.0): ratio = 1.0
     return (wx.Size(source.width / ratio, source.height / ratio), 1/ratio)
 
 #---------------------------------------------------------------------------

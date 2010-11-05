@@ -45,8 +45,12 @@ class ReflectionPlacerHandler(Handler):
         #The parent class actually sets the value
         Handler.setattr(self, info, object, name, value)
         self.changed_point(object)
-        #Choosing another reflection, or a different detector
-        if name == "hkl" or name=="detector" or name=="brute_search":
+        #Choosing another reflection, or a different detector,
+        # or switching to arbitrary mode
+        if name in ["hkl", "detector", "brute_search", 
+                    "arbitrary_bool", "arbitrary_xyz", "arbitrary_width"]:
+            #Make sure the plot detector points to the right one
+            self.frame.detectorPlot.set_detector(self.frame.placer.get_detector())
             #Make the map recalculate
             self.frame.map_thread.reset()
 
@@ -59,6 +63,7 @@ class ReflectionPlacerHandler(Handler):
         meas = ReflectionMeasurement(None, None)
         meas.horizontal = xy[0]
         meas.vertical = xy[1]
+        meas.detector_num = -1 # Mark to say NO detector
         self.frame.detectorPlot.set_measurement(meas)
         #Update other GUI
         valid_angle = not np.any(np.isnan(object.angles_deg))
@@ -143,7 +148,9 @@ class PlacerMapThread(Thread):
                 try:
                     #Calculate more!
                     t1 = time.time()
-                    self.frame.placer.calculate_allowed_map(xpixels, ypixels, step, allowed, wavelength_map, calculated, block_filled, self.frame.placer.brute_search, callback=self.frame.calculation_callback)
+                    self.frame.placer.calculate_allowed_map(xpixels, ypixels, step,
+                        allowed, wavelength_map, calculated, block_filled,
+                        self.frame.placer.brute_search, callback=self.frame.calculation_callback)
                     #print "step ", step, "took ", time.time()-t1, " seconds."
                     if not self._want_abort:
                         #To avoid bug when closing
@@ -199,6 +206,10 @@ class ReflectionPlacer(HasTraits):
     wavelength = Float(0.0)
     wavelength_can_be_measured = Bool(True)
 
+    arbitrary_bool =  Bool(False, desc='Arbitrary direction instead of a detector?')
+    arbitrary_xyz =  Array( shape=(1,3), dtype=float, desc='XYZ coordinates (in mm) to use as the direction to use. +Y = up; +Z = beam direction.')
+    arbitrary_width =  Float(200, desc='When plotting the detector below, use this width and height in mm')
+
     starting_angles =  List( desc='Rotation matrix of the sample to be used as starting point.')
     brute_search = Bool(True)
     _want_abort = Bool(False)
@@ -226,6 +237,7 @@ class ReflectionPlacer(HasTraits):
                 poscov = display_thread.get_position_coverage_from_id(meas.poscov_id)
                 if not poscov is None:
                     self.starting_angles = list(poscov.angles)
+        self.arbitrary_xyz = np.array([500, 0.0, 0.0]).reshape(1,3)
 
 
     #------------------------------
@@ -243,10 +255,6 @@ class ReflectionPlacer(HasTraits):
 
         t_start = time.time()
 
-        det = self.get_detector()
-        if det is None:
-            return
-        
         #Set up the parameters
         ub_matrix = model.experiment.exp.crystal.ub_matrix
         hkl = self.hkl.reshape(3,1)
@@ -350,10 +358,42 @@ class ReflectionPlacer(HasTraits):
     #------------------------------
     def get_detector(self):
         """Return a Detector object from the selected detector."""
-        s = self.detector
-        for det in model.instrument.inst.detectors:
-            if s == det.name:
-                return det
+        if self.arbitrary_bool:
+            # Build up a fake detector using the arbitrary directions
+            #@type det FlatDetector
+            det = model.detectors.FlatDetector("ArbitraryDetector")
+            det.xpixels = 16
+            det.ypixels = 16
+            det.rotation = 0 #No rotation
+            
+            #The width and height
+            det.width = self.arbitrary_width
+            det.height = self.arbitrary_width
+            if det.width==0.0: det.width = 1.0
+            if det.height==0.0: det.height = 1.0
+            
+            # Get the XYZ coords of the center
+            (x,y,z) = self.arbitrary_xyz[0,:]
+            det.distance = np.sqrt( x*x + y*y + z*z )
+            if (det.distance == 0.0):
+                det.distance = 1.0
+                det.azimuth_center = np.pi/2
+                det.elevation_center = 0.0
+            else:
+                det.azimuth_center = np.arctan2(x, z)
+                det.elevation_center = np.arctan(y / np.sqrt(x**2 + z**2))
+                
+            det.calculate_pixel_angles()
+            
+            # Give it back!
+            return det
+
+        else:
+            # Get the name of the selected detector
+            s = self.detector
+            for det in model.instrument.inst.detectors:
+                if s == det.name:
+                    return det
         return None
 
     #------------------------------
@@ -436,7 +476,7 @@ class FrameReflectionPlacer(wx.Frame):
               parent=prnt, pos=wx.Point(702, 235), size=wx.Size(475, 600),
               style=wx.DEFAULT_FRAME_STYLE,
               title=u'Reflection Placer')
-        self.SetClientSize(wx.Size(500, 750))
+        self.SetClientSize(wx.Size(500, 850))
         self.Bind(wx.EVT_CLOSE, self.OnFormClose)
 
         self.staticTextHelp = wx.StaticText( parent=self, \
@@ -488,10 +528,18 @@ class FrameReflectionPlacer(wx.Frame):
 
         viewTop = View( \
             Item("hkl", label="H,K,L of the reflection:", format_str="%d"),
-            Item("detector", label="Detector name:", format_str="%d"),
+            Group(
+                Item("arbitrary_bool", label="Use an arbitrary direction instead of a detector?")),
+            Group(
+                Item("arbitrary_xyz", label="Arbitrary XYZ direction:", format_str="%.2f", visible_when='arbitrary_bool'),
+                Item("arbitrary_width", label="Arbitrary direction:\nWidth/height to plot:", format_str="%.2f", visible_when='arbitrary_bool')
+                ),
+            Item("detector", label="Detector name:", format_str="%d", visible_when='not arbitrary_bool'),
             Group(Item("xy", label="X,Y coordinates on the detector face:", format_str="%.2f")),
             Group(Label("... or use the mouse to set the position by clicking below ...")),
             )
+
+
             #Item("brute_search", label="Use brute-force search")
             
         viewBottom = View( \
@@ -586,5 +634,5 @@ if __name__ == "__main__":
     import gui_utils
     refl = Reflection( (1,1,-6), np.array([1,1,-6]) )
     (app, pnl) = gui_utils.test_my_gui(FrameReflectionPlacer, refl, None)
-    app.frame.SetClientSize(wx.Size(500, 700))
+    app.frame.SetClientSize(wx.Size(500, 850))
     app.MainLoop()
