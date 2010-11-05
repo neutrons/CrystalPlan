@@ -30,6 +30,7 @@ class Crystal(HasTraits):
     name = Str("name")
     description = Str("description")
 
+    # For manually specifying the lattice direction lengths
     lattice_lengths_arr = Array( shape=(1,3), dtype=np.float)
     lattice_angles_deg_arr = Array( shape=(1,3), dtype=np.float)
     #Can the lattice exist given these values?
@@ -57,6 +58,12 @@ class Crystal(HasTraits):
     recip_a = Array( shape=(3,), dtype=np.float)
     recip_b = Array( shape=(3,), dtype=np.float)
     recip_c = Array( shape=(3,), dtype=np.float)
+
+    # Real crystal lattice vectors, in XYZ coordinates.
+    a = Array( shape=(1,3), dtype=np.float)
+    b = Array( shape=(1,3), dtype=np.float)
+    c = Array( shape=(1,3), dtype=np.float)
+
     #Same info, as a column-wise a,b,c matrix
     reciprocal_lattice = Array( shape=(3,3), dtype=np.float)
 
@@ -130,6 +137,7 @@ class Crystal(HasTraits):
         the lattice volume."""
         #Check the lattice parameters.
         (a,b,c, V) = crystal_calc.make_lattice_vectors(self.lattice_lengths, self.lattice_angles)
+
         #Bad angles make a nan volume
         #   0 or negative volume also is bad
         return not ( np.isnan(V) or (V <= 1e-5) )
@@ -150,6 +158,9 @@ class Crystal(HasTraits):
         #Now the UB matrix
         self.ub_matrix = crystal_calc.make_UB_matrix(self.lattice_lengths, self.lattice_angles, phi, chi, omega)
         self.ub_matrix_is_from = "\nManually generated.\n"
+
+        # and re-calc the real-space a,b,c vectors
+        self.calculate_abc()
 
 
     #--------------------------------------------------------------------
@@ -214,6 +225,9 @@ class Crystal(HasTraits):
             angles_deg = np.rad2deg(angles)
             self.ub_matrix_is_from = "ISAW UB matrix file at\n " + filename + "\nmodified by phi, chi, omega of %.1f, %.1f, %.1f" % (angles_deg[0],angles_deg[1],angles_deg[2])
 
+            # and re-calc the real-space a,b,c vectors
+            self.calculate_abc()
+
 
     #--------------------------------------------------------------------
     def calculate_reciprocal(self):
@@ -223,6 +237,19 @@ class Crystal(HasTraits):
             crystal_calc.make_reciprocal_lattice(self.lattice_lengths, self.lattice_angles)
         #Also make the matrix
         self.reciprocal_lattice = numpy_utils.vectors_to_matrix(self.recip_a, self.recip_b, self.recip_c)
+
+    #--------------------------------------------------------------------
+    def calculate_abc(self):
+        """Calculate the abc vectors in real space."""
+        (a,b,c, V) = crystal_calc.make_lattice_vectors(self.lattice_lengths, self.lattice_angles)
+        #Now rotate all these vectors by the U matrix
+        self.a = np.dot(self.u_matrix, a).reshape(1,3)
+        self.b = np.dot(self.u_matrix, b).reshape(1,3)
+        self.c = np.dot(self.u_matrix, c).reshape(1,3)
+
+#        self.a = a.reshape(3,)
+#        self.b = b.reshape(3,)
+#        self.c = c.reshape(3,)
 
     #--------------------------------------------------------------------
     def get_u_matrix(self):

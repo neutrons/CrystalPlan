@@ -191,6 +191,7 @@ class PanelSample(wx.Panel):
     def __init__(self, parent):
         self._init_ctrls(parent)
 
+        vector_format = "%.3f"
         #Make a simple, mostly read-only view for the crystal
         self.crystal_view = View(
             Item("name", label="Crystal Name"),
@@ -199,9 +200,12 @@ class PanelSample(wx.Panel):
             Item("lattice_angles_deg_arr", label="Lattice angles (degrees)", format_str="%.3f", style='readonly'),
             Item("ub_matrix", label="Sample's UB Matrix", style='readonly', format_str="%9.5f"),
             Item("point_group_name", label="Point Group", style='readonly'),
-            Item("recip_a", label="a*", style='readonly'),
-            Item("recip_b", label="b*", style='readonly'),
-            Item("recip_c", label="c*", style='readonly'),
+#            Item("recip_a", label="a*", style='readonly'),
+#            Item("recip_b", label="b*", style='readonly'),
+#            Item("recip_c", label="c*", style='readonly'),
+            Item("a", label="a vector", format_str=vector_format, style='readonly'),
+            Item("b", label="b vector", format_str=vector_format, style='readonly'),
+            Item("c", label="c vector", format_str=vector_format, style='readonly'),
             resizable=True
             )
 
