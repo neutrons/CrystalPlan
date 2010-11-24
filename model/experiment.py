@@ -2089,6 +2089,84 @@ class Experiment:
                         
         return errors
 
+
+    #---------------------------------------------------------------------------------------------
+    def load_HFIR_peaks_file(self, filename, append=False):
+        """Loads a .int (made by HFIR software) into the program, adding on
+        to each reflection.
+
+        Parameters:
+            filename: path to file
+            append: add on to the measurements; otherwise, they get cleared
+        """
+        if not os.path.exists(filename):
+            raise IOError("The file %s does not exist!" % filename)
+
+        print "Loading HFIR .int file %s." % filename
+
+        errors = []
+        angles = [0,0,0]
+        poscov = None
+
+        #Clear them?
+        if not append:
+            self.clear_reflection_real_measurements()
+
+        f = open(filename,'r')
+        #First two lines are ignored
+        title = f.readline()
+        line2 = f.readline()
+
+        #3rd line is the wavelength
+        line = f.readline()
+        arr = line.split()
+        wavelength = float(arr[0])
+        print "Wavelength was %f Angstroms." % wavelength
+
+        count = 0
+
+        #@type line string
+        for line in f:
+            try:
+                arr = line.split()
+                (h,k,l) = [int(arr[i]) for i in xrange(0,3)]
+
+                #Was the peak indexed (hkl is not 0,0,0)?
+                if not ((h,k,l) == (0,0,0)):
+                    #@type ref Reflection
+                    ref = self.get_reflection(h, k, l)
+
+                    if ref is None:
+                        errors.append("Peak was not in the list: Det %d, hkl: %d, %d, %d\n" % (detnum, h, k, l))
+                    else:
+                        #Ok, let's record this info in the same Reflection.
+                        rm = ReflectionRealMeasurement()
+                        rm.angles = np.array([0,0,0])
+                        rm.detector_num = 0
+                        #@type det FlatDetector
+                        rm.horizontal = 0
+                        rm.vertical = 0
+
+                        rm.wavelength = wavelength
+                        rm.integrated = float(arr[3])
+                        rm.sigI = float(arr[4])
+                        rm.measurement_num = count
+                        count += 1
+
+                        #Add it
+                        ref.real_measurements.append(rm)
+                        
+            except IOError:
+                raise
+            except:
+                #Ignore errors and keep loading the file
+                pass
+
+        return errors
+
+
+
+
     #---------------------------------------------------------------------------------------------
     def clear_reflection_real_measurements(self):
         """Remove all entries of "real" measurements from the reflections."""
@@ -2608,13 +2686,25 @@ class TestExperiment(unittest.TestCase):
         assert rrm.detector_num == 1, "Detector 1"
         #print "# of errors:", len(errors)
 
+    def test_load_HFIR_peaks_file(self):
+        e = self.exp #@type e Experiment
+        e.crystal.lattice_lengths = (10, 10, 10)
+        e.crystal.lattice_angles_deg = (90.0, 90.0, 90.0)
+        e.crystal.make_ub_matrix()
+        e.crystal.calculate_reciprocal()
+        e.initialize_reflections()
+        errors = e.load_HFIR_peaks_file("../model/data/HFIR_oxalic.int", append=False)
+        #@type ref Reflection
+        ref = e.get_reflection(0, 1, 1)
+        assert len(ref.real_measurements)==1, "Found 1 real measurements for (0, 1, 1)"
+
 
 
 if __name__ == "__main__":
 #    unittest.main()
     
-    tst = TestExperiment('test_load_peaks')
+    tst = TestExperiment('test_load_HFIR_peaks_file')
     tst.setUp()
-    tst.test_load_peaks()
+    tst.test_load_HFIR_peaks_file()
 
    

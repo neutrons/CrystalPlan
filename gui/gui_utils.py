@@ -176,6 +176,31 @@ def load_integrate_file_dialog(parent):
     return filename
 
 
+last_hfir_int_path = ''
+def load_HFIR_int_file_dialog(parent):
+    """Opens a dialog asking the user where to load the int file."""
+    filters = 'HFIR .int files (*.int)|*.int|All files (*)|*|'
+    if is_mac(): filters = '' #Filters tend to crash on mac
+    global last_hfir_int_path
+    (path, filename) = os.path.split(last_hfir_int_path)
+    dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load a HFIR .int file', wildcard=filters, style=wx.OPEN )
+    if dialog.ShowModal() == wx.ID_OK:
+        filename = dialog.GetPath()
+        last_hfir_int_path = filename
+        dialog.Destroy()
+    else:
+        #'Nothing was selected.
+        dialog.Destroy()
+        return None
+    #Now, ask if the file peaks should be appended
+    res = wx.MessageDialog(parent, "Do you wish to REPLACE the peaks to the current list of measured peaks?\nClick NO to append to the list.", "Replace Measured Peaks List?", wx.YES_NO | wx.YES_DEFAULT).ShowModal()
+    do_append = (res == wx.ID_NO)
+    print "do_append", do_append
+    #Load it
+    model.experiment.exp.load_HFIR_peaks_file(filename, append=do_append)
+    #This hopefully redraws everything
+    display_thread.handle_change_of_qspace()
+    return filename
 
 
 # ===========================================================================================

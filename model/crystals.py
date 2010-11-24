@@ -206,7 +206,7 @@ class Crystal(HasTraits):
             #  x is the beam direction and z is vertically upward.(IPNS convention)
 
             #First we find the U matrix
-            original_U = self.calculate_u_matrix(ub_matrix)
+            original_U = self.calculate_u_matrix(ub_matrix, True)
 
             #Rotate U to account for goniometer angles.
             (phi, chi, omega) = angles
@@ -224,6 +224,50 @@ class Crystal(HasTraits):
             self.ub_matrix_last_filename = filename
             angles_deg = np.rad2deg(angles)
             self.ub_matrix_is_from = "ISAW UB matrix file at\n " + filename + "\nmodified by phi, chi, omega of %.1f, %.1f, %.1f" % (angles_deg[0],angles_deg[1],angles_deg[2])
+
+            # and re-calc the real-space a,b,c vectors
+            self.calculate_abc()
+
+
+
+    #--------------------------------------------------------------------
+    def read_HFIR_ubmatrix_file(self, filename, lattice_filename):
+        """Load a UB matrix text file produced by the HFIR HB3A beamline software
+        into this crystal.
+
+        Parameters:
+            filename: text file to load with the ub matrix
+            lattice_filename: text file to load with the lattice parameters
+        """
+
+        #Load the file
+        ub_matrix = ubmatrixreader.read_HFIR_ubmatrix_file(filename)
+        ret = ubmatrixreader.read_HFIR_lattice_parameters_file(lattice_filename)
+
+        if not ret is None:
+            (lattice_lengths, lattice_angles_deg) = ret
+
+            #Save here
+            self.lattice_lengths = lattice_lengths
+            self.lattice_angles_deg = lattice_angles_deg
+            #Make the B matrix etc.
+            self.calculate_reciprocal()
+
+            #print "self.reciprocal_lattice", self.reciprocal_lattice
+
+            # First we find the U matrix
+            original_U = self.calculate_u_matrix(ub_matrix, False)
+
+            # And we save it - no rotation required
+            self.u_matrix = original_U
+
+            #Re-create a UB matrix that uses the SNS convention now
+            new_ub_matrix = np.dot(self.u_matrix, self.get_B_matrix())
+            self.ub_matrix = new_ub_matrix
+
+            #For next time
+            self.ub_matrix_last_filename = filename
+            self.ub_matrix_is_from = "HFIR UB matrix file at\n " + filename 
 
             # and re-calc the real-space a,b,c vectors
             self.calculate_abc()
@@ -258,13 +302,16 @@ class Crystal(HasTraits):
     
 
     #--------------------------------------------------------------------
-    def calculate_u_matrix(self, ub_matrix):
+    def calculate_u_matrix(self, ub_matrix, convert_from_IPNS):
         """Calculate the sample's U-matrix: the matrix describing the sample mounting orientation.
         So U = UB * (B)^-1
 
         Parameters:
-            ub_matrix: ISAW-style UB matrix, after transposing and 2*pi.
-                Coordinates will be transformed from IPNS convention to SNS convention
+            ub_matrix: Either: an ISAW-style UB matrix, after transposing and 2*pi.
+                Or: a HFIR-style UB matrix, which does not need coordinate transform
+
+            convert_from_IPNS: bool, set to True if converting an ISAW
+                ub-matrix file. Coordinates will be transformed from IPNS convention to SNS convention
 
         """
         #The reciprocal_lattice lattice is the same as the B matrix
@@ -275,16 +322,19 @@ class Crystal(HasTraits):
             U = np.dot(ub_matrix, invB)
             #Test that U must be orthonormal.
             U2 = np.dot(U, U.transpose())
-            assert np.allclose(U2, np.eye(3), atol=1e-4), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
-            #Okay, now let's permute the rows for IPNS->SNS convention
-            U_out = 1. * U
-            U_out[2] = U[0] #x gets put in z
-            U_out[1] = U[2] #z gets put in y
-            U_out[0] = U[1] #y gets put in x
-            U = U_out
+            assert np.allclose(U2, np.eye(3), atol=1e-2), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
+
+            if (convert_from_IPNS):
+                #Okay, now let's permute the rows for IPNS->SNS convention
+                U_out = 1. * U
+                U_out[2] = U[0] #x gets put in z
+                U_out[1] = U[2] #z gets put in y
+                U_out[0] = U[1] #y gets put in x
+                U = U_out
+                
             #Do another test
             U2 = np.dot(U, U.transpose())
-            assert np.allclose(U2, np.eye(3), atol=1e-4), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
+            assert np.allclose(U2, np.eye(3), atol=1e-2), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
 
             return U
         except np.linalg.LinAlgError:
@@ -827,9 +877,21 @@ class TestCrystal(unittest.TestCase):
         self.check_point_group("m-3m", (1,2,3), [(1,2,3),(-1,-2,3),(-1,2,-3),(1,-2,-3),(3,1,2),(3,-1,-2),(-3,-1,2),(-3,1,-2),(2,3,1),(-2,3,-1),(2,-3,-1),(-2,-3,1),(2,1,-3),(-2,-1,-3),(2,-1,3),(-2,1,3),(1,3,-2),(-1,3,2),(-1,-3,-2),(1,-3,2),(3,2,-1),(3,-2,1),(-3,2,1),(-3,-2,-1),(-1,-2,-3),(1,2,-3),(1,-2,3),(-1,2,3),(-3,-1,-2),(-3,1,2),(3,1,-2),(3,-1,2),(-2,-3,-1),(2,-3,1),(-2,3,1),(2,3,-1),(-2,-1,3),(2,1,3),(-2,1,-3),(2,-1,-3),(-1,-3,2),(1,-3,-2),(1,3,2),(-1,3,-2),(-3,-2,1),(-3,2,-1),(3,-2,-1),(3,2,1)] )
 
 
+    def test_read_HFIR_ubmatrix_file(self):
+        #@type c Crystal
+        c = self.c
+        c.read_HFIR_ubmatrix_file("data/HFIR_UBmatrix.dat", "data/HFIR_lattice.dat")
+        UB = c.ub_matrix
+        print "UB matrix loaded (including 2pi) is:\n", UB
+
 #---------------------------------------------------------------------
 if __name__ == "__main__":
-    unittest.main()
+#    unittest.main()
+
+    tst = TestCrystal('test_read_HFIR_ubmatrix_file')
+    tst.setUp()
+    tst.test_read_HFIR_ubmatrix_file()
+
 
 
 

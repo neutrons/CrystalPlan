@@ -33,7 +33,7 @@ def read_ISAW_ubmatrix_file(filename, verbose):
     if not (os.path.exists(filename)):
         raise IOError, ("The file %s cannot be found" % filename)
         return None
-    
+
     # Read the file.
     #try:
     if True:
@@ -92,7 +92,7 @@ def read_ISAW_ubmatrix_file(filename, verbose):
 #        ub_out[:,0] = ub_matrix[:,1] #y gets put in x
 
         return (lattice_lengths, lattice_angles, ub_out)
-    
+
     #Error checking here
     #except:
         print "Error reading UB matrix file:", sys.exc_info()[0]
@@ -102,6 +102,89 @@ def read_ISAW_ubmatrix_file(filename, verbose):
 
     #There was an exception if we reached this point
     return None
+
+
+#-----------------------------------------------------------------
+def read_HFIR_ubmatrix_file(filename):
+    """Open and read a UB matrix file produced by software at HFIR beamline HB3A.
+
+    Parameters:
+        filename: string, path to the file to load
+        verbose: more output
+
+    Returns:
+        ub_matrix: the UB matrix read from the file
+    """
+
+    if not (os.path.exists(filename)):
+        raise IOError, ("The file %s cannot be found" % filename)
+        return None
+
+    f = open(filename)
+
+    #Read the transposed UB matrix. 3x3, first 3 lines
+    ub_matrix = np.zeros([0,3])
+
+    for i in range(0, 3):
+        s = f.readline()
+        temp = np.fromstring(s, float, 3, ' ')
+        ub_matrix = np.vstack((ub_matrix, temp))
+
+    #First, we multiply by the missing 2 * pi
+    ub_matrix =  2 * np.pi * ub_matrix
+
+    
+    f.close()
+
+    return ub_matrix
+
+
+
+#-----------------------------------------------------------------
+def read_HFIR_lattice_parameters_file(filename):
+    """Open and read a lattice parameters file produced by software at HFIR beamline HB3A.
+
+    Parameters:
+        filename: string, path to the file to load
+
+    Returns:
+        lattice_lengths: tuple of 3 lattice dimensions in angstroms.
+        lattice_angles: tuple of 3 lattice angles in degrees.
+    """
+    if not (os.path.exists(filename)):
+        raise IOError, ("The file %s cannot be found" % filename)
+        return None
+
+    f = open(filename)
+
+    #Fourth line: is the unit cell which describes the smallest repeatable unit that can build up
+    #the sample in three dimensions:  the first three numbers are a, b, c in Angstroms (10^-8cm)
+    # followed by the three angles (in degrees) followed by the volume in Angstroms cubed.
+    s = f.readline()
+    temp = np.fromstring(s, float, 7, ' ')
+
+    f.close()
+
+    #Unit cell sizes in angstroms
+    a = temp[0]
+    b = temp[1]
+    c = temp[2]
+    #Angles
+    alpha = temp[3]
+    beta = temp[4]
+    gamma = temp[5]
+
+    #Return params
+    lattice_lengths = (a,b,c)
+    lattice_angles = (alpha,beta,gamma)
+
+    # First, we multiply by the missing 2 * pi
+    #ub_matrix =  2 * np.pi * ub_matrix
+
+    return (lattice_lengths, lattice_angles)
+
+
+
 
 
 #============================ MAIN CODE ==========================

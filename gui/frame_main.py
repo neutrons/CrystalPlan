@@ -67,6 +67,18 @@ class FrameMain(wx.Frame):
         parent.AppendSeparator()
 
         id = wx.NewId()
+        parent.Append(id=id, text=u'Load a HFIR .int file...\tCtrl+I', kind=wx.ITEM_NORMAL,
+                    help='Load a peaks file from HFIR software to compare predicted and real peaks.')
+        self.Bind(wx.EVT_MENU, self.OnMenuLoadIntegrateHFIR, id=id)
+
+        id = wx.NewId()
+        parent.Append(id=id, text=u'Load a HFIR UB matrix and lattice parameters file...', kind=wx.ITEM_NORMAL,
+                    help='Load a UB matrix file made by HFIR software, and a corresponding lattice parameters file.')
+        self.Bind(wx.EVT_MENU, self.OnMenuLoadHFIRUB, id=id)
+
+        parent.AppendSeparator()
+
+        id = wx.NewId()
         parent.Append(id=id, text=u'Save sample orientations to CSV file...\tCtrl+D', kind=wx.ITEM_NORMAL,
                     help='Make a CSV file containing the list of motor positions.')
         self.Bind(wx.EVT_MENU, self.OnMenuSaveToCSV, id=id)
@@ -162,9 +174,62 @@ class FrameMain(wx.Frame):
         gui_utils.load_integrate_file_dialog(self)
         event.Skip()
 
+    def OnMenuLoadIntegrateHFIR(self, event):
+        gui_utils.load_HFIR_int_file_dialog(self)
+        event.Skip()
+
+
     def OnMenuLoadUB(self,event):
         self.load_ubmatrix_file_dialog(self)
         event.Skip()
+
+    def OnMenuLoadHFIRUB(self, event):
+        self.load_HFIR_ubmatrix_file_dialog(self)
+        event.Skip()
+
+
+    def load_HFIR_ubmatrix_file_dialog(self, parent):
+        """Opens a dialog asking the user where to load the ubmatrix file."""
+        filters = 'HFIR UB matrix file (*.dat)|*.dat|All files (*)|*|'
+        (path, filename) = os.path.split(self.last_ubmatrix_path)
+        dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load a HFIR UB Matrix file', wildcard=filters, style=wx.OPEN )
+        if dialog.ShowModal() == wx.ID_OK:
+            filename = dialog.GetPath()
+            self.last_ubmatrix_path = filename
+            dialog.Destroy()
+        else:
+            #'Nothing was selected.
+            dialog.Destroy()
+            return None
+
+        (path, load_filename) = os.path.split(self.last_lattice_path)
+        if self.last_lattice_path == "":
+            path = os.path.split(self.last_ubmatrix_path)[0]
+            load_filename = ''
+        filters = 'HFIR lattice parameters file (*.dat)|*.dat|All files (*)|*|'
+        dialog = wx.FileDialog ( parent, defaultFile=load_filename, defaultDir=path, message='Load a HFIR lattice parameters file', wildcard=filters, style=wx.OPEN )
+        if dialog.ShowModal() == wx.ID_OK:
+            lattice_filename = dialog.GetPath()
+            self.last_lattice_path = lattice_filename
+            dialog.Destroy()
+        else:
+            #'Nothing was selected.
+            dialog.Destroy()
+            return None
+
+        #The old U matrix, before messing with it.
+        old_U = model.experiment.exp.crystal.get_u_matrix()
+
+        print filename
+        print lattice_filename
+
+        #Load the file with no goniometer correction
+        model.experiment.exp.crystal.read_HFIR_ubmatrix_file(filename, lattice_filename)
+
+        #Now this handles updating all the gui etc.
+        self.tab_sample.OnReturningFromEditCrystal(old_U)
+
+        
 
     def load_ubmatrix_file_dialog(self, parent):
         """Opens a dialog asking the user where to load the ubmatrix file."""
@@ -182,7 +247,7 @@ class FrameMain(wx.Frame):
 
         #The old U matrix, before messing with it.
         old_U = model.experiment.exp.crystal.get_u_matrix()
-        
+
         #Load the file with no goniometer correction
         model.experiment.exp.crystal.read_ISAW_ubmatrix_file(filename, angles=[0,0,0])
         #TODO: Check if ISAW matrix file has line saying NOT GONIOMETER CORRECTED
@@ -352,6 +417,7 @@ class FrameMain(wx.Frame):
     #--------------------------------------------------------------------
     def __init__(self, parent):
         self.last_ubmatrix_path = ''
+        self.last_lattice_path = ''
 
         self._init_ctrls(parent)
         #Make the tabs for the notebook
