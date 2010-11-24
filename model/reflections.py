@@ -26,7 +26,7 @@ class Reflection():
             hkl: tuple of (h,k,l), the indices of the reflection in the reciprocal lattice system.
                 Normally will be integer, but float would work too.
             q_vector: vector containing the corresponding q-vector for this
-                reflection.
+                reflection. This q-vector is in the coordinates of the reciprocal lattice.
         """
         #h,k,l coordinates of the reflection
         (self.h, self.k, self.l) = hkl

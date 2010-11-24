@@ -144,8 +144,10 @@ class StartupParameters(HasTraits):
 
     #Create the view
     header_text = Group(Spring(label="Enter the parameters for Q-space simulation:", emphasized=True, show_label=True))
-    second_label = Group(Spring(label="Enter the wavelength limits (from the source and/or detectors):", emphasized=True, show_label=True))
-    third_label = Group(Spring(label="Note: wavelength and bandwidth can also be set, on option, as a goniometer motor setting. See the goniometer tab.\nThe settings below are ignored in that case!", emphasized=False, show_label=True))
+    second_label = Group(Spring(label="Enter the wavelength limits (from the source and/or detectors):",
+                        emphasized=True, show_label=True, visible_when='show_wavelength_options'))
+    third_label = Group(Spring(label="Note: wavelength and bandwidth can also be set, on option, as a goniometer motor setting. See the goniometer tab.\nThe settings below are ignored in that case!",
+                        emphasized=False, show_label=True, visible_when='show_wavelength_options'))
 
     view = View( header_text,
                  Item("d_min", label="d_min (angstroms)", format_str="%.3f", tooltip="Minimum d spacing to simulate."),
@@ -157,8 +159,8 @@ class StartupParameters(HasTraits):
                  Item("points",  label="Number of points in space:", style='readonly', format_func=gui_utils.print_large_number),
                  second_label,
                  third_label,
-                 Item("wl_min", label="Min. wavelength (angstroms)", format_str="%.3f", tooltip="Minimum wavelength that the source can provide, or that the detectors can measure."),
-                 Item("wl_max", label="Max. wavelength (angstroms)", format_str="%.3f", tooltip="Maximum wavelength that the source can provide, or that the detectors can measure."),
+                 Item("wl_min", label="Min. wavelength (angstroms)", format_str="%.3f", visible_when='show_wavelength_options', tooltip="Minimum wavelength that the source can provide, or that the detectors can measure."),
+                 Item("wl_max", label="Max. wavelength (angstroms)", format_str="%.3f", visible_when='show_wavelength_options', tooltip="Maximum wavelength that the source can provide, or that the detectors can measure."),
                  kind='panel',
             )
             
@@ -187,6 +189,11 @@ class StartupParameters(HasTraits):
 
     def __ne__(self,other):
         return not self.__eq__(other)
+
+    def __init__(self):
+        #self.fourcircle_mode = gui_utils.fourcircle_mode()
+        self.show_wavelength_options = True
+        
 
 # ===========================================================================================
 # ===========================================================================================

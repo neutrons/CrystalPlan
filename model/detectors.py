@@ -87,10 +87,10 @@ class FlatDetector(Detector):
         """Constructor for a FlatDetector object.
         """
         Detector.__init__(self, detector_name)
-        #Azimuth angle  (along the horizontal plane, relative to positive Z direction) of the center
+        #Azimuth angle  (along the horizontal plane, relative to positive Z direction) of the center. Radians
         self.azimuth_center = 0
 
-        #elevation angle of the center (above the XZ plane)
+        #elevation angle of the center (above the XZ plane). Radians
         self.elevation_center = 0
 
         #Distance from center (mm)

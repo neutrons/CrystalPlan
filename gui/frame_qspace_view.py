@@ -14,6 +14,7 @@ import panel_coverage_stats
 import panel_reflections_view_options
 import frame_reflection_info
 import config_gui
+import gui_utils
 import display_thread
 
 #--- Model Imports ---
@@ -932,8 +933,9 @@ class FrameQspaceView(wx.Frame):
 
         #Create the qspace options panel
         self.tabVolume = panel_qspace_options.PanelQspaceOptions(parent=self.notebookView)
-        #Add it to the notebook
-        self.notebookView.AddPage(self.tabVolume, 'Volume Coverage View', select=True)
+        if not gui_utils.fourcircle_mode():
+            #Add it to the notebook
+            self.notebookView.AddPage(self.tabVolume, 'Volume Coverage View', select=True)
 
         #Create the reflections view options panel
         self.tabReflections = panel_reflections_view_options.PanelReflectionsViewOptions(parent=self.notebookView)

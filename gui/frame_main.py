@@ -116,6 +116,10 @@ class FrameMain(wx.Frame):
         parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Compare measured to predicted peak positions...')
         self.Bind(wx.EVT_MENU, self.OnMenuComparePeaks, id=id)
 
+        id = wx.NewId()
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Find angles for all HKL.')
+        self.Bind(wx.EVT_MENU, self.OnMenuFourCircleAllHKL, id=id)
+
 
     def _init_menuHelp(self, parent):
         id = wx.NewId()
@@ -344,6 +348,11 @@ class FrameMain(wx.Frame):
         frm.Raise()
         event.Skip()
 
+    def OnMenuFourCircleAllHKL(self, event):
+        model.experiment.exp.fourcircle_measure_all_reflections()
+        self.RefreshAll()
+        event.Skip()
+
     def OnMenuComparePeaks(self, event):
         #First, do the calculation.
         offsets = model.tools.calculate_peak_offsets()
@@ -442,9 +451,11 @@ class FrameMain(wx.Frame):
         self.tab_sample = panel_sample.PanelSample(parent=self.notebook)
         self.tab_goniometer = panel_goniometer.PanelGoniometer(parent=self.notebook)
         self.tab_experiment = panel_experiment.PanelExperiment(parent=self.notebook)
-        self.tab_add = panel_add_positions.PanelAddPositions(parent=self.notebook)
-        self.tab_try = panel_try_position.PanelTryPosition(parent=self.notebook)
+        if not gui_utils.fourcircle_mode():
+            self.tab_add = panel_add_positions.PanelAddPositions(parent=self.notebook)
+            self.tab_try = panel_try_position.PanelTryPosition(parent=self.notebook)
         self.tab_detectors = panel_detectors.PanelDetectors(parent=self.notebook)
+
 
         def AddPage(tab, title, mac_title="", select=False):
             if (gui_utils.is_mac() or gui_utils.is_windows()) and not (mac_title==""):
@@ -455,8 +466,9 @@ class FrameMain(wx.Frame):
         AddPage(self.tab_detectors, 'Detectors')
         AddPage(self.tab_goniometer, 'Goniometer')
         AddPage(self.tab_sample, 'Sample')
-        AddPage(self.tab_try, 'Try an\nOrientation', 'Try Orientation')
-        AddPage(self.tab_add, 'Add\nOrientations', 'Add Orientations')
+        if not gui_utils.fourcircle_mode():
+            AddPage(self.tab_try, 'Try an\nOrientation', 'Try Orientation')
+            AddPage(self.tab_add, 'Add\nOrientations', 'Add Orientations')
         AddPage(self.tab_experiment, 'Experiment\nPlan', 'Experiment Plan' )
 
         self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.onNotebookPageChanging)

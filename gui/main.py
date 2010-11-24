@@ -124,11 +124,13 @@ class CrystalPlanApp(wx.App):
 
 
 #-------------------------------------------------------------------------
-def launch_gui(inelastic):
+def launch_gui(inelastic, hb3a):
     """Launch the CrystalPlan GUI.
 
     Parameters:
-        inelastic: boolean, to indicate whether the instrument is for inelastic scattering."""
+        inelastic: boolean, to indicate whether the instrument is for inelastic scattering.
+        hb3a: boolean, for the HB3A beamline
+        """
 
     import CrystalPlan_version
         
@@ -155,7 +157,12 @@ def launch_gui(inelastic):
     model.goniometer.initialize_goniometers()
 
     #Ok, create the instrument
-    if inelastic:
+    if hb3a:
+        print "Initializing HB3A scattering instrument."
+        model.instrument.inst = model.instrument.InstrumentFourCircle()
+        g = model.goniometer.HB3AGoniometer()
+        model.instrument.inst.set_goniometer(g)
+    elif inelastic:
         print "Initializing inelastic scattering instrument."
         model.instrument.inst = model.instrument.InstrumentInelastic(model.config.cfg.default_detector_filename)
         model.instrument.inst.set_goniometer(model.goniometer.Goniometer())
@@ -226,6 +233,9 @@ def handle_arguments_and_launch(InstalledVersion):
     parser.add_option("-i", "--inelastic", dest="inelastic",
                      action="store_true", default=False,
                      help="simulate an inelastic scattering instrument")
+    parser.add_option("-3", "--hb3a", dest="hb3a",
+                     action="store_true", default=False,
+                     help="simulate HFIR beamline HB3A")
     (options, args) = parser.parse_args()
 
     if options.test:
@@ -238,7 +248,7 @@ def handle_arguments_and_launch(InstalledVersion):
         os.system("python test_all.py")
     else:
         #Start the GUI
-        launch_gui(inelastic=options.inelastic)
+        launch_gui(inelastic=options.inelastic, hb3a=options.hb3a)
 
 
 

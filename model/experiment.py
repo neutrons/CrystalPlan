@@ -1176,6 +1176,147 @@ class Experiment:
         self.reflections_times_real_measured = rtm
         self.reflections_times_real_measured_with_equivalents = rtme
 
+    #========================================================================================================
+    #======================================= FOUR-CIRCLE FUNCTIONS =====================================
+    #========================================================================================================
+    def get_angles_to_measure_hkl(self, h, k, l, wl_tolerance):
+        """ Find the goniometer angles that will allow you to measure
+        the given h,k,l. Only for Four-Circle instruments.
+
+        Parameters:
+            h,k,l: HKL of the reflection of interest
+            wl_tolerance: error tolerance on the detection
+                wavelength, in angstroms.
+
+        Returns:
+            angles: list of the goniometer angles that measure that HKL,
+                    or None if no valid angles could be found.
+
+        """
+
+        #This UB matrix comes from the crystal data
+        ub_matrix = self.crystal.ub_matrix
+
+        #type inst InstrumentFourCircle
+        inst = self.inst
+
+        #@type g HB3AGoniometer
+        g = inst.goniometer
+
+        # These are the limits of detector angles
+        det_angle_limits = g.gonio_angles[3].random_range;
+
+        # hkl as a vector
+        hkl = np.array([h, k, l])
+
+        # Wavelength
+        wl = self.inst.wl_input
+
+        #There is a limited range of accessible detector angles = a limited
+        # range of beam_wanted values. We need to find the one, if any
+        # that measures as close as possible to the input wavelength
+
+
+
+        def _error_in_wavelength(detector_angle, return_rot):
+            """ Compute the wavelength error of finding the desired HKL
+            with the detector at the given detector_angle.
+            A low error means the wavelength of measurement is close to the
+            input wavelength
+
+            Parameters:
+                detector_angle: in radians, your single-pixel detector rotation angle.
+                return_rot: True if you want to return rot (the rotation matrix) in addition to error
+            """
+            # First, calculate the normal beam direction for this detector angle
+            #  Detector is in the horizontal plane
+            beam_wanted = np.array([sin(-detector_angle[0]), 0.0, cos(detector_angle[0])])
+            # Use the utility function to get the rotation matrix and wavelength
+            (rot, wavelength) = crystal_calc.get_sample_rotation_matrix_to_get_beam(beam_wanted, hkl, ub_matrix, starting_rot_matrix=None)
+            # Error in wavelength
+            error = np.abs(wavelength - wl)
+
+            # increase error if you are off the range of the goniometer.
+            diff_min = detector_angle - det_angle_limits[0]
+            if diff_min < 0: error += np.abs(diff_min * 10)
+            diff_max = detector_angle - det_angle_limits[1]
+            if diff_max > 0: error += diff_max * 10
+
+            #print "For angle", detector_angle, " i find it at WL ", wavelength, " giving an error of ", error
+
+            if return_rot:
+                return (rot, error)
+            else:
+                return error
+
+        #args = (initial_R, ending_vec, starting_vec)
+        args = (False,)
+
+        # Pick the middle of the detector range as a starting angle
+        best_detector_angle = (det_angle_limits[0] + det_angle_limits[1])/2
+
+        x0 = np.array([ best_detector_angle ])
+        res = scipy.optimize.fmin(_error_in_wavelength, x0, args, xtol=1e-3, ftol=1e-3, disp=0, maxiter=150)
+        best_detector_angle = res.reshape( (1) )[0] #avoid error with 0-dimension array
+        #print "best_detector_angle", best_detector_angle
+
+        # Call it again to get the rotation matrix
+        (rot, error) = _error_in_wavelength( [best_detector_angle], True)
+        if (error > wl_tolerance):
+            return None
+        (phi,chi,omega) = numpy_utils.angles_from_rotation_matrix(rot)
+
+        # The starting vector = an the q-vector of the unrotated hkl
+        starting_vec = np.dot(ub_matrix, hkl)
+        # But we want it to be rotated by this much, so it ends up pointing there vvv
+        ending_vec = np.dot(rot, starting_vec)
+        #print starting_vec, "->", ending_vec
+
+        # Now we let the LimitedGoniometer class find possible phi chi omega
+        #print "Goniometer angles were ", (phi,chi,omega)
+        (phi,chi,omega) = g.calculate_angles_to_rotate_vector(starting_vec, ending_vec, starting_angles=None, search_method=0)
+
+        # These are the 4 goniometer angles
+        angles = [phi,chi,omega, best_detector_angle]
+        print "Goniometer angles are  ", angles
+        return angles
+
+
+    #-------------------------------------------------------------------------------
+    def fourcircle_measure_all_reflections(self):
+        """ Will go through all the initialized reflections and find the goniometer angles,
+        if any, that can measure them. The corresponding orientation for each
+        hkl will be added to the experiment plan."""
+
+        u_matrix = self.crystal.get_u_matrix()
+
+        for ref in self.reflections:
+            print "Looking for ", ref.h, ref.k, ref.l
+            #@type ref Reflection
+            angles = self.get_angles_to_measure_hkl(ref.h, ref.k, ref.l, 0.01)
+            if not (angles is None):
+                #Create a PositionCoverage object that holds both the position and the coverage
+                pos = instrument.PositionCoverage(angles, np.array([]), sample_U_matrix=u_matrix)
+                pos.comment = "HKL %d,%d,%d" %(ref.h, ref.k, ref.l)
+                #Add it to the list.
+                self.inst.positions.append(pos)
+
+                #Add it to the measurement in ref
+                poscov_id = len(self.inst.positions)-1
+                ref.measurements = (poscov_id, 0, 0, 0, self.inst.wl_input, 1.0)
+
+        #We make the array of how many times measured, for all the positions
+        self.get_reflections_times_measured(None)
+
+        #We make the array of how many times REALLY measured, for all the positions
+        self.get_reflections_times_real_measured(None)
+
+        #Continue on with masking
+        self.calculate_reflections_mask()
+
+        #And get some statistics
+        self.calculate_reflection_coverage_stats()
+
 
     #========================================================================================================
     #======================================= EXPERIMENT PARAMETERS =====================================
@@ -1373,6 +1514,12 @@ class Experiment:
                 #Use the set parameter
                 print "Doing energy slice of", slice.slice_min, " to ", slice.slice_max
                 self.qspace = self.inst.total_coverage(detectors, positions_used, slice_min=slice.slice_min, slice_max=slice.slice_max)
+        elif isinstance(self.inst, instrument.InstrumentFourCircle):
+
+            # Don't calculate 3D coverage for four-circles
+            self.qspace = np.array([])
+            return
+
         else:
             #---- Elastic calculation ----
             self.qspace = self.inst.total_coverage(detectors, positions_used)
@@ -2283,10 +2430,7 @@ import copy
 
 #==================================================================
 class TestExperiment(unittest.TestCase):
-    """Unit test for the Crystal class."""
 
-
-        
     def setUp(self):
         instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_all.csv")
         instrument.inst.set_goniometer(goniometer.Goniometer() )
@@ -2698,13 +2842,34 @@ class TestExperiment(unittest.TestCase):
         ref = e.get_reflection(0, 1, 1)
         assert len(ref.real_measurements)==1, "Found 1 real measurements for (0, 1, 1)"
 
+#==================================================================
+class TestExperimentFourCircle(unittest.TestCase):
+
+    def setUp(self):
+        instrument.inst = instrument.InstrumentFourCircle()
+        instrument.inst.set_goniometer(goniometer.HB3AGoniometer() )
+        self.exp = Experiment(instrument.inst)
+        e = self.exp
+        e.inst.d_min = 0.5
+        e.crystal.lattice_lengths = (6.06, 3.55, 11.926)
+        e.crystal.lattice_angles_deg = (90.0, 106.63, 90.0)
+        #UB and reciprocal
+        e.crystal.make_ub_matrix()
+        e.crystal.calculate_reciprocal()
+        e.initialize_reflections()
+
+    def test_get_angles_to_measure_hkl(self):
+        e = self.exp #@type e Experiment
+        print e.get_angles_to_measure_hkl(1,2,3, 0.01)
+        e.fourcircle_measure_all_reflections()
+
 
 
 if __name__ == "__main__":
 #    unittest.main()
     
-    tst = TestExperiment('test_load_HFIR_peaks_file')
+    tst = TestExperimentFourCircle('test_get_angles_to_measure_hkl')
     tst.setUp()
-    tst.test_load_HFIR_peaks_file()
+    tst.test_get_angles_to_measure_hkl()
 
    

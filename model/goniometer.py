@@ -111,7 +111,7 @@ class AngleInfo(HasTraits):
 
 
     def __init__(self, name, type="angle", units="rad", friendly_units="deg", conversion=np.deg2rad(1),
-                    friendly_range=[-180, 180], random_range=[-np.pi, np.pi],
+                    friendly_range=[-180, 180], random_range=None,
                     das_units="deg", das_conversion=np.deg2rad(1)):
         """Constructor.
 
@@ -124,6 +124,7 @@ class AngleInfo(HasTraits):
             friendly_range: Range to use, in friendly units; for sliders and such.
             random_range: Randomization range: when generating an angle at random (in a genetic algorithm, for example,
                  use this range to initialize population.  In internal units.
+                 Optional. Will be the same as friendly_range, but converted to "units".
             das_conversion: Units required by the DAS group to be used in the output CSV file
             das_units: Conversion factor from internal units to DAS units (multiply the internal by THIS to get DAS units)
         """
@@ -134,7 +135,10 @@ class AngleInfo(HasTraits):
         if conversion != 0:
             self.conversion = conversion
         self.friendly_range = friendly_range
-        self.random_range = random_range
+        if random_range is None:
+            self.random_range = list(np.array(friendly_range) * self.conversion)
+        else:
+            self.random_range = random_range
         self.das_conversion = das_conversion
         self.das_units = das_units
 
@@ -545,6 +549,7 @@ class LimitedGoniometer(Goniometer):
         #C code for the fitness of phi,chi, omega.
         # OVERWRITE THIS FOR SUBCLASSES!
         #   Don't change the # of parameters - the search code always gives you phi, chi, omega.
+        # This sample fitness value makes phi less important (since it normally has full freedom)
         return """
         FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
         {
@@ -1745,6 +1750,47 @@ class TopazInHouseGoniometer(LimitedGoniometer):
 
 
 
+#===============================================================================================
+#===============================================================================================
+#===============================================================================================
+class HB3AGoniometer(LimitedGoniometer):
+    """Goniometer on the HFIR HB3A four-circle diffractometer.
+    """
+
+    #-------------------------------------------------------------------------
+    def __init__(self, *args, **kwargs):
+        """Constructor"""
+        #Init the base class
+        LimitedGoniometer.__init__(self, wavelength_control=False)
+
+        #Some info about the goniometer
+        self.name = "HB3A Goniometer"
+        self.description = "Goniometer for HFIR HB3A. Four degrees of freedom: phi, chi, omega, and detector."
+
+        #Chi is +135 degrees as of October 2010.
+        self.chi = +0.75*np.pi
+
+        #Make the angle info object
+        self.gonio_angles = [
+            AngleInfo('Phi', friendly_range=[-180, 180]),
+            AngleInfo('Chi', friendly_range=[-90, 90]),
+            AngleInfo('Omega', friendly_range=[0, 50]),
+            AngleInfo('Detector', friendly_range=[-1, 95]),
+            ]
+
+
+    #-------------------------------------------------------------------------
+    def get_fitness_function_c_code(self):
+        # C code for the fitness of phi,chi, omega.
+        # We want omega to be close to its middle range of 25 degrees.
+        # Phi is free
+        return """
+        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+        {
+            return absolute(chi) + absolute(omega - 3.14159*25.0/180.0) + absolute(phi)/10000.0;
+        }
+        """
+
 
 #================================================================================================
 #================================================================================================
@@ -1885,6 +1931,10 @@ class TestGoniometers(unittest.TestCase):
         g = TopazInHouseGoniometer()
         assert g.are_angles_allowed([0,0,0])
         assert not g.are_angles_allowed([0,1.0,0])
+
+    def test_hb3a(self):
+        g = HB3AGoniometer()
+        assert g.are_angles_allowed([0,0,0,0])
 
 #===============================================================================================
 if __name__ == "__main__":

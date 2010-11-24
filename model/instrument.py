@@ -1596,6 +1596,60 @@ class InstrumentInelastic(Instrument):
 
 
 
+
+
+#========================================================================================================
+#========================================================================================================
+#========================================================================================================
+class InstrumentFourCircle(Instrument):
+    """ Class for a four-circle diffractometer (also could be applied to
+    triple-axis.
+    Features:
+        - Fixed incoming wavelength
+            - Possible contamination wavelengths
+        - Movable detector (typically single pixel)
+    """
+
+    def __init__(self):
+        """Constructor"""
+
+        #Init the base instrument with no file
+        Instrument.__init__(self, None, dict())
+        
+        # Input wavelength in angstroms
+        self.wl_input = 1.01
+
+        self.wl_min = 0.95
+        self.wl_max = 1.05
+        
+        # Add the single pixel detector
+        #Dimensions in mm
+        #@type det FlatDetector
+        det = FlatDetector("single-pixel")
+        det.distance = 300
+        det.elevation_center = 0
+        det.azimuth_center = np.pi/4
+        det.rotation = 0
+        det.width = 10
+        det.height = 10
+        det.xpixels = 10
+        det.ypixels = 10
+        #Calculate the pixel angles
+        det.calculate_pixel_angles()
+        self.detectors.append(det)
+
+    def total_coverage(self, *args, **kwargs):
+        print "total_coverage not implemented for the Four-Circle instrument"
+
+#    def simulate_position(self, *args, **kwargs):
+#        print "simulate_position not implemented for the Four-Circle instrument"
+
+    def calculate_coverage(self, *args, **kwargs):
+        print "calculate_coverage not implemented for the Four-Circle instrument"
+        return np.array([])
+
+
+
              
     
 #==============================================================================
@@ -1834,15 +1888,34 @@ class TestInstrumentWithDetectors(unittest.TestCase):
 
 
 
+#==================================================================
+class TestFourCircleInstrument(unittest.TestCase):
+    """Unit test for the InstrumentInelastic class."""
+    def setUp(self):
+        config.cfg.force_pure_python = False
+        self.tst_inst = InstrumentFourCircle()
+        #@type ti InstrumentFourCircle
+        ti = self.tst_inst
+        ti.set_goniometer(goniometer.HB3AGoniometer())
+        ti.d_min = 1.0
+        ti.q_resolution = 0.5
+        ti.make_qspace()
+
+    def test_creation(self):
+        #@type ti InstrumenFourCircle
+        ti = self.tst_inst
+        assert len(ti.detectors) == 1
+
+
 #---------------------------------------------------------------------
 if __name__ == "__main__":
-#    #Test just the inelastic one
-#    suite = unittest.makeSuite(TestInelasticInstrument)
-#    unittest.TextTestRunner().run(suite)
-#
-    tst = TestInstrumentWithDetectors('test_load_detcal')
-    tst.setUp()
-    tst.test_load_detcal()
+    #Test just the inelastic one
+    suite = unittest.makeSuite(TestFourCircleInstrument)
+    unittest.TextTestRunner().run(suite)
+
+#    tst = TestInstrumentWithDetectors('test_load_detcal')
+#    tst.setUp()
+#    tst.test_load_detcal()
 
 #    unittest.main()
 
