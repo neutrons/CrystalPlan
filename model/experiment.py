@@ -1191,6 +1191,7 @@ class Experiment:
         Returns:
             angles: list of the goniometer angles that measure that HKL,
                     or None if no valid angles could be found.
+            wavelength: actual measurement wavelength
 
         """
 
@@ -1226,7 +1227,9 @@ class Experiment:
 
             Parameters:
                 detector_angle: in radians, your single-pixel detector rotation angle.
-                return_rot: True if you want to return rot (the rotation matrix) in addition to error
+                return_rot: True if you want to return rot (the rotation matrix)
+                            and wavelength, in addition to error.
+                            Returns: rot, wavelength, error
             """
             # First, calculate the normal beam direction for this detector angle
             #  Detector is in the horizontal plane
@@ -1245,7 +1248,7 @@ class Experiment:
             #print "For angle", detector_angle, " i find it at WL ", wavelength, " giving an error of ", error
 
             if return_rot:
-                return (rot, error)
+                return (rot, wavelength, error)
             else:
                 return error
 
@@ -1261,9 +1264,9 @@ class Experiment:
         #print "best_detector_angle", best_detector_angle
 
         # Call it again to get the rotation matrix
-        (rot, error) = _error_in_wavelength( [best_detector_angle], True)
+        (rot, best_wavelength, error) = _error_in_wavelength( [best_detector_angle], True)
         if (error > wl_tolerance):
-            return None
+            return (None, None)
         (phi,chi,omega) = numpy_utils.angles_from_rotation_matrix(rot)
 
         # The starting vector = an the q-vector of the unrotated hkl
@@ -1274,26 +1277,47 @@ class Experiment:
 
         # Now we let the LimitedGoniometer class find possible phi chi omega
         #print "Goniometer angles were ", (phi,chi,omega)
-        (phi,chi,omega) = g.calculate_angles_to_rotate_vector(starting_vec, ending_vec, starting_angles=None, search_method=0)
+        ret = g.calculate_angles_to_rotate_vector(starting_vec, ending_vec, starting_angles=None, search_method=0)
+        if ret is None:
+            return None, None
+        else:
+            (phi,chi,omega) = ret
 
         # These are the 4 goniometer angles
         angles = [phi,chi,omega, best_detector_angle]
-        print "Goniometer angles are  ", angles
-        return angles
+        print "Goniometer angles are  ", angles, "with wavelength", best_wavelength
+        return (angles, best_wavelength)
 
 
     #-------------------------------------------------------------------------------
-    def fourcircle_measure_all_reflections(self):
+    def fourcircle_measure_all_reflections(self, progress_dialog=None):
         """ Will go through all the initialized reflections and find the goniometer angles,
         if any, that can measure them. The corresponding orientation for each
-        hkl will be added to the experiment plan."""
+        hkl will be added to the experiment plan.
+
+        Parameters:
+            progress_dialog: handle to the wx.ProgressDialog object to report
+                progress.
+        """
+
+        # Clear the list of positions
+        self.inst.positions = []
 
         u_matrix = self.crystal.get_u_matrix()
-
+        count = 0
         for ref in self.reflections:
-            print "Looking for ", ref.h, ref.k, ref.l
+            # Report progress
+            if progress_dialog is None:
+                print "Looking for HKL %d %d %d" % (ref.h, ref.k, ref.l)
+            else:
+                count += 1
+                (keep_going, skip) = progress_dialog.Update(count, "Looking for HKL %d %d %d" % (ref.h, ref.k, ref.l))
+                # User can abort
+                if not keep_going:
+                    break
+
             #@type ref Reflection
-            angles = self.get_angles_to_measure_hkl(ref.h, ref.k, ref.l, 0.01)
+            angles, wavelength = self.get_angles_to_measure_hkl(ref.h, ref.k, ref.l, 0.01)
             if not (angles is None):
                 #Create a PositionCoverage object that holds both the position and the coverage
                 pos = instrument.PositionCoverage(angles, np.array([]), sample_U_matrix=u_matrix)
@@ -1303,7 +1327,8 @@ class Experiment:
 
                 #Add it to the measurement in ref
                 poscov_id = len(self.inst.positions)-1
-                ref.measurements = (poscov_id, 0, 0, 0, self.inst.wl_input, 1.0)
+                # Only a single measurement in the list.
+                ref.measurements = [ (id(pos), 0, 0, 0, wavelength, 1.0) ]
 
         #We make the array of how many times measured, for all the positions
         self.get_reflections_times_measured(None)

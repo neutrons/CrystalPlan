@@ -54,27 +54,31 @@ class FrameMain(wx.Frame):
 
         parent.AppendSeparator()
 
-        id = wx.NewId()
-        parent.Append(id=id, text=u'Load an ISAW .integrate or .peaks file...\tCtrl+I', kind=wx.ITEM_NORMAL,
-                    help='Load a peaks file from ISAW to compare predicted and real peaks.')
-        self.Bind(wx.EVT_MENU, self.OnMenuLoadIntegrate, id=id)
+        if gui_utils.fourcircle_mode():
+            # ---------- HFIR-specific loading menus --------------------
 
-        id = wx.NewId()
-        parent.Append(id=id, text=u'Load an ISAW UB matrix (.mat) file...\tCtrl+U', kind=wx.ITEM_NORMAL,
-                    help='Load a UB matrix file made by ISAW (goniometer-corrected; not by ISAWev).')
-        self.Bind(wx.EVT_MENU, self.OnMenuLoadUB, id=id)
+            id = wx.NewId()
+            parent.Append(id=id, text=u'Load a HFIR .int file...\tCtrl+I', kind=wx.ITEM_NORMAL,
+                        help='Load a peaks file from HFIR software to compare predicted and real peaks.')
+            self.Bind(wx.EVT_MENU, self.OnMenuLoadIntegrateHFIR, id=id)
 
-        parent.AppendSeparator()
+            id = wx.NewId()
+            parent.Append(id=id, text=u'Load a HFIR UB matrix and lattice parameters file...\tCtrl+U', kind=wx.ITEM_NORMAL,
+                        help='Load a UB matrix file made by HFIR software, and a corresponding lattice parameters file.')
+            self.Bind(wx.EVT_MENU, self.OnMenuLoadHFIRUB, id=id)
 
-        id = wx.NewId()
-        parent.Append(id=id, text=u'Load a HFIR .int file...\tCtrl+I', kind=wx.ITEM_NORMAL,
-                    help='Load a peaks file from HFIR software to compare predicted and real peaks.')
-        self.Bind(wx.EVT_MENU, self.OnMenuLoadIntegrateHFIR, id=id)
+        else:
+            # ---------- ISAW loading menus --------------------
+            id = wx.NewId()
+            parent.Append(id=id, text=u'Load an ISAW .integrate or .peaks file...\tCtrl+I', kind=wx.ITEM_NORMAL,
+                        help='Load a peaks file from ISAW to compare predicted and real peaks.')
+            self.Bind(wx.EVT_MENU, self.OnMenuLoadIntegrate, id=id)
 
-        id = wx.NewId()
-        parent.Append(id=id, text=u'Load a HFIR UB matrix and lattice parameters file...', kind=wx.ITEM_NORMAL,
-                    help='Load a UB matrix file made by HFIR software, and a corresponding lattice parameters file.')
-        self.Bind(wx.EVT_MENU, self.OnMenuLoadHFIRUB, id=id)
+            id = wx.NewId()
+            parent.Append(id=id, text=u'Load an ISAW UB matrix (.mat) file...\tCtrl+U', kind=wx.ITEM_NORMAL,
+                        help='Load a UB matrix file made by ISAW (goniometer-corrected; not by ISAWev).')
+            self.Bind(wx.EVT_MENU, self.OnMenuLoadUB, id=id)
+
 
         parent.AppendSeparator()
 
@@ -92,6 +96,7 @@ class FrameMain(wx.Frame):
         parent.Append(id=wx.ID_EXIT, text=u'Quit\tCtrl+Q', kind=wx.ITEM_NORMAL, help='Exit the program.')
         self.Bind(wx.EVT_MENU, self.OnMenuQuit, id=wx.ID_EXIT)
 
+    # -------------------------------------------------------------------------
     def _init_menuView(self, parent):
         id = wx.NewId()
         parent.Append(id=id, text=u'View Q-Space in 3D\tF2', kind=wx.ITEM_NORMAL, help='Make a CSV file containing the list of motor positions.')
@@ -102,15 +107,20 @@ class FrameMain(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnMenuNewReflectionInfoWindow, id=id)
 
 
+    # -------------------------------------------------------------------------
     def _init_menuParameters(self, parent):
         id = wx.NewId()
         parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Other...')
         self.Bind(wx.EVT_MENU, self.OnMenu, id=id)
 
+
+    # -------------------------------------------------------------------------
     def _init_menuTools(self, parent):
-        id = wx.NewId()
-        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Automatic Coverage Optimizer...\tCtrl+O')
-        self.Bind(wx.EVT_MENU, self.OnMenuOptimizePositions, id=id)
+
+        if not gui_utils.fourcircle_mode():
+            id = wx.NewId()
+            parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Automatic Coverage Optimizer...\tCtrl+O')
+            self.Bind(wx.EVT_MENU, self.OnMenuOptimizePositions, id=id)
 
         id = wx.NewId()
         parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Compare measured to predicted peak positions...')
@@ -349,8 +359,18 @@ class FrameMain(wx.Frame):
         event.Skip()
 
     def OnMenuFourCircleAllHKL(self, event):
-        model.experiment.exp.fourcircle_measure_all_reflections()
+        max = len( model.experiment.exp.reflections)
+        prog_dlg = wx.ProgressDialog( "Calculating goniometer angles for all HKL.",   "Calculation progress:",
+            max, style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_ESTIMATED_TIME | wx.PD_REMAINING_TIME | wx.PD_AUTO_HIDE)
+        #Make it wider
+        prog_dlg.SetSize((500, prog_dlg.GetSize()[1]))
+        # This performs the calculation
+        model.experiment.exp.fourcircle_measure_all_reflections(prog_dlg)
+        # Update the main GUI
         self.RefreshAll()
+        # Remove the progress bar
+        prog_dlg.Destroy()
+
         event.Skip()
 
     def OnMenuComparePeaks(self, event):
@@ -454,7 +474,7 @@ class FrameMain(wx.Frame):
         if not gui_utils.fourcircle_mode():
             self.tab_add = panel_add_positions.PanelAddPositions(parent=self.notebook)
             self.tab_try = panel_try_position.PanelTryPosition(parent=self.notebook)
-        self.tab_detectors = panel_detectors.PanelDetectors(parent=self.notebook)
+            self.tab_detectors = panel_detectors.PanelDetectors(parent=self.notebook)
 
 
         def AddPage(tab, title, mac_title="", select=False):
@@ -463,7 +483,8 @@ class FrameMain(wx.Frame):
             self.notebook.AddPage(tab, title, select)
 
         AddPage(self.tab_startup, 'Q-Space', 'Q-Space', select=True)
-        AddPage(self.tab_detectors, 'Detectors')
+        if not gui_utils.fourcircle_mode():
+            AddPage(self.tab_detectors, 'Detectors')
         AddPage(self.tab_goniometer, 'Goniometer')
         AddPage(self.tab_sample, 'Sample')
         if not gui_utils.fourcircle_mode():

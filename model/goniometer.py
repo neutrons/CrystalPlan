@@ -178,6 +178,20 @@ class AngleInfo(HasTraits):
     def __repr__(self):
         return self.__str__()
 
+    def is_angle_valid(self, angle):
+        """ Return true if the angle is within the valid random range of this
+        AngleInfo.
+
+        Parameters:
+            angle: angle in INTERNAL units."""
+
+        if (angle < self.random_range[0]) or (angle > self.random_range[1]):
+            return False
+        else:
+            return True
+
+
+
 
 
 
@@ -825,7 +839,7 @@ class LimitedGoniometer(Goniometer):
             search_method: 0 for default search (semi-brute-force), 1 to use scipy.optimize
 
         Return:
-            best_angles: list of the 3 angles found. None if invalid inputs were given
+            best_angles: list of the 3 angles phi, chi, omega found. None if invalid inputs were given
         """
 #        print "starting_vec, ending_vec", starting_vec, ending_vec
 
@@ -1787,9 +1801,40 @@ class HB3AGoniometer(LimitedGoniometer):
         return """
         FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
         {
-            return absolute(chi) + absolute(omega - 3.14159*25.0/180.0) + absolute(phi)/10000.0;
+            double omegadiff = absolute( omega - (3.14159*25.0/180.0) );
+            if (omegadiff > 3.14159*25.0/180.0)
+                omegadiff = omegadiff * 10;
+            return absolute(chi) + omegadiff + absolute(phi)/10000.0;
         }
         """
+
+
+    #-------------------------------------------------------------------------
+    def calculate_angles_to_rotate_vector(self, *args, **kwargs):
+        """Calculate a set of sample orientation angles that rotate a single vector.
+        TRY to return a sample orientation that is achievable by the goniometer.
+
+        Parameters:
+            see  LimitedGoniometer.calculate_angles_to_rotate_vector()
+
+        Return:
+            best_angles: list of the 2 angles found. None if invalid inputs were given
+        """
+        #The parent class does the work
+        best_angles = LimitedGoniometer.calculate_angles_to_rotate_vector(self, *args, **kwargs)
+
+        if best_angles is None:
+            return None
+        else:
+            (phi, chi, omega) = best_angles
+
+            # Check that all angles are within allowable ranges, or return none
+            if  self.gonio_angles[0].is_angle_valid(phi) and \
+                self.gonio_angles[1].is_angle_valid(chi) and \
+                self.gonio_angles[2].is_angle_valid(omega):
+                    return best_angles
+            else:
+                    return None
 
 
 #================================================================================================

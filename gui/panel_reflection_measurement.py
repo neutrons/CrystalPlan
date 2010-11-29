@@ -249,15 +249,15 @@ class PanelReflectionMeasurement(wx.Panel):
                 self.staticTextIntegrated.Show()
                 self.buttonPlace.Hide()
             else:
-                #Predicted
+                # Predicted - normal mode
                 self.staticTextWidthLabel.SetLabel("Width:")
                 self.staticTextWidth.SetLabel((fmt % meas.peak_width) + " mm")
                 self.staticTextWidth.SetToolTipString(u'Half-width of the peak on the detector.')
                 self.flexGridSizer1.InsertWindow(9, self.buttonPlace, 0, border=8, flag=wx.EXPAND | wx.RIGHT)
+                # Don't show the place button for 4-circle
+                self.buttonPlace.Show( not gui_utils.fourcircle_mode() )
                 self.staticTextIntegratedLabel.Hide()
                 self.staticTextIntegrated.Hide()
-                self.buttonPlace.Show()
-
 
 
 
@@ -268,6 +268,7 @@ class PanelReflectionMeasurement(wx.Panel):
 
 if __name__ == "__main__":
     import gui_utils
+    model.instrument.inst = model.instrument.InstrumentFourCircle()
     (app, pnl) = gui_utils.test_my_gui(PanelReflectionMeasurement)
     ref = model.reflections.Reflection( (1,2,3), (2., 3., 4.))
     ref.measurements = [ (0,0,0,0,0,0)]
