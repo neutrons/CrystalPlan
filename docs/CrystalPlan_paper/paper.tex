@@ -48,8 +48,8 @@
   
   
 \newif\ifdograph
-% \dographtrue % DO keep the graphs.
-\dographfalse % DONT put graphs - makes things faster
+\dographtrue % DO keep the graphs.
+%\dographfalse % DONT put graphs - makes things faster
 
 \usepackage{ifpdf}
 
@@ -81,14 +81,14 @@
  % Use lower-case letters in square brackets to link authors to their
  % affiliations; if there is only one affiliation address, remove the [a].
 
-\cauthor[a]{Janik}{Zikovsky}{zikovskyjl@ornl.gov}{address if different from
+\cauthor[]{Janik}{Zikovsky}{zikovskyjl@ornl.gov}{address if different from
 \aff}
-\author[a]{Peter}{Peterson}
-\author[a]{Xiaoping}{Wang}
-\author[a]{Matthew}{Frost}
-\author[a]{Christina}{Hoffmann}
+\author[]{Peter}{Peterson}
+\author[]{Xiaoping}{Wang}
+\author[]{Matthew}{Frost}
+\author[]{Christina}{Hoffmann}
 
-\aff[a]{Spallation Neutron Source, Oak Ridge National Laboratory, P.O. Box 2008
+\aff[]{Spallation Neutron Source, Oak Ridge National Laboratory, P.O. Box 2008
 MS-6477, Oak Ridge, TN 37831-6477
 \country{USA}}
 
@@ -630,7 +630,7 @@ b)
 \caption{GUI showing details of the predicted measurement positions for a
 single $hkl$.}
 \ifdograph
-  \includegraphics[width=2.5in]{single_reflection_3}
+  \includegraphics[width=3in]{single_reflection_3}
 \fi
 
 \label{fig:single_reflection} 
