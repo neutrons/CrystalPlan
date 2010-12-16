@@ -46,32 +46,25 @@
      \journalaccepted{0 XXXXXXX 0000}
      \journalonline{0 XXXXXXX 0000}
   
+  
+\newif\ifdograph
+% \dographtrue % DO keep the graphs.
+\dographfalse % DONT put graphs - makes things faster
+
 \usepackage{ifpdf}
 
-%%Then use your new variable \ifpdf
-
-%\ifpdf
-%  \usepackage{graphicx}
-%  \pdfcompresslevel=9
-%  \DeclareGraphicsExtensions{.jpg,.pdf,.mps}
-%  \graphicspath{{png/}}
-%\else  
-  \usepackage{graphicx}
-  \DeclareGraphicsExtensions{.eps,.ps,.bmp,.tif,.tiff,.tga}  
-  \graphicspath{{eps/}}
-%\fi
-
+\usepackage{graphicx}
+\DeclareGraphicsExtensions{.eps,.ps,.bmp,.tif,.tiff,.tga}  
+\graphicspath{{eps/}}
 
 \usepackage{gensymb} %General symbols
 \usepackage[version=3]{mhchem} %For chemical formulae
 \usepackage{subfigure} 
  
-%\usepackage[pdftex]{graphicx}
-%\DeclareGraphicsExtensions{.pdf,.png,.jpg}
 
 %quick angstrom define
 \newcommand{\ang}{$\mathrm{\AA} $}
-  
+%\newcommand{\th}[0]{\superscript{th}}
 
 \begin{document}                  % DO NOT DELETE THIS LINE
 
@@ -182,8 +175,9 @@ CrystalPlan is designed with these capabilities:
   \item Calculate the orientation of a crystal at different goniometer settings.
   \item Calculate the coverage of these orientations in reciprocal space,
   in volume and for single peaks.
-  \item Take crystal symmetries into account.
+  \item Take crystal Bravais lattice symmetries into account.
   \item Optimize the experiment plan automatically.
+  \item Compare predicted and actual measurement of peaks.
 \end{itemize}
 
 \subsection{Instrument Configuration}
@@ -206,7 +200,7 @@ goniometers, allowing a unified interface. This base class acts as a
 which uses the conventional goniometer angles of
 $\phi$, $\chi$, $\omega$ as defined in \cite{busing67}.
 Each class inheriting from Goniometer can convert
-the desired phi, chi, omega angles to the internal motor positions it requires. The API allows
+the desired $\phi$, $\chi$, $\omega$ angles to the internal motor positions it requires. The API allows
 for limited goniometers: for example, TOPAZ is currently equipped with a
 goniometer where chi is fixed at 45 degrees. CrystalPlan handles this by
 limiting the available sample orientation angles accessible to the user.        
@@ -223,31 +217,33 @@ The reciprocal space to be measured is divided into a cubic 3D matrix, the size
 of which is determined by the user, who specifies the minimum d-spacing
 ($d_{min}$, in \ang) that he or she is interested in. The resolution of the
 3D matrix is also specified (in \ang$^{-1}$), which determines the number of
-points to be modeled. Available machine memory limits the resolution that can be achieved in
-practice.
+points (voxels or volumetric pixels) to be modeled. Available machine memory
+limits the resolution that can be achieved in practice.
 
 Each point of the reciprocal space 3D matrix holds an integer representing the 
-number of times that voxel of q-space has been measured – this is the total
-coverage matrix. To speed up the calculation of the total, a coverage matrix for
-each sample orientation is calculated and saved in memory. This means that the
-total coverage matrix can be computed by simply adding multiple 3D matrices
-corresponding to each sample orientation. 
+number of times that voxel of {\bf Q}-space (with {\bf Q} defined as $\frac{2\pi}{d}$) has
+been measured -- this is the total coverage matrix. To speed up the
+calculation of the total, a coverage matrix for each sample orientation is 
+calculated and saved in memory. This means that the total coverage matrix can
+be computed by simply adding multiple 3D matrices corresponding to each sample orientation. 
  
 \subsection{Calculating Coverage of One Sample Orientation}
 
 For each sample orientation, a rotation matrix combining the sample's mounting
-orientation (the U matrix loaded from ISAW) and the goniometer rotation
+orientation (the U matrix loaded from ISAW) and the goniometer rotation matrices
 ($\Phi$, $\chi$, $\Omega$) is computed. The coverage in reciprocal space is
 computed in this way: for each pixel in the face of a detector, the direction of
 the scattered beam is known. Then, two incident beam vectors are considered,
 corresponding to the $\lambda_{min}$ and $\lambda_{max}$ wavelength limits
 of the detectors and/or source. The scattered beam direction and the two possible incident beam vectors
-are used to to find two $q$ vectors, which point in the same direction. At the
-high wavelength we find $q_{min}$, and the low wavelength limit scattering off
-of $q_{max}$. Since the instrument has a wide bandwidth, we fill in the 3D q-space
-matrix by filling all points from $q_{min}$ to the $q_{max}$, for all pixels in
-the face of the detector. This quickly defines a volume of coverage, as shown
-schematically in two dimensions in Figure \ref{fig:ewald_fig}.
+are used to to find two $\overrightarrow q$ vectors; these point in the
+same direction. At the high wavelength we find $\overrightarrow q_{min}$, and
+the low wavelength limit scattering off of $\overrightarrow q_{max}$. Since the
+instrument has a wide bandwidth, we fill in the 3D {\bf Q}-space matrix by
+filling all points from $\overrightarrow q_{min}$ to the 
+$\overrightarrow q_{max}$, for all pixels in the face of the detector.
+This quickly defines a volume of coverage, as shown schematically in
+ two dimensions in Figure \ref{fig:ewald_fig}.
 
 
 To reduce memory usage yet allow for quickly trying different detector
@@ -282,22 +278,24 @@ redundancy.
 
 When entering the lattice parameters, the crystal's point group symmetry can
 also be entered. This information is then used to calculate the increased
-measurement redundancy. A list of $n$ $3\times3$ multiplication matrices is
-generated based on the point group; any $hkl$ vector can be multiplied by
+measurement redundancy \cite{giacovazzo92}. A list of $n$ $3\times3$
+multiplication matrices is generated based on the point group; any $hkl$ vector can be multiplied by
 these matrices to find the $n$ equivalent $hkl$ reflections; for example, for
 orthorombic (mmm) symmetry, $n=8$; therefore 8 multiplication matrices are
 generated that multiply $hkl$ to give $\pm h$, $\pm k$, $\pm l$.              
 
 For the single reflections, each $hkl$ is tracked separately, but a primary
-$hkl$ is found that points to a list of equivalent $hkl$'s. The GUI can then display
-either all $hkl$, ignoring crystal symmetry; or combine them to display only part of
-the reflections.             
+$hkl$ is found that points to a list of equivalent $hkl$'s. The GUI can
+then display either all $hkl$, ignoring crystal symmetry; or combine them to
+display only part of the reflections. Primary $hkl$'s
+are picked so that they make a contiguous block. 
 
-In volume coverage mode, a 4D matrix is generated where each voxel has a list
-with $n$ entries, each pointing to a corresponding equivalent voxels. This
-allows CrystalPlan to quickly compute a volume coverage map that takes into
-account crystal symmetry: at each voxel, all $n$ voxels are checked to
-see if any of them were measured. 
+In volume coverage mode, a 4D array is generated where the first 3 dimensions
+correspond to {\bf Q}-space, and the $4^{th}$ dimension is a list of $n$
+entries. Each entry in the $4^{th}$ dimension points to a voxel that is an
+equivalent due to crystal symmetry. This allows CrystalPlan to quickly compute a volume coverage
+map that takes into account crystal symmetry: at each voxel, all $n$ voxels are
+checked to see if any of them were measured. 
 
 
 
@@ -309,11 +307,11 @@ consuming. To make the process easier, CrystalPlan includes an Automatic
 Coverage Optimizer, which takes as its inputs the desired number of sample
 orientations and uses a genetic algorithm to find a solution that satisfies a
 user-specified coverage criterion (for example, the user may ask for $85\%$ of
-peaks to be measured, or for $90\%$ of q-volume).           
+peaks to be measured, or for $90\%$ of {\bf Q}-volume).           
 
-Genetic algorithms have been covered in the literature before, see e.g ref
-[INSERT REFERENCE HERE]. In this application, the genes consist of goniometer
-angles. For instance, if a goniometer has freedom in 3 angles and the user
+Genetic algorithms have been covered in the literature before, see e.g
+\cite{Goldberg89}. In this application, the genes
+consist of goniometer angles. For instance, if a goniometer has freedom in 3 angles and the user
 requests a 10 different sample orientations, then each individual has 30 genes.
 The initial population is created randomly and is made to evolve using mutations
 and crossover. Individuals whose goniometer angles turn out to be impossible to
@@ -324,7 +322,7 @@ algorithm process.
 The Automatic Coverage Optimizer can find an acceptable solution (if any is
 possible) in times ranging from a few seconds to several minutes, depending on
 the difficulty of the problem and the computing hardware. Given that at a
-neutron facility, a measurement at a single sample orientation may take a few
+neutron facility, a measurement of a single orientation may take a few
 hours, this feature can result in significant beam-time savings.           
 
 
@@ -344,12 +342,12 @@ The program needs to be cross-platform, and run equally well on Linux, Mac OS
 and Windows, although Linux is our primary target operating system. Another
 design goal was to use of open-source software and toolkits as much as possible. 
 
-To this end, CrystalPlan was written in Python, a powerful, open, cross-platform
-scripting language. Python was chosen for its ease of cross-platform deployment, and for
+To this end, CrystalPlan was written in Python \cite{python}, a powerful, open,
+cross-platform scripting language. Python was chosen for its ease of cross-platform deployment, and for
 its attractive language features. The numpy and scipy libraries (two
 open-source, commonly installed Python libraries) were used for many of the
-calculations. Some of the critical calculations were also written with inline C
-code, which speed up some calculations by up to $400\times$ as compared with
+calculations \cite{numpy}. Some of the critical calculations were also written
+with inline C code, which speed up some calculations by up to $400\times$ as compared with
 the pure Python version (which can still be used, in case of incompatibilities).       
 
 \subsection{Code Layout}
@@ -367,10 +365,12 @@ systems.
 
 An attractive and easy-to-use GUI was considered an important part of
 CrystalPlan, since the program is meant to be used interactively as a guide to
-the experimenter. The user interface was written using wxPython, a mature
-cross-platform GUI toolkit, as well as the Enthought Traits GUI. Some of the 2D
-plots use matplotlib, and the 3D visualization elements use the Mayavi2 toolkit
-for Python, itself based on VTK. All of these libraries are open-source.       
+the experimenter. The user interface was written using wxPython
+\cite{wxPython}, a mature cross-platform GUI toolkit, as well as the Enthought
+Traits GUI. Some of the 2D plots use matplotlib \cite{matplotlib},
+and the 3D visualization elements use the Mayavi2 toolkit for Python
+\cite{mayavi}, itself based on VTK \cite{VTK}. All of these libraries are
+open-source.
 
 \subsubsection{Main Program Workflow.}
 A screenshot of the main window GUI is shown in Figure \ref{fig:screenshots}.
@@ -378,8 +378,8 @@ The main window consists of a series of tabs, with workflow proceeding
 intuitively from left to right:
 
 \begin{itemize}
-  	\item Q-Space tab: define the volume of interest (minimum d-spacing) and
-resolution of reciprocal space. 
+  	\item {\bf Q}-Space tab: define the volume of interest (minimum d-spacing)
+  	and resolution of reciprocal space. 
  	\item Detectors tab: load instrument detector geometry
 files, and enable or disable individual detectors. 
 	\item Goniometer tab: to choose the
@@ -395,7 +395,7 @@ goniometer and degrees of orientation freedom of the instrument.
 orientations. Here you can manage the orientations you will use in the experiment: add,
 delete, or temporarily disable them to see the effect on coverage. Once
 complete, the plan can be sent to the SNS data acquisition computers in order to
-begin a run.
+begin a run \cite{SNSDAS}.
     
 \end{itemize} 
 
@@ -403,7 +403,7 @@ begin a run.
 
 \subsubsection{Reciprocal Space Coverage Visualization.}
 Figure \ref{fig:volume_view}a) shows a screenshot of the reciprocal space
-coverage 3D interface. The 3D view can represent q-space in two ways: volume coverage, or single-peak
+coverage 3D interface. The 3D view can represent {\bf Q}-space in two ways: volume coverage, or single-peak
 coverage. The view shown can be rotated, translated or zoomed using the mouse or
 keyboard.
 
@@ -570,8 +570,9 @@ red wedge between the two $\lambda$ is built by projecting straight lines betwee
 $q_{min}$ and $q_{max}$ limits for each pixel on the detector face, giving the
 volume in reciprocal space that is measured at a single sample oriention. }
 
-%\includegraphics[bb=0in 0in 8in 6in, scale=0.20]{ewald_fig.pdf}
-\includegraphics[width=3.5in]{ewald_fig.ps}
+\ifdograph
+  \includegraphics[width=3.5in]{ewald_fig.ps}
+\fi
      
 \label{fig:ewald_fig} 
 \end{figure} 
@@ -581,7 +582,9 @@ volume in reciprocal space that is measured at a single sample oriention. }
 \caption{Screenshot of the main GUI window. Six more interface windows (not
 shown) are presented to the user when he or she clicks on the tabs at the
 top of the main window.}
-\includegraphics{main_gui}
+\ifdograph
+  \includegraphics{main_gui}
+\fi
 \label{fig:screenshots}
 \end{figure}
  
@@ -593,9 +596,13 @@ top of the main window.}
 reciprocal space volume for 3 sample orientations and 14 detectors in TOPAZ, from 0.9 \ang\ to 4.0\ang:
 a) without crystal symmetry, 17\% coverage; b) with crystal symmetry (mmm 8-fold
 symmetry), coverage increases to 65\%. }
-\includegraphics{volume_nosym}
+\ifdograph
+  \includegraphics{volume_nosym}
+\fi
 a)
-\includegraphics{volume_sym}
+\ifdograph
+  \includegraphics{volume_sym}
+\fi
 b)
 \label{fig:volume_view} 
 \end{figure}
@@ -608,9 +615,13 @@ number of measurements (dark blue: 0, cyan: 1, green: 2, etc.).
 a) without crystal symmetry, 2375 of 9481 reflections are measured, or 25\%.
 b) with crystal symmetry, 1276 of 1427 primary reflections are measured, or
 89\%, and redundancy is also increased. }
-\includegraphics{refl_nosym} 
+\ifdograph
+  \includegraphics{refl_nosym} 
+\fi
 a)
-\includegraphics{refl_sym}
+\ifdograph
+  \includegraphics{refl_sym}
+\fi
 b)
 \label{fig:refl_view}
 \end{figure}
@@ -618,7 +629,10 @@ b)
 \begin{figure}
 \caption{GUI showing details of the predicted measurement positions for a
 single $hkl$.}
-\includegraphics[width=2.5in]{single_reflection_3}
+\ifdograph
+  \includegraphics[width=2.5in]{single_reflection_3}
+\fi
+
 \label{fig:single_reflection} 
 \end{figure}  
  
@@ -627,9 +641,13 @@ single $hkl$.}
 \caption{a) Screenshot of the Natrolite experiment plan generated using the
 Automatic coverage Optimizer. b) Screenshot of the resulting coverage
 statistics.}
-\includegraphics[width=3.5in]{Plan8List}
+\ifdograph
+  \includegraphics[width=3.5in]{Plan8List}
+\fi
 a)
-\includegraphics[width=3.5in]{NatCoverage}
+\ifdograph
+  \includegraphics[width=3.5in]{NatCoverage}
+\fi
 b)
 \label{fig:natrolite_gui}
 \end{figure}
