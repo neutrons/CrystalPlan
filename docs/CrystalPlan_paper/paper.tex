@@ -346,18 +346,18 @@ To this end, CrystalPlan was written in Python \cite{python}, a powerful, open,
 cross-platform scripting language. Python was chosen for its ease of cross-platform deployment, and for
 its attractive language features. The numpy and scipy libraries (two
 open-source, commonly installed Python libraries) were used for many of the
-calculations \cite{numpy}. Some of the critical calculations were also written
-with inline C code, which speed up some calculations by up to $400\times$ as compared with
+calculations \cite{numpy,scipy}. Some of the critical calculations were
+also written with inline C code, which speed up some calculations by up to $400\times$ as compared with
 the pure Python version (which can still be used, in case of incompatibilities).       
 
 \subsection{Code Layout}
 
 The calculation code of CrystalPlan is placed in a model layer and kept
-completely separate from eventual GUI elements. This makes it possible to run
-calculations using Python scripts, if desired. Unit tests for each part of the
-calculations are used to ensure consistent results on different platforms and
-systems.     
- 
+completely separate from eventual GUI elements, using a Model-View-Controller
+architecture \cite{Gamma95}. This makes it possible to run calculations using
+Python scripts, if desired. Unit tests for each part of the calculations are used to ensure
+consistent results on different platforms and  systems.     
+  
 
 \subsection{Graphical User Interface}
 
@@ -461,9 +461,9 @@ into CrystalPlan for comparison. The predicted and actual measurement
 positions on each detector face were compared for the 554 integrated peaks
 found. Very good agreement was found; the
 RMS difference between the predicted and actual measurement wavelength was only
-0.016 \ang. Inspecting the detector position offsets showed that the main
-contributor to this error was a slight misalignment of the goniometer, which
-CrystalPlan can help diagnose. 
+0.016 \ang. The offsets in the peak position were plotted, which
+helped show that the main contributor to this error was a slight misalignment of
+the goniometer.
 
 %, whereas the RMS of the detector position error was 7.6 mm.
 
@@ -479,7 +479,7 @@ CrystalPlan can help diagnose.
 
 We have described CrystalPlan, a software program designed to quickly produce
 efficient experiment plans for wide bandwidth time-of-flight Laue
-diffractometers. This program will help maximize scientific productivity at SNS
+diffractometers. This program will help increase scientific productivity at SNS
 beamlines such as TOPAZ.
 
 One planned future development for CrystalPlan include extending the software
