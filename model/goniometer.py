@@ -563,11 +563,23 @@ class LimitedGoniometer(Goniometer):
         #C code for the fitness of phi,chi, omega.
         # OVERWRITE THIS FOR SUBCLASSES!
         #   Don't change the # of parameters - the search code always gives you phi, chi, omega.
+        #   The *_min and *_max are the limits to these angles, in the same units.
         # This sample fitness value makes phi less important (since it normally has full freedom)
         return """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
-            return absolute(chi) + absolute(omega) + absolute(phi)/10000.0;
+        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega,
+                FLOAT phi_min, FLOAT phi_max,
+                FLOAT chi_min, FLOAT chi_max,
+                FLOAT omega_min, FLOAT omega_max)
+        { 
+            FLOAT phi_mid = (phi_min + phi_max) / 2;
+            FLOAT chi_mid = (chi_min + chi_max) / 2;
+            FLOAT omega_mid = (omega_min + omega_max) / 2;
+            FLOAT fitness =  absolute(chi - chi_mid) + absolute(omega - omega_mid) + absolute(phi - phi_mid)/100.0;
+            // Big penalties for being out of the range
+            if (phi < phi_min || phi > phi_max) fitness += 10;
+            if (chi < chi_min || chi > chi_max) fitness += 10;
+            if (omega < omega_min || omega > omega_max) fitness += 10;
+            return;
         }
         """
 
@@ -787,7 +799,7 @@ class LimitedGoniometer(Goniometer):
             if (phi < -PI) phi += 2*PI;
             if (chi < -PI) chi += 2*PI;
             if (omega < -PI) omega += 2*PI;
-            fitness = fitness_function(phi, chi, omega);
+            fitness = fitness_function(phi, chi, omega, phi_min, phi_max, chi_min, chi_max, omega_min, omega_max);
             fitnesses.append(fitness);
             phi_list.append(phi);
             chi_list.append(chi);
@@ -803,9 +815,16 @@ class LimitedGoniometer(Goniometer):
         chi_list = []
         phi_list = []
         omega_list = []
+        phi_min = self.gonio_angles[0].random_range[0]
+        phi_max = self.gonio_angles[0].random_range[1]
+        chi_min = self.gonio_angles[1].random_range[0]
+        chi_max = self.gonio_angles[1].random_range[1]
+        omega_min = self.gonio_angles[2].random_range[0]
+        omega_max = self.gonio_angles[2].random_range[1]
 
         #Prepare variables, run the C code
         varlist = ['rot_angle_list', 'ending_vec', 'initial_rotation_matrix', 'fitnesses', 'chi_list', 'phi_list', 'omega_list']
+        varlist += ['phi_min', 'phi_max', 'chi_min', 'chi_max', 'omega_min', 'omega_max']
         ret = weave.inline(code, varlist, compiler='gcc', support_code=support)
 
         #Test that the resulting matrix is still OK
@@ -952,7 +971,10 @@ class TopazAmbientGoniometer(LimitedGoniometer):
     def get_fitness_function_c_code(self):
         """Generate a bit of C code that gives the fitness of phi,chi, omega"""
         s = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega,
+                FLOAT phi_min, FLOAT phi_max,
+                FLOAT chi_min, FLOAT chi_max,
+                FLOAT omega_min, FLOAT omega_max)
         {
             // #Chi needs to be exactly this many radians
             return absolute(chi - (%f) );
@@ -1981,8 +2003,15 @@ class TestGoniometers(unittest.TestCase):
         g = HB3AGoniometer()
         assert g.are_angles_allowed([0,0,0,0])
 
+    def test_limited_angle_finding(self):
+        g = LimitedGoniometer()
+        starting_vec = np.array([1,2,3]);
+        ending_vec = np.array([2,2,3]);
+        g.calculate_angles_to_rotate_vector(starting_vec, ending_vec, [0, 0, 0])
+
 #===============================================================================================
 if __name__ == "__main__":
+   
     unittest.main()
 #    initialize_goniometers()
 #    sample_pin_position_range()
