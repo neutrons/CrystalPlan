@@ -46,11 +46,26 @@
      \journalaccepted{0 XXXXXXX 0000}
      \journalonline{0 XXXXXXX 0000}
   
-\usepackage{graphicx}
+\usepackage{ifpdf}
+
+%%Then use your new variable \ifpdf
+
+%\ifpdf
+%  \usepackage{graphicx}
+%  \pdfcompresslevel=9
+%  \DeclareGraphicsExtensions{.jpg,.pdf,.mps}
+%  \graphicspath{{png/}}
+%\else  
+  \usepackage{graphicx}
+  \DeclareGraphicsExtensions{.eps,.ps,.bmp,.tif,.tiff,.tga}  
+  \graphicspath{{eps/}}
+%\fi
+
+
 \usepackage{gensymb} %General symbols
 \usepackage[version=3]{mhchem} %For chemical formulae
 \usepackage{subfigure} 
-
+ 
 %\usepackage[pdftex]{graphicx}
 %\DeclareGraphicsExtensions{.pdf,.png,.jpg}
 
@@ -92,7 +107,7 @@ MS-6477, Oak Ridge, TN 37831-6477
 
 
 
-\maketitle                        % DO NOT DELETE THIS LINE
+\maketitle                        % DO NOT DELETE THIS LINE 
 
 \begin{synopsis}
 Describes CrystalPlan, a software program for the automatic creation of 
@@ -152,9 +167,9 @@ planning their experiments. By quickly making an experimental plan that will be
 sufficient for the needs of the scientist (enough peaks measured), but without
 spending time needlessly measuring the same region in reciprocal space,
 CrystalPlan will greatly increase the scientific productivity and throughput of
-TOPAZ and other beamlines. More users will be able to measure more samples in
-less time.
-
+TOPAZ and other beamlines. Users will be able to measure more
+samples or more fully explore parameters such as temperature and pressure.
+ 
 %---------------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------------
@@ -566,7 +581,7 @@ volume in reciprocal space that is measured at a single sample oriention. }
 \caption{Screenshot of the main GUI window. Six more interface windows (not
 shown) are presented to the user when he or she clicks on the tabs at the
 top of the main window.}
-\includegraphics{main_gui.eps}
+\includegraphics{main_gui}
 \label{fig:screenshots}
 \end{figure}
  
@@ -578,11 +593,11 @@ top of the main window.}
 reciprocal space volume for 3 sample orientations and 14 detectors in TOPAZ, from 0.9 \ang\ to 4.0\ang:
 a) without crystal symmetry, 17\% coverage; b) with crystal symmetry (mmm 8-fold
 symmetry), coverage increases to 65\%. }
-\includegraphics{volume_nosym.eps}
+\includegraphics{volume_nosym}
 a)
-\includegraphics{volume_sym.eps}
+\includegraphics{volume_sym}
 b)
-\label{fig:volume_view}
+\label{fig:volume_view} 
 \end{figure}
 
 
@@ -593,9 +608,9 @@ number of measurements (dark blue: 0, cyan: 1, green: 2, etc.).
 a) without crystal symmetry, 2375 of 9481 reflections are measured, or 25\%.
 b) with crystal symmetry, 1276 of 1427 primary reflections are measured, or
 89\%, and redundancy is also increased. }
-\includegraphics{refl_nosym.eps}
+\includegraphics{refl_nosym} 
 a)
-\includegraphics{refl_sym.eps}
+\includegraphics{refl_sym}
 b)
 \label{fig:refl_view}
 \end{figure}
@@ -603,18 +618,18 @@ b)
 \begin{figure}
 \caption{GUI showing details of the predicted measurement positions for a
 single $hkl$.}
-\includegraphics[width=2.5in]{single_reflection_2.eps}
-\label{fig:single_reflection}
-\end{figure}
-
-
-\begin{figure}
+\includegraphics[width=2.5in]{single_reflection_3}
+\label{fig:single_reflection} 
+\end{figure}  
+ 
+  
+\begin{figure} 
 \caption{a) Screenshot of the Natrolite experiment plan generated using the
 Automatic coverage Optimizer. b) Screenshot of the resulting coverage
 statistics.}
-\includegraphics[width=3.5in]{Plan8List.eps}
+\includegraphics[width=3.5in]{Plan8List}
 a)
-\includegraphics[width=3.5in]{NatCoverage.eps}
+\includegraphics[width=3.5in]{NatCoverage}
 b)
 \label{fig:natrolite_gui}
 \end{figure}
