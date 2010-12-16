@@ -539,8 +539,8 @@ class FrameReflectionPlacer(wx.Frame):
             Group(Label("... or use the mouse to set the position by clicking below ...")),
             )
 
+            # Item("brute_search", label="Use brute-force search")
 
-            #Item("brute_search", label="Use brute-force search")
             
         viewBottom = View( \
             Group(Label("Measurement requires the following sample orientation:")),

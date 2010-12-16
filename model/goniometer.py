@@ -447,7 +447,7 @@ class Goniometer(HasTraits):
             ub_matrix: for the current sample and mounting. B converts hkl to q-vector, and U orients.
             starting_angles: optional, list of angles from which to start the search.
                 e.g. we want the beam to move a few degrees away from this starting sample orientation.
-            search_method: option for the search method
+            search_method: option for the search method.
 
         Returns:
             angles: list of angles found
@@ -553,35 +553,92 @@ class Goniometer(HasTraits):
 class LimitedGoniometer(Goniometer):
     """Class for goniometers where there are limits to the range of phi, chi, and/or omega
     values. Holds general-purpose code for finding valid sample orientations."""
+    
+    name = String("Limited Goniometer")
+    description = String("Goniometer with 3 degrees of freedom but restrictions to allowed angles.")
 
     #-------------------------------------------------------------------------
     def __init__(self, wavelength_control=False, *args, **kwargs):
         Goniometer.__init__(self, wavelength_control, *args, **kwargs)
 
     #-------------------------------------------------------------------------
+    def are_angles_allowed(self, angles, return_reason=False):
+        """Calculate whether the given angles can be reached with the goniometer.
+        Will be overridden by subclasses as needed.
+
+        Parameters:
+            angles: list of angles of the goniometer (typically phi, chi, omega).
+            return_reason: do you want to return the reason (as string)?
+
+        Returns:
+            allowed: True if the angle provided can be reached.
+            reason: string describing the reason they cannot be reached. Empty if the angles are allowed.
+        """
+        ret = True
+        reason = ""
+
+        for i in xrange(len(angles)):
+            #@type AngleInfo ai
+            ai = self.gonio_angles[i]
+            angle = angles[i]
+            if angle < ai.random_range[0] or angle > ai.random_range[1]:
+                ret = False
+                reason += ai.name + " outside limits."
+
+        #The base goniometer can reach all angles.
+        if return_reason:
+            return (ret, reason)
+        else:
+            return ret
+
+
+    #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
         #C code for the fitness of phi,chi, omega.
         # OVERWRITE THIS FOR SUBCLASSES!
         #   Don't change the # of parameters - the search code always gives you phi, chi, omega.
-        #   The *_min and *_max are the limits to these angles, in the same units.
         # This sample fitness value makes phi less important (since it normally has full freedom)
-        return """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega,
-                FLOAT phi_min, FLOAT phi_max,
-                FLOAT chi_min, FLOAT chi_max,
-                FLOAT omega_min, FLOAT omega_max)
-        { 
+
+        args = []
+        for i in xrange(3):
+            for j in xrange(2):
+                args.append(self.gonio_angles[i].random_range[j])
+        args = tuple(args)
+
+        s = """
+        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+        {
+            FLOAT phi_min = %f;
+            FLOAT phi_max = %f;
+            FLOAT chi_min = %f;
+            FLOAT chi_max = %f;
+            FLOAT omega_min = %f;
+            FLOAT omega_max = %f;
+
             FLOAT phi_mid = (phi_min + phi_max) / 2;
             FLOAT chi_mid = (chi_min + chi_max) / 2;
             FLOAT omega_mid = (omega_min + omega_max) / 2;
-            FLOAT fitness =  absolute(chi - chi_mid) + absolute(omega - omega_mid) + absolute(phi - phi_mid)/100.0;
+
+            FLOAT fitness =  absolute(chi - chi_mid) + absolute(omega - omega_mid) + absolute(phi - phi_mid);
+
             // Big penalties for being out of the range
-            if (phi < phi_min || phi > phi_max) fitness += 10;
-            if (chi < chi_min || chi > chi_max) fitness += 10;
-            if (omega < omega_min || omega > omega_max) fitness += 10;
-            return;
+            if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
+            if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
+            if (chi < chi_min) fitness += (chi_min - chi) * 1.0;
+            if (chi > chi_max) fitness += (chi - chi_max) * 1.0;
+            if (omega < omega_min) fitness += (omega_min - omega) * 1.0;
+            if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
+
+            // if (phi < phi_min || phi > phi_max) fitness += 10;
+            // if (chi < chi_min || chi > chi_max) fitness += 10;
+            // if (omega < omega_min || omega > omega_max) fitness += 10;
+
+            return fitness;
         }
-        """
+        """ % (args)
+        return s
+
+
 
     #-------------------------------------------------------------------------
     def _angle_fitness_python(self, rot_angle, initial_rotation_matrix, ending_vec, starting_vec):
@@ -776,6 +833,13 @@ class LimitedGoniometer(Goniometer):
             FLOAT old_chi = chi;
             FLOAT old_omega = omega;
 
+            // Try the original angles
+            fitness = fitness_function(phi, chi, omega);
+            fitnesses.append(fitness);
+            phi_list.append(phi);
+            chi_list.append(chi);
+            omega_list.append(omega);
+
             //Make angles closer to 0
             if (phi > PI) phi -= 2*PI;
             if (chi > PI) chi -= 2*PI;
@@ -799,7 +863,7 @@ class LimitedGoniometer(Goniometer):
             if (phi < -PI) phi += 2*PI;
             if (chi < -PI) chi += 2*PI;
             if (omega < -PI) omega += 2*PI;
-            fitness = fitness_function(phi, chi, omega, phi_min, phi_max, chi_min, chi_max, omega_min, omega_max);
+            fitness = fitness_function(phi, chi, omega);
             fitnesses.append(fitness);
             phi_list.append(phi);
             chi_list.append(chi);
@@ -815,16 +879,9 @@ class LimitedGoniometer(Goniometer):
         chi_list = []
         phi_list = []
         omega_list = []
-        phi_min = self.gonio_angles[0].random_range[0]
-        phi_max = self.gonio_angles[0].random_range[1]
-        chi_min = self.gonio_angles[1].random_range[0]
-        chi_max = self.gonio_angles[1].random_range[1]
-        omega_min = self.gonio_angles[2].random_range[0]
-        omega_max = self.gonio_angles[2].random_range[1]
-
+       
         #Prepare variables, run the C code
         varlist = ['rot_angle_list', 'ending_vec', 'initial_rotation_matrix', 'fitnesses', 'chi_list', 'phi_list', 'omega_list']
-        varlist += ['phi_min', 'phi_max', 'chi_min', 'chi_max', 'omega_min', 'omega_max']
         ret = weave.inline(code, varlist, compiler='gcc', support_code=support)
 
         #Test that the resulting matrix is still OK
@@ -836,14 +893,15 @@ class LimitedGoniometer(Goniometer):
                 result_vec = np.dot(rotation_matrix(phi,chi,omega), column(starting_vec)).flatten()
                 assert np.allclose( result_vec, ending_vec, atol=1e-3), "rotated rotation matrix still makes the correct rotation. Expected %s, got %s" % (ending_vec, result_vec)
 
-        #The minimum (fitness) is the best fitness
+        #The minimum (fitness) is the best fitness.
+        # There are 3 output values per input angle
         index = np.argmin(fitnesses)
         fitness = fitnesses[index]
         chi = chi_list[index]
         phi = phi_list[index]
         omega = omega_list[index]
 
-        return (rot_angle_list[index/2], (phi, chi, omega))
+        return (rot_angle_list[index/3], (phi, chi, omega))
 
 
     #-------------------------------------------------------------------------
@@ -916,12 +974,15 @@ class LimitedGoniometer(Goniometer):
 
         if search_method:
             #--- scipy optimize ----
-            #Get a starting point by brute force ?
-            best_rot_angle = np.pi/2 
 
+            # Get a starting point by brute force 
+            step = np.deg2rad(2)
+            (best_rot_angle, best_angles) = optimize_c_code(-2.2*pi, pi*2.2, step)
+
+            # And optimize with that
             if False:
                 x0 = best_rot_angle
-                #res = scipy.optimize.fminbound(self._angle_fitness, 0, 2*pi, args, xtol=4e-3, disp=0, maxfun=100, full_output=0)
+                res = scipy.optimize.fminbound(self._angle_fitness, 0, 2*pi, args, xtol=4e-3, disp=0, maxfun=100, full_output=0)
                 best_rot_angle = res
             else:
                 x0 = np.array([ best_rot_angle ])
@@ -934,8 +995,9 @@ class LimitedGoniometer(Goniometer):
         else:
             #--- semi-brute optimization routine ----
             #for optimize_func in [optimize, optimize_c_code]:
-            step = np.deg2rad(5)
-            (best_rot_angle, best_angles) = optimize_c_code(-0.2*pi, pi*2.2, step)
+            step = np.deg2rad(2)
+            # (best_rot_angle, best_angles) = optimize_c_code(-0.2*pi, pi*2.2, step)
+            (best_rot_angle, best_angles) = optimize_c_code(-1.2*pi, pi*1.2, step)
             for x in xrange(4):
                 newstep = step/10
                 (best_rot_angle, best_angles) = optimize_c_code(best_rot_angle-step, best_rot_angle+step, newstep)
@@ -950,37 +1012,41 @@ class LimitedGoniometer(Goniometer):
 #===============================================================================================
 #===============================================================================================
 #===============================================================================================
+class TestLimitedGoniometer(LimitedGoniometer):
+    """Limited goniometer for testing."""
+
+
+    #-------------------------------------------------------------------------
+    def __init__(self, wavelength_control=False):
+        """Constructor"""
+        #Init the base class
+        LimitedGoniometer.__init__(self, wavelength_control)
+
+        #Some info about the goniometer
+        self.name = "Testing Limited Goniometer"
+        self.description = "Limited goniometer for testing."
+
+        #Make the angle info object
+        self.gonio_angles = [
+            AngleInfo('Phi', friendly_range=[-57, 0], random_range=[-1.0, 0.0]),
+            AngleInfo('Chi', friendly_range=[0, 57], random_range=[0, 1]),
+            AngleInfo('Omega', friendly_range=[172, 229], random_range=[3, 4]),
+            ]
+
+
+#===============================================================================================
+#===============================================================================================
+#===============================================================================================
 class TopazAmbientGoniometer(LimitedGoniometer):
     """Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."""
 
     #Chi is +135 degrees as of October 2010.
     chi = Float(+0.75*np.pi, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
-    
+
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
                 Item('wavelength_bandwidth', visible_when="wavelength_control"),        Item('wavelength_minimum', visible_when="wavelength_control"),        Item('wavelength_maximum', visible_when="wavelength_control"),
                 Item('chi'), Item('angles_desc', style='readonly'))
-
-    #-------------------------------------------------------------------------
-    def __eq__(self, other):
-        """Return True if the contents of self are equal to other."""
-        return LimitedGoniometer.__eq__(self,other) and \
-            (self.chi == other.chi)
-
-    #-------------------------------------------------------------------------
-    def get_fitness_function_c_code(self):
-        """Generate a bit of C code that gives the fitness of phi,chi, omega"""
-        s = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega,
-                FLOAT phi_min, FLOAT phi_max,
-                FLOAT chi_min, FLOAT chi_max,
-                FLOAT omega_min, FLOAT omega_max)
-        {
-            // #Chi needs to be exactly this many radians
-            return absolute(chi - (%f) );
-        }
-        """ % (self.chi)
-        return s
 
     #-------------------------------------------------------------------------
     def __init__(self, wavelength_control=False):
@@ -993,14 +1059,56 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         self.description = "Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +135 degrees."
 
         #Chi is +135 degrees as of October 2010.
-        self.chi = +0.75*np.pi 
+        self.chi = +0.75*np.pi
 
         #Make the angle info object
         self.gonio_angles = [
             AngleInfo('Phi'),
             AngleInfo('Omega'),
             ]
-            
+
+    #-------------------------------------------------------------------------
+    def __eq__(self, other):
+        """Return True if the contents of self are equal to other."""
+        return LimitedGoniometer.__eq__(self,other) and \
+            (self.chi == other.chi)
+
+    #-------------------------------------------------------------------------
+    def get_fitness_function_c_code(self):
+        #C code for the fitness of phi,chi, omega.
+        args = []
+        for i in xrange(2):
+            for j in xrange(2):
+                args.append(self.gonio_angles[i].random_range[j])
+        # Last argument is the fixed chi value.
+        args.append( self.chi )
+        args = tuple(args)
+
+        s = """
+        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+        {
+            FLOAT phi_min = %f;
+            FLOAT phi_max = %f;
+            FLOAT omega_min = %f;
+            FLOAT omega_max = %f;
+
+            FLOAT phi_mid = (phi_min + phi_max) / 2;
+            FLOAT chi_mid = %f;
+            FLOAT omega_mid = (omega_min + omega_max) / 2;
+
+            FLOAT fitness = absolute(chi - chi_mid)*10.0 + absolute(omega - omega_mid)/10.0 + absolute(phi - phi_mid)/10.0;
+
+            // Big penalties for being out of the range
+            if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
+            if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
+            if (omega < omega_min) fitness += (omega_min - omega) * 1.0;
+            if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
+
+            return fitness;
+        }
+        """ % (args)
+        return s
+
 
     #-------------------------------------------------------------------------------
     def get_phi_chi_omega(self, angles):
@@ -1969,6 +2077,8 @@ goniometers = []
 def initialize_goniometers():
     """Function creates all possible goniometers."""
     goniometers.append( Goniometer() )
+    goniometers.append( LimitedGoniometer() )
+    goniometers.append( TestLimitedGoniometer() )
     goniometers.append( TopazInHouseGoniometer() )
     goniometers.append( TopazAmbientGoniometer() )
 
@@ -2005,6 +2115,19 @@ class TestGoniometers(unittest.TestCase):
 
     def test_limited_angle_finding(self):
         g = LimitedGoniometer()
+        starting_vec = np.array([1,2,3]);
+        ending_vec = np.array([2,2,3]);
+        g.calculate_angles_to_rotate_vector(starting_vec, ending_vec, [0, 0, 0])
+
+    def test_TestLimited_angle_finding(self):
+        g = TestLimitedGoniometer()
+        starting_vec = np.array([1,2,3]);
+        ending_vec = np.array([2,2,3]);
+        g.calculate_angles_to_rotate_vector(starting_vec, ending_vec, [0, 0, 0])
+        g.calculate_angles_to_rotate_vector(starting_vec, ending_vec, [0, 0, 0], search_method=1)
+
+    def test_ambient_angle_finding(self):
+        g = TopazAmbientGoniometer()
         starting_vec = np.array([1,2,3]);
         ending_vec = np.array([2,2,3]);
         g.calculate_angles_to_rotate_vector(starting_vec, ending_vec, [0, 0, 0])
