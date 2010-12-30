@@ -156,7 +156,7 @@ These programs are not suitable for TOPAZ, since as a time-of-flight instrument
 (time-resolved Laue), it is collecting data from a wide
 bandwidth of incident neutrons, contracting the Ewald sphere through the
 reflection condition thus while keeping a crystal stationary, as described in
-[!!!! CC WILSON REFERENCE].
+\cite{Schultz94,Wilson00}.
  Additionally, this means that relatively few sample
 orientations are needed in order to complete a measurement: whereas an X-ray measurement might have
 hundreds or thousands of individual frames, a TOPAZ run may have as few as 10
@@ -179,7 +179,8 @@ them to explore parameters such as temperature and pressure more fully.
 CrystalPlan is designed with these capabilities:
 
 \begin{itemize}
-  \item Load an instrument geometry file.
+  \item Load a geometry file for a specific instrument (using a generic,
+  flexible file format).
   \item Calculate the orientation of a crystal at different goniometer settings.
   \item Calculate the coverage of these orientations in reciprocal space,
   in volume and for single peaks.
