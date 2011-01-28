@@ -49,7 +49,7 @@
   
 \newif\ifdograph
 \dographtrue % DO keep the graphs.
-%\dographfalse % DONT put graphs - makes things faster
+\dographfalse % DONT put graphs - makes things faster
 
 \usepackage{ifpdf}
 
@@ -117,8 +117,8 @@ reciprocal space in a single-crystal diffraction time-of-flight experiment.
 CrystalPlan can help a user build an experiment plan that will acquire the most
 data possible, with sufficient coverage but limited redundancy, therefore
 increasing scientific productivity. 
-A user friendly GUI including a 3D viewer, an automated coverage optimizer,
-and an option to reorient the crystal for the measurement 
+A user friendly GUI (Graphical User Interface) including a 3D viewer, an
+automated coverage optimizer, and an option to reorient the crystal for the measurement 
 of selected $hkl$s on specific detector positions 
 are among its useful features. 
 A sample use case of the program with the TOPAZ beamline at SNS will be
@@ -154,8 +154,8 @@ diffraction condition using a single incident wavelength,
 resulting in a large number of sample orientations.
 These programs are not suitable for TOPAZ, since as a time-of-flight instrument
 (time-resolved Laue), it is collecting data from a wide
-bandwidth of incident neutrons, contracting the Ewald sphere through the
-reflection condition thus while keeping the crystal stationary, as described in
+bandwidth of incident neutrons, thus contracting the Ewald sphere through the
+reflection condition while keeping the crystal stationary, as described in
 \cite{Schultz94,Wilson00}.
  Additionally, this means that relatively few sample
 orientations are needed to complete a measurement: whereas an X-ray measurement might have
@@ -204,9 +204,9 @@ detectable range of neutron/x-ray wavelength.
 \subsection{Sample Orientation}
 
 CrystalPlan can accomodate a variety of sample
-orientation goniometers. A base Goniometer class is subclassed for specific types of
-goniometers, allowing a unified interface. This base class acts as a
-\emph{universal goniometer},
+orientation goniometers. A base Goniometer class (in the object-oriented
+programming sense) is subclassed for specific types of goniometers, allowing a
+unified interface. This base class acts as a \emph{universal goniometer},
 which uses the conventional Eulerian goniometer angles of
 $\phi$, $\chi$, $\omega$ as defined in \cite{busing67}.
 Each class inheriting from the base Goniometer can convert
@@ -219,8 +219,8 @@ $\omega$.
 The sample unit cell and orientation is typically determined by the data
 collection/reduction software. In our case, from an initial data set, the data
 analysis program ISAW (Integrated Scattering Analysis
-Workbench \cite{Mikkelson05}) provides us with the unit cell of the sample (B
-matrix) and the sample mounting orientation (U matrix).
+Workbench \cite{Mikkelson05}) provides us with the unit cell of the sample (via
+the B matrix) and the sample mounting orientation (U matrix).
 The combined UB matrix is then saved to a
 text file along with the lattice parameters. 
 CrystalPlan can load this UB matrix file and uses it for reciprocal coverage
@@ -258,11 +258,11 @@ corresponding to the $\lambda_{min}$ and $\lambda_{max}$ wavelength limits
 of the detectors and/or source. The scattered beam direction and the two possible incident beam vectors
 are used to find two $\overrightarrow q$ vectors; these point in the
 same direction. At the high wavelength limit we find $\overrightarrow q_{min}$,
-and the low wavelength limit is scattering off of $\overrightarrow q_{max}$.
-Since the instrument has a wavelength bandwidth, we fill in the 3D {\bf Q}-space
+and the low wavelength limit corresponds to $\overrightarrow
+q_{max}$. Since the instrument has a wavelength bandwidth, we fill in the 3D {\bf Q}-space
 matrix by filling all points from $\overrightarrow q_{min}$ to the 
 $\overrightarrow q_{max}$, for all pixels in the face of the detector.
-A typical range for TOPAZ is 0.5 to 3.6 \ang, a 3 \ang\ wavelength band.
+A typical wavelength band for TOPAZ is from 0.5 to 3.6 \ang.
 This readily defines a volume of coverage, as shown schematically in
 two dimensions in Figure \ref{fig:ewald_fig}.
 
@@ -305,7 +305,7 @@ calculate the increased measurement redundancy for higher symmetries
 A list of $n$ $3\times3$ multiplication matrices is generated based on the point group; 
 all $hkl$ vectors are multiplied by
 these matrices to find the $n$ equivalent $hkl$ reflections; for example, for
-orthorombic (mmm) symmetry, $n=8$; therefore 8 multiplication matrices are
+orthorhombic (mmm) symmetry, $n=8$; therefore 8 multiplication matrices are
 generated that multiply $hkl$ to give $\pm h$, $\pm k$, $\pm l$.              
 
 Each reflection is tracked separately, but a primary
@@ -369,9 +369,9 @@ hours, this feature can result in significant beam-time savings.
 
 \subsection{Language and Libraries}
 
-The program was designed to be cross-platform, and run equally well on Linux,
+The program was designed to be cross-platform, and to run equally well on Linux,
 Mac OS and Windows, although Linux is our primary target operating system. Another
-design goal was to use of open-source software and toolkits as much as possible. 
+design goal was to use open-source software and toolkits as much as possible. 
 
 To this end, CrystalPlan was written in Python \cite{python}, a powerful, open,
 cross-platform scripting language. Python was chosen for its ease of cross-platform deployment, and for
@@ -486,19 +486,17 @@ was processed using ISAW to determine the UB matrix and cell parameters of the c
 The resulting UB matrix was loaded into CrystalPlan, where the Automatic
 Coverage Optimizer was used to generate an experiment plan with 8 sample
 orientations (Figure \ref{fig:natrolite_gui}a) that covered 97\% of the peaks,
-taking into account the crystal Laue symmetry (orthorombic or mmm) (Figure
+taking into account the crystal Laue symmetry (orthorhombic or mmm) (Figure
 \ref{fig:natrolite_gui}b). The eight orientations were run
 unattended overnight.
 
 Peaks were integrated using ISAW, and the resulting .integrate file was loaded
 into CrystalPlan for comparison. The predicted and actual measurement
 positions on each detector face were compared for the 554 integrated peaks
-found. Good agreement was found; the RMS difference between the predicted and
-actual measurement wavelength was only 0.016 \ang. The offsets in the peak
+found. Good agreement was found; the root-mean-square difference between the
+predicted and actual measurement wavelength was only 0.016 \ang. The offsets in the peak
 position were plotted, which helped show that the main contributor to this error
 was a slight misalignment of the goniometer.
-
-%, whereas the RMS of the detector position error was 7.6 mm.
 
 %NOTE: Check on this misalignment of goniometer business - is that really the
 % cause?
@@ -592,15 +590,15 @@ DE-AC05-00OR22725 for the U.S. Department of Energy, Office of Science.
  % Postscript figures can be included with multiple figure blocks
 
 \begin{figure}
-\caption{2D Ewald sphere construction showing reciprocal-space detector coverage
+\caption{2D Ewald construction showing reciprocal-space detector coverage
 for a wide-bandwidth Laue diffractometer. The smaller blue circle represents the
 $1/\lambda_{max}$ limit of measurement, with the larger green circle
 representing $1/\lambda_{min}$. The origin of reciprocal space (000) is common to both
 spheres, but the ``virtual" sample position in the construction (S1 or S2)
 depends on $\lambda$. The angular coverage of the detector is represented by the dashed
 wedge, and projects an arc onto each sphere of radius $1/\lambda$. The
-red wedge between the two $\lambda$ is built by projecting straight lines between the
-$q_{min}$ and $q_{max}$ limits for each pixel on the detector face, giving the
+red wedge between the two $\lambda$ is built by drawing straight lines between
+the $q_{min}$ and $q_{max}$ limits for each pixel on the detector face, giving the
 volume in reciprocal space that is measured at a single sample oriention. }
 
 \ifdograph
@@ -626,8 +624,8 @@ top of the main window.}
 
 \begin{figure}
 \caption{Sample screenshot showing the 3D view of the predicted coverage of
-reciprocal space volume for 3 sample orientations and 14 detectors in TOPAZ, from 0.9 \ang\ to 4.0\ang:
-a) without crystal symmetry, 17\% coverage; b) with crystal symmetry (mmm 8-fold
+reciprocal space volume for 3 sample orientations and 14 detectors on TOPAZ,
+from 0.9 \ang\ to 4.0\ang: a) without crystal symmetry, 17\% coverage; b) with crystal symmetry (mmm 8-fold
 symmetry), coverage increases to 65\%. }
 \ifdograph
   \includegraphics{volume_nosym}
@@ -644,9 +642,9 @@ b)
 \begin{figure}
 \caption{Sample screenshot showing the 3D view of single-crystal reflection
 measurements. Each sphere represents an $hkl$ peak, color-coded to indicate the
-number of measurements (dark blue: 0, cyan: 1, green: 2, etc.). 
-a) without crystal symmetry, 2375 of 9481 reflections are measured, or 25\%.
-b) with crystal symmetry, 1276 of 1427 primary reflections are measured, or
+number of measurements (dark blue: 0, cyan: 1, green: 2, yellow: 3, red: 4 or
+more). a) without crystal symmetry, 2375 of 9481 reflections are measured, or
+25\%. b) with crystal symmetry, 1276 of 1427 primary reflections are measured, or
 89\%, and redundancy is also increased. }
 \ifdograph
   \includegraphics{refl_nosym} 
@@ -660,8 +658,8 @@ b)
 \end{figure}
 
 \begin{figure}
-\caption{GUI showing details of the predicted measurement positions for a
-single $hkl$.}
+\caption{Part of a GUI showing details of the predicted measurement positions
+for a single $hkl$ and some of its equivalents.}
 \ifdograph
   \includegraphics[width=3in]{single_reflection_3}
 \fi
