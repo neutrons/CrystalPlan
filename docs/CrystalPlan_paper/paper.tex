@@ -119,7 +119,7 @@ data possible, with sufficient coverage but limited redundancy, therefore
 increasing scientific productivity. 
 A user friendly GUI including a 3D viewer, an automated coverage optimizer,
 and an option to reorient the crystal for the measurement 
-of selected hkls on specific detector positions 
+of selected $hkl$s on specific detector positions 
 are among its useful features. 
 A sample use case of the program with the TOPAZ beamline at SNS will be
 presented. 
@@ -138,11 +138,11 @@ time-of-flight Laue diffractometer with high wavelength (time) resolution. It
 is designed to acquire single-crystal diffraction data of small-to-moderate sized unit cells with  high
 throughput. The final design calls for an array of 48 detectors covering three
 quarters of $2\pi$ steradians. However as of this writing, only 14 of the 48
-detectors are installed, giving only a quarter of $2\pi$ steradian coverage. In
-order to have sufficient data for a reliable structure solution and
+detectors are installed, giving only a quarter of $2\pi$ steradian coverage. 
+To have sufficient data for a reliable structure solution and
 refinement, an experimenter will typically want to measure $ > 85\%$ of the
-peaks within a certain range of d-spacings. However, wide wavelength band
-combined with TOPAZ's complex geometry makes it very difficult to come up with
+peaks within a certain range of d-spacings. However, TOPAZ's wide wavelength
+band combined with its complex geometry makes it difficult to come up with
 an effective set of sample orientations that will cover all the required peaks
 without unnecessary redundancy.   
 
@@ -155,10 +155,10 @@ resulting in a large number of sample orientations.
 These programs are not suitable for TOPAZ, since as a time-of-flight instrument
 (time-resolved Laue), it is collecting data from a wide
 bandwidth of incident neutrons, contracting the Ewald sphere through the
-reflection condition thus while keeping a crystal stationary, as described in
+reflection condition thus while keeping the crystal stationary, as described in
 \cite{Schultz94,Wilson00}.
  Additionally, this means that relatively few sample
-orientations are needed in order to complete a measurement: whereas an X-ray measurement might have
+orientations are needed to complete a measurement: whereas an X-ray measurement might have
 hundreds or thousands of individual frames, a TOPAZ run may have as few as 10
 to cover the same volume of reciprocal space.
 
@@ -168,8 +168,8 @@ planning their experiments. By quickly making an experimental plan that will be
 tailored to the needs of the scientist (enough peaks measured for a structure
 analysis), but without spending time collecting redundant data, CrystalPlan will
 greatly increase the scientific productivity and throughput of TOPAZ and other
-beamlines. Users will be able to measure samples highly efficiently, allowing
-them to explore parameters such as temperature and pressure more fully.
+similar beamlines. Users will be able to measure samples highly efficiently,
+allowing them to explore parameters such as temperature and pressure more fully.
  
 %---------------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------------
@@ -184,8 +184,8 @@ CrystalPlan is designed with these capabilities:
   \item Calculate the orientation of a crystal at different goniometer settings.
   \item Calculate the coverage of these orientations in reciprocal space,
   in volume and for single peaks.
-  \item Take crystal Bravais lattice symmetries and the higher redundancy of
-  higher space groups into account.
+  \item Take into account crystal Bravais lattice symmetries and the higher
+  redundancy of higher space groups.
   \item Optimize the experiment plan automatically.
   \item Compare predicted and actual measurement of peaks.
 \end{itemize}
@@ -227,7 +227,7 @@ CrystalPlan can load this UB matrix file and uses it for reciprocal coverage
 calculations and optimization.
     
   
-\subsection{Reciprocal Space Representation.}
+\subsection{Reciprocal Space Representation}
 
 The reciprocal space to be measured is divided into a cubic 3D matrix 
 of {\bf Q}-space (with {\bf Q} defined as $\frac{2\pi}{d}$). 
@@ -290,7 +290,7 @@ measured.
 Each $hkl$ peak is a separate object that holds all predicted
 recordings, including which detector measured it, at what (x,y) position on the
 detector face, at what wavelength, and for which sample orientation. These data
-is used to  graphically display coverage and calculate statistics such as
+are used to graphically display coverage and calculate statistics such as
 redundancy. 
 
 
@@ -329,7 +329,7 @@ measured.
 
 CrystalPlan allows the user to manually enter lists of sample orientations to
 simulate and graphically display the coverage in reciprocal space;
-however, finding an optimal plan by trial and error is in general very
+however, finding an optimal plan by trial and error is in general 
 time consuming and only feasible for an experienced crytallographer.
 To make the process more efficient, CrystalPlan includes an Automatic
 Coverage Optimizer, which takes as its inputs the desired number of sample
@@ -477,7 +477,7 @@ directions in the most sensitive part of a detector.
 
 \section{Sample Use Case}
 
-As part of the TOPAZ beamline commissioning process, a Natrolite
+As part of the TOPAZ beamline commissioning process, a natrolite
 (\ce{Na2Al2Si3O10} $\cdot$ \ce{2H2O}) single crystal was measured on a fixed
 $45\degree\ \chi$ goniometer at room temperature and ambient atmosphere. An
 initial short run (wavelength range from $\sim0.5$ \ang\ to $3.5$ \ang)
@@ -493,11 +493,10 @@ unattended overnight.
 Peaks were integrated using ISAW, and the resulting .integrate file was loaded
 into CrystalPlan for comparison. The predicted and actual measurement
 positions on each detector face were compared for the 554 integrated peaks
-found. Very good agreement was found; the
-RMS difference between the predicted and actual measurement wavelength was only
-0.016 \ang. The offsets in the peak position were plotted, which
-helped show that the main contributor to this error was a slight misalignment of
-the goniometer.
+found. Good agreement was found; the RMS difference between the predicted and
+actual measurement wavelength was only 0.016 \ang. The offsets in the peak
+position were plotted, which helped show that the main contributor to this error
+was a slight misalignment of the goniometer.
 
 %, whereas the RMS of the detector position error was 7.6 mm.
 
@@ -521,7 +520,7 @@ to help predict coverage in inelastic neutron scattering experiments. Another
 desired feature is the introduction of feedback loops to help determine the
 right time to end data acquisition at a particular sample orientation.
 CrystalPlan would interface with data analysis software such as ISAW and use
-recently developped capabilities for real-time data analysis to monitor
+recently developed capabilities for real-time data analysis to monitor
 the  signal to noise ratio on particular peaks. When the signal intensity
 becomes sufficient, the sample will automatically be moved to the next sample
 orientation, further adjusting data acquisition time for each specific sample.
