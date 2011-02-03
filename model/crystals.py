@@ -98,7 +98,7 @@ class Crystal(HasTraits):
         self.add_trait("point_group_name", Enum( get_point_group_names(long_name=True), value="1" ) )
         # Reflection conditions
         self.reflection_condition_name_list = get_reflection_condition_names()
-        self.add_trait("reflection_condition_name", Enum( get_reflection_condition_names(), value="1" ) )
+        self.add_trait("reflection_condition_name", Enum( get_reflection_condition_names(), value="Primitive" ) )
          
         #Pick the first long name
         self.point_group_name = get_point_group_names(long_name=True)[0]
