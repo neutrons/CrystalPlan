@@ -193,6 +193,7 @@ class DialogEditCrystal(wx.Dialog):
             Item("lattice_lengths_arr", label="Lattice sizes (Angstroms)", format_str="%.3f", style='readonly'),
             Item("lattice_angles_deg_arr", label="Lattice angles (degrees)", format_str="%.3f", style='readonly'),
             Item("point_group_name", label="Point Group:", editor=EnumEditor(name="point_group_name_list")),
+            Item("reflection_condition_name", label="Reflection Condition:", editor=EnumEditor(name="reflection_condition_name_list")),
             Item("ub_matrix", label="Sample's UB Matrix", style='readonly', format_str="%9.5f"),
             Item("ub_matrix_is_from", label="UB matrix obtained from", style='readonly'),
             label="" ),

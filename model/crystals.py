@@ -45,6 +45,9 @@ class Crystal(HasTraits):
     #List of options for the point group
     point_group_name_list = ['1']
 
+    #List of options for the reflection condition group
+    reflection_condition_name_list = ['Primitive']
+
     #Resulting or input UB matrix
     ub_matrix = Array( shape=(3,3), dtype=np.float)
 
@@ -73,6 +76,7 @@ class Crystal(HasTraits):
     #The hkl indices of interest. A list of (h,k,l) tuples.
     important_hkl = List
 
+    #========================================================================================================
     def __init__(self, name, description=""):
         """Constructor.
 
@@ -92,6 +96,10 @@ class Crystal(HasTraits):
         #Point Group symmetry of the crystal
         self.point_group_name_list = get_point_group_names(long_name=True)
         self.add_trait("point_group_name", Enum( get_point_group_names(long_name=True), value="1" ) )
+        # Reflection conditions
+        self.reflection_condition_name_list = get_reflection_condition_names()
+        self.add_trait("reflection_condition_name", Enum( get_reflection_condition_names(), value="1" ) )
+         
         #Pick the first long name
         self.point_group_name = get_point_group_names(long_name=True)[0]
 
@@ -130,6 +138,11 @@ class Crystal(HasTraits):
     def get_point_group(self):
         """Return the PointGroup object for this crystal."""
         return get_point_group_from_long_name(self.point_group_name)
+    
+    #--------------------------------------------------------------------
+    def get_reflection_conditions(self):
+        """Return a list of all ReflectionCondition's that apply """
+        return [get_refl_cond(self.reflection_condition_name)]
 
     #--------------------------------------------------------------------
     def is_lattice_valid(self):
@@ -785,21 +798,35 @@ class ReflectionCondition:
         ret = ret | ~apply
         return ret
             
+    # ---------------------------------------------------------------------------
+    def reflection_visible_matrix(self, hkl):
+        """Do reflection_visible() on a 3xN array of HKL
+        
+        Parameters:
+            hkl : ndarray of 3xN values of h, k, and l.
+        Returns:
+            vector of True/False.
+        """        
+        h = hkl[0,:]
+        k = hkl[1,:]
+        l = hkl[2,:]
+        return self.reflection_visible(h, k, l)
 
-""" Dictionary of name:ReflectionCondition object """        
-refl_conds = {}
+""" List of ReflectionCondition object """        
+refl_conds = []
 
 
 #================================================================================
 def make_all_reflection_conditions():
     """ Generate all the reflection conditions used in the program """
     def add(reflcond):
-        refl_conds[reflcond.name] = reflcond;
+        refl_conds.append(reflcond);
         
+    add( ReflectionCondition("Primitive", applies_to="h==h", reflection_condition="h==h"))
     add( ReflectionCondition("C-face centred", applies_to="h==h", reflection_condition="((h+k)%2)==0"))
     add( ReflectionCondition("A-face centred", applies_to="h==h", reflection_condition="((k+l)%2)==0"))
     add( ReflectionCondition("B-face centred", applies_to="h==h", reflection_condition="((h+l)%2)==0"))
-    add( ReflectionCondition("Body-face centred", applies_to="h==h", reflection_condition="((h+k+l)%2)==0"))
+    add( ReflectionCondition("Body centred", applies_to="h==h", reflection_condition="((h+k+l)%2)==0"))
     
     # condition: h+k, h+l and k+l==2n; or all even, or all odd.
     add( ReflectionCondition("All-face centred", applies_to="h==h", 
@@ -808,6 +835,19 @@ def make_all_reflection_conditions():
     add( ReflectionCondition("Rhombohedrally centred, obverse", applies_to="h==h", reflection_condition="((-h+k+l)%3)==0"))
     add( ReflectionCondition("Rhombohedrally centred, reverse", applies_to="h==h", reflection_condition="((h-k+l)%3)==0"))
     add( ReflectionCondition("Hexagonally centred, reverse", applies_to="h==h", reflection_condition="((h-k)%3)==0"))
+
+#================================================================================
+def get_reflection_condition_names():
+    """Returns a list of all the ReflectionCondition' names. """
+    return [rc.name for rc in refl_conds]
+
+#================================================================================
+def get_refl_cond(name):
+    """Returns the ReflectionCondition named. """
+    for rc in refl_conds:
+        if rc.name == name:
+            return rc
+    return None
 
 if len(refl_conds)==0:
     make_all_reflection_conditions()
@@ -828,16 +868,21 @@ class TestReflectionCondition(unittest.TestCase):
     """Unit test for the Crystal class."""
 
     def test_CFC(self):
-        rc = refl_conds["C-face centred"]
+        rc = get_refl_cond("C-face centred")
         h = [0,0,0,1,1,1,2,2,2]
         k = [0,1,2,0,1,2,0,1,2]
         l = [0,1,3,4,5,6,7,8,9]
         v = [1,0,1,0,1,0,1,0,1] # 1 == this will be valid
         res_vis = rc.reflection_visible(h, k, l)
         assert matches(v, res_vis)
+
+        # Same but with the matrix call        
+        hkl = np.array([h,k,l])
+        res_vis2 = rc.reflection_visible_matrix(hkl)
+        assert matches(v, res_vis2)
         
     def test_All_FC(self):
-        rc = refl_conds["All-face centred"]
+        rc = get_refl_cond("All-face centred")
         h = [0,1,0,1,1]
         k = [0,1,0,3,2]
         l = [0,1,1,1,3]

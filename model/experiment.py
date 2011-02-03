@@ -639,6 +639,18 @@ class Experiment:
         #Last axis (l) varies fastest. Repeat sequence over and over
         reflections_hkl[2, :] = np.tile(l_list, num_h*num_k)
         
+        
+        # Get a list of all the reflection conditions contained.
+        rc_list = self.crystal.get_reflection_conditions()
+        # Start with all true
+        visible = h_list==h_list
+        for rc in rc_list:
+            if not rc is None:
+                visible = visible & rc.reflection_visible_matrix(reflections_hkl)
+            
+        # Take off anything not visible
+        reflections_hkl = reflections_hkl[:,visible]
+        
         #Calculate all the q vectors at once
         all_q_vectors = np.dot(self.crystal.reciprocal_lattice, reflections_hkl)
         self.reflections_q_norm = np.sqrt(np.sum(all_q_vectors**2, axis=0))

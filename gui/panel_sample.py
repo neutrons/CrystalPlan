@@ -200,6 +200,7 @@ class PanelSample(wx.Panel):
             Item("lattice_angles_deg_arr", label="Lattice angles (degrees)", format_str="%.3f", style='readonly'),
             Item("ub_matrix", label="Sample's UB Matrix", style='readonly', format_str="%9.5f"),
             Item("point_group_name", label="Point Group", style='readonly'),
+            Item("reflection_condition_name", label="Reflection Condition", style='readonly'),
 #            Item("recip_a", label="a*", style='readonly'),
 #            Item("recip_b", label="b*", style='readonly'),
 #            Item("recip_c", label="c*", style='readonly'),
@@ -370,7 +371,7 @@ class PanelSample(wx.Panel):
 
 
 if __name__=="__main__":
-    model.crystals.initialize()
+    model.crystals._initialize()
     #Test routine
     model.instrument.inst = model.instrument.Instrument()
     model.experiment.exp = model.experiment.Experiment(model.instrument.inst)
