@@ -347,7 +347,7 @@ class Crystal(HasTraits):
 
 
 #================================================================================
-#============================ GENERATORS ======================================
+#============================ GENERATORS ========================================
 #================================================================================
 
 class Generator():
@@ -722,6 +722,95 @@ if len(point_groups)==0:
 
 
 
+#================================================================================
+#============================ REFLECTION CONDITIONS =============================
+#================================================================================
+class ReflectionCondition:
+    """Class describing reflection conditions, e.g.
+        h + k = 2n for (hkl),
+    and utility functions for filtering all HKL into
+    just those that match the condition."""
+    
+    def __init__(self, name, applies_to, reflection_condition):
+        """Constructor:
+        Parameters:
+            name: name of the reflection condition
+            applies_to: python string that evaluates to a vector of [true] if the
+                given h,k,l are one that applies to. (h k l are vectors)
+            reflection_condition: python string that evaluates to a vector of [true]
+                if the given h,k,l reflection WILL be present in diffraction.
+        """
+        self.name = name
+        self.applies_to = applies_to
+        self.reflection_condition = reflection_condition
+        
+    # ---------------------------------------------------------------------------
+    def applies(self, h, k, l):
+        """Does this reflection condition apply to these hkl?
+        Parameters:
+            h,k,l : vectors of h, k, and l.
+        Returns:
+            vector of True/False.
+        """
+        # Make sure inputs are flat vectors
+        h = np.array(h).flatten()
+        k = np.array(k).flatten()
+        l = np.array(l).flatten()
+        # Evaluate the python bit
+        ret = eval(self.applies_to)
+        return ret
+    
+    
+    # ---------------------------------------------------------------------------
+    def reflection_visible(self, h, k, l):
+        """Will this reflection be visible given the reflection conditions?
+        This takes into account whether or not the condition applies, e.g.
+        if it does not apply, then it returns True; if it does apply,
+        it evaluates the condition to determine truth 
+        
+        Parameters:
+            h,k,l : vectors of h, k, and l.
+        Returns:
+            vector of True/False.
+        """
+        # Make sure inputs are flat vectors
+        h = np.array(h).flatten()
+        k = np.array(k).flatten()
+        l = np.array(l).flatten()
+        # Get the applies vector
+        apply = self.applies(h, k, l)
+        # Evaluate the python bit
+        ret = eval(self.reflection_condition)
+        # Anything where it did not apply becomes "true"
+        ret = ret | ~apply
+        return ret
+            
+
+""" Dictionary of name:ReflectionCondition object """        
+refl_conds = {}
+
+
+#================================================================================
+def make_all_reflection_conditions():
+    """ Generate all the reflection conditions used in the program """
+    def add(reflcond):
+        refl_conds[reflcond.name] = reflcond;
+        
+    add( ReflectionCondition("C-face centred", applies_to="h==h", reflection_condition="((h+k)%2)==0"))
+    add( ReflectionCondition("A-face centred", applies_to="h==h", reflection_condition="((k+l)%2)==0"))
+    add( ReflectionCondition("B-face centred", applies_to="h==h", reflection_condition="((h+l)%2)==0"))
+    add( ReflectionCondition("Body-face centred", applies_to="h==h", reflection_condition="((h+k+l)%2)==0"))
+    
+    # condition: h+k, h+l and k+l==2n; or all even, or all odd.
+    add( ReflectionCondition("All-face centred", applies_to="h==h", 
+                             reflection_condition="((((h+k)%2)==0) & (((h+l)%2)==0) & (((k+l)%2)==0)) | ((h%2==0) & (k%2==0) & (l%2==0)) | ((h%2==1) & (k%2==1) & (l%2==1))"))
+    
+    add( ReflectionCondition("Rhombohedrally centred, obverse", applies_to="h==h", reflection_condition="((-h+k+l)%3)==0"))
+    add( ReflectionCondition("Rhombohedrally centred, reverse", applies_to="h==h", reflection_condition="((h-k+l)%3)==0"))
+    add( ReflectionCondition("Hexagonally centred, reverse", applies_to="h==h", reflection_condition="((h-k)%3)==0"))
+
+if len(refl_conds)==0:
+    make_all_reflection_conditions()
         
 
 #================================================================================
@@ -729,6 +818,51 @@ if len(point_groups)==0:
 #================================================================================
 import unittest
 from numpy import pi
+
+def matches(a,b):
+    """Match a list of 0,1 to an array of True/False"""
+    return np.all( (np.array(a)==1) == b)
+
+#==================================================================
+class TestReflectionCondition(unittest.TestCase):
+    """Unit test for the Crystal class."""
+
+    def test_CFC(self):
+        rc = refl_conds["C-face centred"]
+        h = [0,0,0,1,1,1,2,2,2]
+        k = [0,1,2,0,1,2,0,1,2]
+        l = [0,1,3,4,5,6,7,8,9]
+        v = [1,0,1,0,1,0,1,0,1] # 1 == this will be valid
+        res_vis = rc.reflection_visible(h, k, l)
+        assert matches(v, res_vis)
+        
+    def test_All_FC(self):
+        rc = refl_conds["All-face centred"]
+        h = [0,1,0,1,1]
+        k = [0,1,0,3,2]
+        l = [0,1,1,1,3]
+        v = [1,1,0,1,0] # 1 == this will be valid
+        res_vis = rc.reflection_visible(h, k, l)
+        assert matches(v, res_vis)
+        
+        
+        
+    def test_applies(self):
+        rc = ReflectionCondition("test", applies_to="h==0", reflection_condition="((k+l)%2)==0")
+        h = [0,0,0,0,1,1]
+        k = [0,1,0,1,0,1]
+        l = [0,0,1,1,0,1]
+        a = [1,1,1,1,0,0] # applies
+        v = [1,0,0,1,1,1] # 1 == this will be valid
+        
+        res_app = rc.applies(h, k, l)
+        assert matches(a, res_app)
+         
+        res_vis = rc.reflection_visible(h, k, l)
+        assert matches(v, res_vis)
+
+        
+
 
 #==================================================================
 class TestCrystal(unittest.TestCase):
@@ -884,13 +1018,14 @@ class TestCrystal(unittest.TestCase):
         UB = c.ub_matrix
         print "UB matrix loaded (including 2pi) is:\n", UB
 
+
 #---------------------------------------------------------------------
 if __name__ == "__main__":
-#    unittest.main()
+    unittest.main()
 
-    tst = TestCrystal('test_read_HFIR_ubmatrix_file')
-    tst.setUp()
-    tst.test_read_HFIR_ubmatrix_file()
+#    tst = TestCrystal('test_read_HFIR_ubmatrix_file')
+#    tst.setUp()
+#    tst.test_read_HFIR_ubmatrix_file()
 
 
 
