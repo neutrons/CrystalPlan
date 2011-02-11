@@ -49,7 +49,7 @@
   
 \newif\ifdograph
 \dographtrue % DO keep the graphs.
-\dographfalse % DONT put graphs - makes things faster
+%\dographfalse % DONT put graphs - makes things faster
 
 \usepackage{ifpdf}
 
@@ -115,7 +115,7 @@ beamtime per sample per experiment.
 This program can calculate and optimize the data coverage of a crystal in
 reciprocal space in a single-crystal diffraction time-of-flight experiment.
 CrystalPlan can help a user build an experiment plan that will acquire the most
-data possible, with sufficient coverage but limited redundancy, therefore
+unique data possible, with sufficient coverage but limited redundancy, therefore
 increasing scientific productivity. 
 A user friendly GUI (Graphical User Interface) including a 3D viewer, an
 automated coverage optimizer, and an option to reorient the crystal for the measurement 
@@ -141,9 +141,9 @@ quarters of $2\pi$ steradians. However as of this writing, only 14 of the 48
 detectors are installed, giving only a quarter of $2\pi$ steradian coverage. 
 To have sufficient data for a reliable structure solution and
 refinement, an experimenter will typically want to measure $ > 85\%$ of the
-peaks within a certain range of d-spacings. However, TOPAZ's wide wavelength
-band combined with its complex geometry makes it difficult to come up with
-an effective set of sample orientations that will cover all the required peaks
+unique reflections within a certain range of d-spacings. However, TOPAZ's wide
+wavelength band combined with its complex geometry makes it difficult to come up with
+an effective set of sample orientations that will cover all the required reflections
 without unnecessary redundancy.   
 
 
@@ -165,7 +165,7 @@ to cover the same volume of reciprocal space.
 
 The goal of CrystalPlan was to make an easy-to-use software tool to aid users in
 planning their experiments. By quickly making an experimental plan that will be
-tailored to the needs of the scientist (enough peaks measured for a structure
+tailored to the needs of the scientist (enough reflections measured for a structure
 analysis), but without spending time collecting redundant data, CrystalPlan will
 greatly increase the scientific productivity and throughput of TOPAZ and other
 similar beamlines. Users will be able to measure samples highly efficiently,
@@ -183,11 +183,11 @@ CrystalPlan is designed with these capabilities:
   flexible file format).
   \item Calculate the orientation of a crystal at different goniometer settings.
   \item Calculate the coverage of these orientations in reciprocal space,
-  in volume and for single peaks.
+  in volume and for single reflections.
   \item Take into account crystal Bravais lattice symmetries and the higher
   redundancy of higher space groups.
   \item Optimize the experiment plan automatically.
-  \item Compare predicted and actual measurement of peaks.
+  \item Compare predicted and actual measurement of reflections.
 \end{itemize}
 
 \subsection{Instrument Configuration}
@@ -212,9 +212,9 @@ $\phi$, $\chi$, $\omega$ as defined in \cite{busing67}.
 Each class inheriting from the base Goniometer can convert
 the desired $\phi$, $\chi$, $\omega$ angles to the internal motor positions it requires. 
 The class hierarchy allows for goniometer limitations: for example, TOPAZ is
-currently equipped with a goniometer where $\chi$ is fixed at 45 degrees.
-CrystalPlan handles this by limiting the sample orientation angles accessible to the user to $\phi$ and
-$\omega$.
+currently equipped with a goniometer where $\chi$ is fixed at 45 degrees
+(at $\omega$ to the incident beam). CrystalPlan handles this by limiting the
+sample orientation angles accessible to the user to $\phi$ and $\omega$.
     
 The sample unit cell and orientation is typically determined by the data
 collection/reduction software. In our case, from an initial data set, the data
@@ -280,14 +280,14 @@ detectors are disabled, for example.
 
 Crystal lattice parameters (lengths $a$, $b$, $c$ and angles $\alpha$, $\beta$,
 $\gamma$) are typed in or loaded from the ISAW UB matrix file. CrystalPlan then
-generates a list of $hkl$ peaks with d-spacings larger than the $d_{min}$
-specified. For each sample orientation being simulated and for each peak, a function calculates at
+generates a list of $hkl$ reflections with d-spacings larger than the $d_{min}$
+specified. For each sample orientation being simulated and for each reflection, a function calculates at
 what wavelength $\lambda$ and in which direction it scatters. If $\lambda$ 
 is within range of the limits of the instrument, the beam direction is projected
 onto each detector face to determine where, on each detector surface, it will be
 measured. 
  
-Each $hkl$ peak is a separate object that holds all predicted
+Each $hkl$ reflection is a separate object that holds all predicted
 recordings, including which detector measured it, at what (x,y) position on the
 detector face, at what wavelength, and for which sample orientation. These data
 are used to graphically display coverage and calculate statistics such as
@@ -436,7 +436,7 @@ order to begin a run \cite{SNSDAS}.
 
 \subsubsection{Reciprocal Space Coverage Visualization.}
 Figure \ref{fig:volume_view}a) shows a screenshot of the reciprocal space
-coverage 3D interface. The 3D view can represent {\bf Q}-space in two ways: volume coverage, or single-peak
+coverage 3D interface. The 3D view can represent {\bf Q}-space in two ways: volume coverage, or single-reflection
 coverage. The view shown can be rotated, translated or zoomed using the mouse or
 keyboard.
 
@@ -457,17 +457,17 @@ whereas the single reflection view (Figure \ref{fig:refl_view}b) leaves only
 the primary reflections (one eight of the total, in this example).
  
 Finally, both views display coverage statistics in the lower right
-corner, showing the percentage of volume (or of the number of peaks) measured,
-as well as the proportion of redundancy (voxels or peaks measured 2 or more
+corner, showing the percentage of volume (or of the number of reflections) measured,
+as well as the proportion of redundancy (voxels or reflections measured 2 or more
 times). 
 
 \subsubsection{Single Reflection View.}
 Figure \ref{fig:single_reflection} shows a screenshot of the GUI allowing one to
-observe in detail the predicted measurements of a particular peak, by clicking
+observe in detail the predicted measurements of a particular reflection, by clicking
 in the 3D view or by typing in the $hkl$ values. The position on the detector
-and wavelength of measurement are displayed. An additional window (not shown) allows the user to place the peak on a particular
+and wavelength of measurement are displayed. An additional window (not shown) allows the user to place the reflection on a particular
 position on a detector by automatically finding the necessary sample orientation
-angles. This is used, for example, to center important peaks or diffraction
+angles. This is used, for example, to center important reflections or diffraction
 directions in the most sensitive part of a detector.
 
 
@@ -479,28 +479,33 @@ directions in the most sensitive part of a detector.
 
 As part of the TOPAZ beamline commissioning process, a natrolite
 (\ce{Na2Al2Si3O10} $\cdot$ \ce{2H2O}) single crystal was measured on a fixed
-$45\degree\ \chi$ goniometer at room temperature and ambient atmosphere. An
-initial short run (wavelength range from $\sim0.5$ \ang\ to $3.5$ \ang)
-was processed using ISAW to determine the UB matrix and cell parameters of the crystal.
+$45\degree\ \chi$ goniometer at room temperature and ambient atmosphere, with a
+wavelength range from $\sim0.5$ \ang\ to $3.5$ \ang.
+An initial short event file (each neutron detection event is saved with its
+time-of-flight and position) was processed using ISAW to determine the UB
+matrix and cell parameters of the crystal.
 
 The resulting UB matrix was loaded into CrystalPlan, where the Automatic
 Coverage Optimizer was used to generate an experiment plan with 8 sample
-orientations (Figure \ref{fig:natrolite_gui}a) that covered 97\% of the peaks,
+orientations (Figure \ref{fig:natrolite_gui}a) that covered 97\% of the reflections,
 taking into account the crystal Laue symmetry (orthorhombic or mmm) (Figure
 \ref{fig:natrolite_gui}b). The eight orientations were run
 unattended overnight.
 
-Peaks were integrated using ISAW, and the resulting .integrate file was loaded
-into CrystalPlan for comparison. The predicted and actual measurement
-positions on each detector face were compared for the 554 integrated peaks
+Reflections were integrated using ISAW, and the resulting file was
+loaded into CrystalPlan for comparison. The predicted and actual measurement
+positions on each detector face were compared for the 554 integrated reflections
 found. Good agreement was found; the root-mean-square difference between the
-predicted and actual measurement wavelength was only 0.016 \ang. The offsets in the peak
+predicted and actual measurement wavelength was only 0.016 \ang. The offsets in the reflection
 position were plotted, which helped show that the main contributor to this error
 was a slight misalignment of the goniometer.
 
 %NOTE: Check on this misalignment of goniometer business - is that really the
 % cause?
 
+CrystalPlan was also successfully used in a similar way during experiments run
+on the TOPAZ instrument by Yuri Janssen from State University of New York, Stony
+Brook, and Henrik Clausen from University of Aarhus, Denmark. 
 
 %---------------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------------
@@ -511,7 +516,10 @@ was a slight misalignment of the goniometer.
 We have described CrystalPlan, a software program designed to quickly produce
 efficient experiment plans for wide bandwidth time-of-flight Laue
 diffractometers. This program will help increase scientific productivity at SNS
-beamlines such as TOPAZ.
+beamlines such as TOPAZ. With some relatively minor modifications, the program
+could also be adapted for use at reactor sources. Monochromatic reactor sources
+could be handled by adding support sweeps consisting of many motor positions;
+Laue diffractometers would requiring detecting and removing reflections with chromatic overlap. 
 
 One planned future development for CrystalPlan include extending the software
 to help predict coverage in inelastic neutron scattering experiments. Another
@@ -519,7 +527,7 @@ desired feature is the introduction of feedback loops to help determine the
 right time to end data acquisition at a particular sample orientation.
 CrystalPlan would interface with data analysis software such as ISAW and use
 recently developed capabilities for real-time data analysis to monitor
-the  signal to noise ratio on particular peaks. When the signal intensity
+the  signal to noise ratio on particular reflections. When the signal intensity
 becomes sufficient, the sample will automatically be moved to the next sample
 orientation, further adjusting data acquisition time for each specific sample.
 Combined with advanced sample changers coming on-line at TOPAZ, this will allow
@@ -641,7 +649,7 @@ b)
 
 \begin{figure}
 \caption{Sample screenshot showing the 3D view of single-crystal reflection
-measurements. Each sphere represents an $hkl$ peak, color-coded to indicate the
+measurements. Each sphere represents an $hkl$ reflection, color-coded to indicate the
 number of measurements (dark blue: 0, cyan: 1, green: 2, yellow: 3, red: 4 or
 more). a) without crystal symmetry, 2375 of 9481 reflections are measured, or
 25\%. b) with crystal symmetry, 1276 of 1427 primary reflections are measured, or
