@@ -643,7 +643,7 @@ def print_pop(ga_engine, *args):
 
 if __name__ == "__main__":
     #Inits
-    instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")
+    instrument.inst = instrument.Instrument("../instruments/TOPAZ_geom_all_2011.csv")
     instrument.inst.set_goniometer(goniometer.TopazInHouseGoniometer())
     experiment.exp = experiment.Experiment(instrument.inst)
     exp = experiment.exp

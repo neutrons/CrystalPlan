@@ -701,7 +701,7 @@ class PanelExperiment(wx.Panel):
 
 if __name__ == "__main__":
     #Ok, create the instrument
-    model.instrument.inst = model.instrument.Instrument("model/TOPAZ_detectors_all.csv")
+    model.instrument.inst = model.instrument.Instrument("model/TOPAZ_geom_all_2011.csv")
     model.instrument.inst.make_qspace()
     #Initialize the instrument and experiment
     model.experiment.exp = model.experiment.Experiment(model.instrument.inst)

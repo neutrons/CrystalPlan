@@ -280,7 +280,7 @@ class PanelQspaceOptions(wx.Panel):
 
 if __name__ == '__main__':
     #Ok, create the instrument
-    model.instrument.inst = model.instrument.InstrumentInelastic("../instruments/TOPAZ_detectors_2010.csv")
+    model.instrument.inst = model.instrument.InstrumentInelastic("../instruments/TOPAZ_geom_all_2011.csv")
     model.instrument.inst.make_qspace()
     #Initialize the instrument and experiment
     model.experiment.exp = model.experiment.Experiment(model.instrument.inst)

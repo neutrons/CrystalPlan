@@ -514,7 +514,7 @@ def find_parent_frame(window):
 
 
 if __name__=="__main__":
-    model.instrument.inst = model.instrument.Instrument("../instruments/TOPAZ_detectors_2010.csv")
+    model.instrument.inst = model.instrument.Instrument("../instruments/TOPAZ_geom_all_2011.csv")
     model.experiment.exp = model.experiment.Experiment(model.instrument.inst)
     save_configuration()
 #    app = wx.PySimpleApp()

@@ -2469,7 +2469,7 @@ import copy
 class TestExperiment(unittest.TestCase):
 
     def setUp(self):
-        instrument.inst = instrument.Instrument("../instruments/TOPAZ_detectors_all.csv")
+        instrument.inst = instrument.Instrument("../instruments/TOPAZ_geom_all_2011.csv")
         instrument.inst.set_goniometer(goniometer.Goniometer() )
         self.exp = Experiment(instrument.inst)
         e = self.exp

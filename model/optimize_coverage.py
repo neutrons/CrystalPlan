@@ -355,7 +355,7 @@ def optimize_detector_choice(optim_params, gui=False):
 def test_setup():
     """Setup a small test."""
     #Create the space
-    instrument.inst = instrument.Instrument("TOPAZ_detectors_all.csv")
+    instrument.inst = instrument.Instrument("TOPAZ_geom_all_2011.csv")
     experiment.exp = experiment.Experiment(instrument.inst)
     experiment.exp.inst.make_qspace()
     experiment.exp.verbose = False
