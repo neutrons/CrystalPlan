@@ -401,7 +401,7 @@ generators = {}
 def make_generators():
     """Make all the (positive) generator matrices.
 
-    Taken from Giacovazzo, Fundamentals of Crystallography, p.43
+    Taken from Giacovazzo, Fundamentals of Crystallography, p.43.
     """
     generators["1"] = Generator([ [1,0,0], [0,1,0], [0,0,1] ], 1)
     generators["2;1,0,0"] = Generator([ [1,0,0], [0,-1,0], [0,0,-1] ], 2)
@@ -488,20 +488,20 @@ class PointGroup():
 
     #----------------------------------------------------------------
     def __init__(self, name, long_name, expected_order, preferred_axis, *args):
-        """Contructor
+        """Constructor.
 
         Parameters:
             name: string, short name of the point group, e.g. "4mm".
                 Use a "-" as a prefix to indicate "bar", e.g. 1-bar = "-1"
 
             long_name: string, longer description of the point group
-            args: one or more 3x3 generator matrices names, as strings, e.g. "2;1,0,0".
-                use a "-" to indicate a negative generator, "-2;1,0,0"
             expected_order: order of the point group (aka number of matrices in the
                 multiplication table). An error is raised if the calculation
                 does not yield this expected number
             preferred_axis: string, 'h', 'k', or 'lkh', the rotation axis to prioritize
                 when choosing which peaks are 'primary' ones
+            args: one or more 3x3 generator matrices names, as strings, e.g. "2;1,0,0".
+                use a "-" to indicate a negative generator, "-2;1,0,0"
         """
         self.name = name
         self.long_name = long_name
@@ -625,7 +625,8 @@ class PointGroup():
         return results
 
 
-
+# Do we make all 32 point groups (True)? Or only the 11 with a center of inversion (False)?
+make_all_point_groups = True
 
 #List of all point groups
 point_groups = []
@@ -650,8 +651,8 @@ def unique(x):
 def make_all_point_groups():
     """Hard-coded function that generates all the standard point groups.
 
-    Generator matrices taken from Giacovazzo, Fundamentals of Crystallography, p.46
-    Generator choice from IUCR International Tables for Crystallography, Vol A, ch.8.3
+    Generator matrices taken from Giacovazzo, Fundamentals of Crystallography, p.46.
+    Generator choice from IUCR International Tables for Crystallography, Vol A, ch.8.3, table 8.3.5.1, p.737.
     """
 
     #11 Laue classes
@@ -669,29 +670,40 @@ def make_all_point_groups():
     point_groups.append( PointGroup("m-3", "m-3 (Cubic)", 24, 'lkh', "2;0,0,1", "2;0,1,0", "3;1,1,1", "-1" ))
     point_groups.append( PointGroup("m-3m", "m-3m (Cubic)", 48, 'lkh',"2;0,0,1", "2;0,1,0", "3;1,1,1", "2;1,1,0", "-1" ))
 
-    if False:
+    if make_all_point_groups:
         #The following point groups do not have an inversion center,
         #   and therefore are not meaningful in diffraction experiments
-        point_groups.append( PointGroup("1", "identity", 1, 'lkh', "1") )
-        point_groups.append( PointGroup("2", "two-fold rotation along y axis", 2, 'k', "2;0,1,0"))
-        point_groups.append( PointGroup("m", "mirror operation in the xy plane", 2, 'k', "-2;0,0,1"))
-        point_groups.append( PointGroup("3", "three-fold rotation along z axis", 3, 'lkh', "H3;0,0,1"))
-        point_groups.append( PointGroup("4", "four-fold rotation along z axis", 4, 'lkh', "4;0,0,1"))
-        point_groups.append( PointGroup("6", "six-fold rotation along z axis", 6, 'lkh', "H6;0,0,1"))
-        point_groups.append( PointGroup("-4", "four-fold rotoinversion along z axis", 4, 'lkh', "-4;0,0,1"))
-        point_groups.append( PointGroup("-6", "six-fold rotoinversion along z axis", 6, 'lkh', "-H6;0,0,1"))
-        point_groups.append( PointGroup("222", "", 4, 'lkh', "2;1,0,0", "2;0,1,0" ))
-        point_groups.append( PointGroup("mm2", "", 4, 'lkh', "-2;1,0,0", "2;0,0,1" ))
-        point_groups.append( PointGroup("32", "", 6, 'lkh', "H3;0,0,1", "2;1,1,0" )) #Changed 2nd generator from book
-        point_groups.append( PointGroup("3m", "", 6, 'lhk', "H3;0,0,1", "-2;1,1,0" )) #Changed 2nd generator from book!
-        point_groups.append( PointGroup("422", "", 8, 'lkh', "2;1,0,0", "2;1,-1,0" ))
-        point_groups.append( PointGroup("4mm", "", 8, 'lkh', "-2;1,0,0", "-2;1,-1,0" ))
-        point_groups.append( PointGroup("-62m", "", 12, 'lkh', "-2;1,0,0", "2;1,-1,0" ))
-        point_groups.append( PointGroup("622", "", 12, 'lkh', "2;1,0,0", "2;1,-1,0" ))
-        point_groups.append( PointGroup("6mm", "", 12, 'lkh', "-2;1,0,0", "-2;1,-1,0" ))
-        point_groups.append( PointGroup("23", "", 12, 'lhk', "3;1,1,1", "2;0,0,1" ))
-        point_groups.append( PointGroup("432", "", 24, 'lkh', "3;1,1,1", "2;1,1,0" ))
-        point_groups.append( PointGroup("-43m", "", 24, 'lkh', "3;1,1,1", "-2;1,1,0" ))
+        point_groups.append( PointGroup("1", "1 (Triclinic)", 1, 'lkh', "1") )
+        
+        point_groups.append( PointGroup("2", "2 (Monoclinic)", 2, 'k', "2;0,1,0"))
+        point_groups.append( PointGroup("m", "m (Monoclinic)", 2, 'k', "-2;0,0,1"))
+        
+        point_groups.append( PointGroup("222", "222 (Orthorombic)", 4, 'lkh', "2;1,0,0", "2;0,1,0" ))
+        point_groups.append( PointGroup("mm2", "mm3 (Orthorombic)", 4, 'lkh', "-2;1,0,0", "2;0,0,1" ))
+
+        point_groups.append( PointGroup("4", "4 (Tetragonal)", 4, 'lkh', "4;0,0,1"))
+        point_groups.append( PointGroup("-4", "-4 (Tetragonal)", 4, 'lkh', "-4;0,0,1"))
+        point_groups.append( PointGroup("422", "422 (Tetragonal)", 8, 'lkh', "2;1,0,0", "4;0,0,1", "2;1,-1,0" ))
+        point_groups.append( PointGroup("4mm", "4mm (Tetragonal)", 8, 'lkh', "-2;1,0,0", "4;0,0,1", "-2;1,-1,0" ))
+        point_groups.append( PointGroup("-42m", "-42m (Tetragonal)", 8, 'lkh', "2;0,0,1", "-4;0,0,1", "2;0,1,0" ))
+        point_groups.append( PointGroup("-4m2", "-4m2 (Tetragonal)", 8, 'lkh', "2;0,0,1", "-4;0,0,1", "-2;0,1,0" ))
+        
+        point_groups.append( PointGroup("3", "3 (Trigonal)", 3, '3kh', "H3;0,0,1"))
+        point_groups.append( PointGroup("321", "321 (Trigonal)", 6, '3kh', "H3;0,0,1", "2;1,1,0" )) 
+        point_groups.append( PointGroup("312", "312 (Trigonal)", 6, '3kh', "H3;0,0,1", "2;1,-1,0" ))
+        point_groups.append( PointGroup("3m1", "3m1 (Trigonal)", 6, '3kh', "H3;0,0,1", "-2;1,1,0" )) 
+        point_groups.append( PointGroup("31m", "31m (Trigonal)", 6, '3kh', "H3;0,0,1", "-2;1,-1,0" )) 
+        
+        point_groups.append( PointGroup("6", "6 (Hexagonal)", 6, 'lkh', "H6;0,0,1"))
+        point_groups.append( PointGroup("-6", "-6 (Hexagonal)", 6, 'lkh', "-H6;0,0,1"))
+        point_groups.append( PointGroup("622", "622 (Hexagonal)", 12, 'lkh', "H3;0,0,1", "2;0,0,1", "2;1,1,0")) #"2;1,0,0", "2;1,-1,0" ))
+        point_groups.append( PointGroup("6mm", "6mm (Hexagonal)", 12, 'lkh', "H3;0,0,1", "2;0,0,1", "-2;1,1,0")) #"-2;1,0,0", "-2;1,-1,0" ))
+        point_groups.append( PointGroup("-6m2", "-6m2 (Hexagonal)", 12, 'lkh', "H3;0,0,1", "-2;0,0,1", "-2;1,1,0")) #  "-2;1,0,0", "2;1,-1,0" ))
+        point_groups.append( PointGroup("-62m", "-62m (Hexagonal)", 12, 'lkh', "H3;0,0,1", "-2;0,0,1", "2;1,1,0")) #  "-2;1,0,0", "2;1,-1,0" ))
+        
+        point_groups.append( PointGroup("23", "23 (Cubic)", 12, 'lhk', "2;0,0,1", "2;0,1,0", "3;1,1,1")) #"3;1,1,1", "2;0,0,1" ))
+        point_groups.append( PointGroup("432", "432 (Cubic)", 24, 'lkh', "2;0,0,1", "2;0,1,0", "3;1,1,1", "2;1,1,0")) #"3;1,1,1", "2;1,1,0" ))
+        point_groups.append( PointGroup("-43m", "-43m (Cubic)", 24, 'lkh', "2;0,0,1", "2;0,1,0", "3;1,1,1", "-2;1,-1,0")) #"3;1,1,1", "-2;1,1,0" ))
 
 
 #================================================================================
@@ -1037,10 +1049,10 @@ class TestCrystal(unittest.TestCase):
 
         assert len(found)==len(hkl_expected), "correct # of results for %s. We wanted %d results but got %d" % (message, len(hkl_expected), len(found))
         for hkl_wanted in hkl_expected:
-            assert hkl_wanted in found, "hkl %s was found in the list of results for %s" % (hkl_wanted, message)
+            assert hkl_wanted in found, "hkl %s was found in the list of results for %s.\nfound=%s" % (hkl_wanted, message,found)
 
     def test_point_groups(self):
-        """Exhaustive and exhausting test each of the 11 Laue classes equivalent hkls"""
+        """Exhaustive and exhausting test each of the 11 Laue classes/32 point groups equivalent hkls"""
         self.check_point_group("-1", (1,2,3), [(1,2,3),(-1,-2,-3)] )
         self.check_point_group("1 2/m 1", (1,2,3), [(1,2,3), (-1,-2,-3), (-1,2,-3), (1,-2,3)  ])
         self.check_point_group("1 1 2/m", (1,2,3), [(1,2,3), (-1,-2,3), (-1,-2,-3), (1,2,-3)  ])
@@ -1054,6 +1066,22 @@ class TestCrystal(unittest.TestCase):
         self.check_point_group("6/mmm", (1,2,3), [(1,2,3),(-2,1-2,3),(-1+2,-1,3),(-1,-2,3),(2,-1+2,3),(1-2,1,3),(2,1,-3),(1-2,-2,-3),(-1,-1+2,-3),(-2,-1,-3),(-1+2,2,-3),(1,1-2,-3),(-1,-2,-3),(2,-1+2,-3),(1-2,1,-3),(1,2,-3),(-2,1-2,-3),(-1+2,-1,-3),(-2,-1,3),(-1+2,2,3),(1,1-2,3),(2,1,3),(1-2,-2,3),(-1,-1+2,3)])
         self.check_point_group("m-3", (1,2,3), [(1,2,3),(-1,-2,3),(-1,2,-3),(1,-2,-3),(3,1,2),(3,-1,-2),(-3,-1,2),(-3,1,-2),(2,3,1),(-2,3,-1),(2,-3,-1),(-2,-3,1),(-1,-2,-3),(1,2,-3),(1,-2,3),(-1,2,3),(-3,-1,-2),(-3,1,2),(3,1,-2),(3,-1,2),(-2,-3,-1),(2,-3,1),(-2,3,1),(2,3,-1)] )
         self.check_point_group("m-3m", (1,2,3), [(1,2,3),(-1,-2,3),(-1,2,-3),(1,-2,-3),(3,1,2),(3,-1,-2),(-3,-1,2),(-3,1,-2),(2,3,1),(-2,3,-1),(2,-3,-1),(-2,-3,1),(2,1,-3),(-2,-1,-3),(2,-1,3),(-2,1,3),(1,3,-2),(-1,3,2),(-1,-3,-2),(1,-3,2),(3,2,-1),(3,-2,1),(-3,2,1),(-3,-2,-1),(-1,-2,-3),(1,2,-3),(1,-2,3),(-1,2,3),(-3,-1,-2),(-3,1,2),(3,1,-2),(3,-1,2),(-2,-3,-1),(2,-3,1),(-2,3,1),(2,3,-1),(-2,-1,3),(2,1,3),(-2,1,-3),(2,-1,-3),(-1,-3,2),(1,-3,-2),(1,3,2),(-1,3,-2),(-3,-2,1),(-3,2,-1),(3,-2,-1),(3,2,1)] )
+        
+        # Check the other ones!
+        if make_all_point_groups:
+            print "All point groups"
+            self.check_point_group("1", (1,2,3), [(1,2,3)] )
+            self.check_point_group("2", (1,2,3), [(1,2,3),(-1,2,-3)] )
+            self.check_point_group("m", (1,2,3), [(1,2,3),(1,2,-3)] )
+            self.check_point_group("222", (1,2,3), [(1,2,3),(-1,-2,3),(-1,2,-3),(1,-2,-3),] )
+            self.check_point_group("mm2", (1,2,3), [(1,2,3),(-1,-2,3),(1,-2,3),(-1,2,3),] )
+            self.check_point_group("4", (1,2,3), [(1,2,3),(-1,-2,3),(-2,1,3),(2,-1,3),] )
+            self.check_point_group("-4", (1,2,3), [(1,2,3),(-1,-2,3),(2,-1,-3),(-2,1,-3),] )
+            self.check_point_group("422", (1,2,3), [(1,2,3),(-1,-2,3),(-2,1,3),(2,-1,3),  (-1,2,-3),(1,-2,-3),(2,1,-3),(-2,-1,-3),] )
+            self.check_point_group("4mm", (1,2,3), [(1,2,3),(-1,-2,3),(-2,1,3),(2,-1,3),  (1,-2,3),(-1,2,3),(-2,-1,3),(2,1,3),] )
+            self.check_point_group("4mm", (1,2,3), [(1,2,3),(-1,-2,3),(-2,1,3),(2,-1,3),  (1,-2,3),(-1,2,3),(-2,-1,3),(2,1,3),] )
+            self.check_point_group("-42m", (1,2,3), [(1,2,3),(-1,-2,3),(2,-1,-3),(-2,1,-3),  (-1,2,-3),(1,-2,-3),(-2,-1,3),(2,1,3),] )
+            self.check_point_group("-4m2", (1,2,3), [(1,2,3),(-1,-2,3),(2,-1,-3),(-2,1,-3),  (1,-2,3),(-1,2,3),(2,1,-3),(-2,-1,-3),] )
 
 
     def test_read_HFIR_ubmatrix_file(self):
