@@ -136,15 +136,15 @@ The TOPAZ beamline at the Spallation Neutron Source (SNS) at Oak Ridge National
 Laboratory (ORNL), currently finishing commissioning, is a neutron
 time-of-flight Laue diffractometer with high wavelength (time) resolution. It
 is designed to acquire single-crystal diffraction data of small-to-moderate sized unit cells with  high
-throughput. The final design calls for an array of 48 detectors covering three
-quarters of $2\pi$ steradians. However as of this writing, only 14 of the 48
-detectors are installed, giving only a quarter of $2\pi$ steradian coverage. 
-To have sufficient data for a reliable structure solution and
+throughput. The final design calls for an array of 48 detectors covering
+approximately half of $4\pi$ steradians. However as of this writing, only 14 of
+the 48 detectors are installed, giving only a sixth of $4\pi$ steradian
+coverage. To have sufficient data for a reliable structure solution and  
 refinement, an experimenter will typically want to measure $ > 85\%$ of the
-unique reflections within a certain range of d-spacings. However, TOPAZ's wide
-wavelength band combined with its complex geometry makes it difficult to come up with
-an effective set of sample orientations that will cover all the required reflections
-without unnecessary redundancy.   
+unique reflections within a certain range of d-spacings. However, TOPAZ's wide 
+wavelength band combined with its complex geometry makes it difficult to come up
+with  an effective set of sample orientations that will cover all the required
+reflections without unnecessary redundancy. 
 
 
 Existing diffraction experiment planning software programs (for example,
@@ -517,9 +517,10 @@ We have described CrystalPlan, a software program designed to quickly produce
 efficient experiment plans for wide bandwidth time-of-flight Laue
 diffractometers. This program will help increase scientific productivity at SNS
 beamlines such as TOPAZ. With some relatively minor modifications, the program
-could also be adapted for use at reactor sources. Monochromatic reactor sources
+could also be adapted for use at reactor sources. Monochromatic diffractometers
 could be handled by adding support sweeps consisting of many motor positions;
-Laue diffractometers would requiring detecting and removing reflections with chromatic overlap. 
+Laue diffractometers on a constant intensity beam would requiring
+detecting and removing reflections with chromatic overlap.
 
 One planned future development for CrystalPlan include extending the software
 to help predict coverage in inelastic neutron scattering experiments. Another
@@ -634,9 +635,11 @@ top of the main window.}
 \caption{Sample screenshot showing the 3D view of the predicted coverage of
 reciprocal space volume for 3 sample orientations and 14 detectors on TOPAZ,
 from 0.9 \ang\ to 4.0\ang: a) without crystal symmetry, 17\% coverage; b) with crystal symmetry (mmm 8-fold
-symmetry), coverage increases to 65\%. }
+symmetry), coverage increases to 65\%. The area plot at the bottom shows the
+measured percentage of reciprocal volume as a function of $q$; the
+color indicates the redundancy (cyan: 1, green: 2, yellow: 3, orange: 4). }
 \ifdograph
-  \includegraphics{volume_nosym}
+  \includegraphics{volume_nosym} 
 \fi
 a)
 \ifdograph
