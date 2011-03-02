@@ -957,6 +957,15 @@ class Instrument:
         if num < 0 or num >= len(self.positions):
             return None
         return self.positions[num]
+    
+    #========================================================================================================
+    def get_position_by_id(self, poscovid):
+        """Return the PositionCoverage object that matches the given poscovid id number,
+        or None if not found."""
+        for poscov in self.positions:
+            if id(poscov) == poscovid:
+                return poscov
+        return None
 
     #========================================================================================================
     def simulate_position(self, angles, sample_U_matrix=np.identity(3), use_multiprocessing=False):
@@ -1897,7 +1906,7 @@ class TestInstrumentWithDetectors(unittest.TestCase):
 
 #==================================================================
 class TestFourCircleInstrument(unittest.TestCase):
-    """Unit test for the InstrumentInelastic class."""
+    """Unit test for the 4-circle class."""
     def setUp(self):
         config.cfg.force_pure_python = False
         self.tst_inst = InstrumentFourCircle()
@@ -1912,7 +1921,7 @@ class TestFourCircleInstrument(unittest.TestCase):
         #@type ti InstrumenFourCircle
         ti = self.tst_inst
         assert len(ti.detectors) == 1
-
+        
 
 #---------------------------------------------------------------------
 if __name__ == "__main__":

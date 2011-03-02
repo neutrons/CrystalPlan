@@ -269,7 +269,7 @@ class Crystal(HasTraits):
             #print "self.reciprocal_lattice", self.reciprocal_lattice
 
             # First we find the U matrix
-            original_U = self.calculate_u_matrix(ub_matrix, False)
+            original_U = self.calculate_u_matrix(ub_matrix, True)
 
             # And we save it - no rotation required
             self.u_matrix = original_U
@@ -321,9 +321,9 @@ class Crystal(HasTraits):
 
         Parameters:
             ub_matrix: Either: an ISAW-style UB matrix, after transposing and 2*pi.
-                Or: a HFIR-style UB matrix, which does not need coordinate transform
+                Or: a HFIR-style UB matrix, which ALSO needs coordinate transforms
 
-            convert_from_IPNS: bool, set to True if converting an ISAW
+            convert_from_IPNS: bool, set to True if converting an ISAW (or HFIR)
                 ub-matrix file. Coordinates will be transformed from IPNS convention to SNS convention
 
         """
@@ -335,7 +335,8 @@ class Crystal(HasTraits):
             U = np.dot(ub_matrix, invB)
             #Test that U must be orthonormal.
             U2 = np.dot(U, U.transpose())
-            assert np.allclose(U2, np.eye(3), atol=1e-2), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
+            if not np.allclose(U2, np.eye(3), atol=1e-2):
+                print "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
 
             if (convert_from_IPNS):
                 #Okay, now let's permute the rows for IPNS->SNS convention
@@ -347,7 +348,9 @@ class Crystal(HasTraits):
                 
             #Do another test
             U2 = np.dot(U, U.transpose())
-            assert np.allclose(U2, np.eye(3), atol=1e-2), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
+            #assert np.allclose(U2, np.eye(3), atol=1e-2), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
+            if not np.allclose(U2, np.eye(3), atol=1e-2):
+                print "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
 
             return U
         except np.linalg.LinAlgError:

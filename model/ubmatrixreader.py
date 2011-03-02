@@ -122,21 +122,38 @@ def read_HFIR_ubmatrix_file(filename):
 
     f = open(filename)
 
-    #Read the transposed UB matrix. 3x3, first 3 lines
+    #Read the UB matrix. 3x3, first 3 lines
     ub_matrix = np.zeros([0,3])
 
     for i in range(0, 3):
         s = f.readline()
         temp = np.fromstring(s, float, 3, ' ')
         ub_matrix = np.vstack((ub_matrix, temp))
-
-    #First, we multiply by the missing 2 * pi
+        
+    # First, we multiply by the missing 2 * pi
     ub_matrix =  2 * np.pi * ub_matrix
+    
+    # HFIR uses busing-levy 1967 convention:
+    #    +Y = beam direction
+    #    +Z = vertical axis
+    #    +X = (find using right-handed coordinates)
+    
+    ub_out = ub_matrix
+     
+#    #Now we permute COLUMNS around to change the coordinate system
+#    ub_out[:,2] = ub_matrix[:,0] #x gets put in z
+#    ub_out[:,1] = ub_matrix[:,2] #z gets put in y
+#    ub_out[:,0] = ub_matrix[:,1] #y gets put in x
 
+#    #Now we permute COLUMNS around to change the coordinate system
+#    ub_out[2,:] = ub_matrix[0,:] #x gets put in z
+#    ub_out[1,:] = ub_matrix[2,:] #z gets put in y
+#    ub_out[0,:] = ub_matrix[1,:] #y gets put in x
+     
     
     f.close()
 
-    return ub_matrix
+    return ub_out
 
 
 

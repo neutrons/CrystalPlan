@@ -1297,7 +1297,7 @@ class Experiment:
 
         # These are the 4 goniometer angles
         angles = [phi,chi,omega, best_detector_angle]
-        print "Goniometer angles are  ", angles, "with wavelength", best_wavelength
+        #print "Goniometer angles are  ", angles, "with wavelength", best_wavelength
         return (angles, best_wavelength)
 
 
@@ -1318,11 +1318,14 @@ class Experiment:
         u_matrix = self.crystal.get_u_matrix()
         count = 0
         for ref in self.reflections:
+            count += 1
             # Report progress
             if progress_dialog is None:
-                print "Looking for HKL %d %d %d" % (ref.h, ref.k, ref.l)
+                print ".",
+                if count % 50 == 0 : print
+                pass
+                #print "Looking for HKL %d %d %d" % (ref.h, ref.k, ref.l)
             else:
-                count += 1
                 (keep_going, skip) = progress_dialog.Update(count, "Looking for HKL %d %d %d" % (ref.h, ref.k, ref.l))
                 # User can abort
                 if not keep_going:
@@ -1353,6 +1356,8 @@ class Experiment:
 
         #And get some statistics
         self.calculate_reflection_coverage_stats()
+        
+        if progress_dialog is None: print "Done!"
 
 
     #========================================================================================================
@@ -2900,13 +2905,30 @@ class TestExperimentFourCircle(unittest.TestCase):
         print e.get_angles_to_measure_hkl(1,2,3, 0.01)
         e.fourcircle_measure_all_reflections()
 
-
+    def test_ub_matrix(self):
+        e = self.exp #@type e Experiment
+        e.crystal.read_HFIR_ubmatrix_file("data/HFIR_UBmatrix.dat", "data/HFIR_lattice.dat")
+        e.crystal.calculate_reciprocal()
+        e.range_h = [-3,3]
+        e.range_k = [-3,3]
+        e.range_l = [-6,6]
+        e.range_automatic = False
+        e.initialize_reflections()
+        # Measure all HKL
+        e.fourcircle_measure_all_reflections(None)
+        #@type ref Reflection
+        for (h,k,l) in [ (1,0,1), (6,0,-6), (0,0,2), (-1,0,-1), (0,0,-2) ]:
+            ref = e.get_reflection(h, k, l)
+            if not ref is None:
+                poscovid = ref.measurements[0][0]
+                poscov = e.inst.get_position_by_id(poscovid)
+                print "HKL", h,k,l, " : ", np.array(poscov.angles)*57.3
 
 if __name__ == "__main__":
 #    unittest.main()
     
     tst = TestExperimentFourCircle('test_get_angles_to_measure_hkl')
     tst.setUp()
-    tst.test_get_angles_to_measure_hkl()
+    tst.test_ub_matrix()
 
    
