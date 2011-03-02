@@ -1931,10 +1931,15 @@ class HB3AGoniometer(LimitedGoniometer):
         return """
         FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
         {
-            double omegadiff = absolute( omega - (3.14159*25.0/180.0) );
-            if (omegadiff > 3.14159*25.0/180.0)
-                omegadiff = omegadiff * 10;
-            return absolute(chi) + omegadiff + absolute(phi)/10000.0;
+            double center = 3.14159*25.0/180.0;
+            double omegadiff = omega - center;
+            if (omegadiff < 0) omegadiff = -omegadiff;
+             
+            //if (omegadiff > center)
+            // omegadiff = omegadiff + (omega-center) * 10.0;
+            
+            return absolute(chi) + omegadiff + absolute(phi)/1000.0;
+            //return absolute(chi) + omegadiff + absolute(phi);
         }
         """
 

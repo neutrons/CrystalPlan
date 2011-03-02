@@ -2917,12 +2917,13 @@ class TestExperimentFourCircle(unittest.TestCase):
         # Measure all HKL
         e.fourcircle_measure_all_reflections(None)
         #@type ref Reflection
-        for (h,k,l) in [ (1,0,1), (6,0,-6), (0,0,2), (-1,0,-1), (0,0,-2) ]:
+        for (h,k,l) in [ (1,0,1), (0,0,2), (-1,0,-1), (0,0,-2) ]:
             ref = e.get_reflection(h, k, l)
             if not ref is None:
-                poscovid = ref.measurements[0][0]
-                poscov = e.inst.get_position_by_id(poscovid)
-                print "HKL", h,k,l, " : ", np.array(poscov.angles)*57.3
+                if len(ref.measurements) > 0:
+                    poscovid = ref.measurements[0][0]
+                    poscov = e.inst.get_position_by_id(poscovid)
+                    print "HKL", h,k,l, " : ", np.array(poscov.angles)*57.3
 
 if __name__ == "__main__":
 #    unittest.main()
