@@ -422,7 +422,7 @@ class FrameMain(wx.Frame):
               title="%s %s - Main Window" % (CrystalPlan_version.package_name, CrystalPlan_version.version) )
         self._init_menus()
         
-        self.SetClientSize(wx.Size(800, 630))
+        self.SetClientSize(wx.Size(850, 630))
         self.SetMenuBar(self.menuBar1)
         self.SetMinSize(wx.Size(100, 100))
         self.SetAutoLayout(True)
