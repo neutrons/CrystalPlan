@@ -146,7 +146,7 @@ class StartupParameters(HasTraits):
     header_text = Group(Spring(label="Enter the parameters for Q-space simulation:", emphasized=True, show_label=True))
     second_label = Group(Spring(label="Enter the wavelength limits (from the source and/or detectors):",
                         emphasized=True, show_label=True, visible_when='show_wavelength_options'))
-    third_label = Group(Spring(label="Note: wavelength and bandwidth can also be set, on option, as a goniometer motor setting. See the goniometer tab.\nThe settings below are ignored in that case!",
+    third_label = Group(Spring(label="Note: wavelength and bandwidth can also be set, on option, as a goniometer motor setting.\n(See the goniometer tab). The settings below are ignored in that case!",
                         emphasized=False, show_label=True, visible_when='show_wavelength_options'))
 
     view = View( header_text,
