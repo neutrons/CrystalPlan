@@ -2198,13 +2198,15 @@ class Experiment:
     #========================================================================================================
 
     #---------------------------------------------------------------------------------------------
-    def load_peaks_file(self, filename, append=False):
+    def load_peaks_file(self, filename, append=False, sequential_detector_numbers=False):
         """Loads a .peaks or .integrate file (made by ISAW) into the program, adding on
         to each reflection.
 
         Parameters:
             filename: path to .peaks or .integrate
             append: add on to the measurements; otherwise, they get cleared
+            sequential_detector_numbers :: detector numbers are from 1 to X in order. 
+                This is the old format (before April 2011).
         """
         if not os.path.exists(filename):
             raise IOError("The file %s does not exist!" % filename)
@@ -2226,12 +2228,30 @@ class Experiment:
                 #Detector number marker
                 if line.startswith("1"):
                     arr = line.split()
-                    #Find the detector number, make it 0-based
-                    detnum = int(arr[2]) - 1
-                    if detnum>=0 and detnum < len(self.inst.detectors):
-                        det = self.inst.detectors[detnum] 
+                    
+                    #Find the detector number
+                    detnum = int(arr[2])
+                    if (sequential_detector_numbers):
+                        # make it 0-based
+                        detnum = detnum - 1
+                        if detnum>=0 and detnum < len(self.inst.detectors):
+                            det = self.inst.detectors[detnum] 
+                        else:
+                            print "Warning: Detector number", detnum, "was not found!"
                     else:
                         det = None
+                        detname = "%d" % detnum
+                        # Use the detector number as the name
+                        for i in xrange(len(self.inst.detectors)):
+                            if self.inst.detectors[i].name == detname:
+                                # Point to the detector
+                                det = self.inst.detectors[i]
+                                # You still need the detector "number" aka its index.
+                                detnum = i
+                                break
+                        if det is None:
+                            print "Warning: Detector number", detnum, "was not found!"
+                    
 
                     #Find the angles, convert to radians
                     (chi, phi, omega) =  [np.deg2rad(float(arr[i])) for i in xrange(3,6)]
@@ -2257,7 +2277,7 @@ class Experiment:
                             rm.detector_num = detnum
                             col = float(arr[5])
                             row = float(arr[6])
-                            #Convert to horizontal TODO!!!
+                            #Convert to horizontal 
                             if not det is None:
                                 #@type det FlatDetector
                                 rm.horizontal = det.width * (det.xpixels/2-col)/det.xpixels

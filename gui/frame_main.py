@@ -1,4 +1,3 @@
-#Boa:Frame:FrameMain
 """FrameMain: main GUI window for the CrystalPlan application.
 """
 import os.path
@@ -70,9 +69,14 @@ class FrameMain(wx.Frame):
         else:
             # ---------- ISAW loading menus --------------------
             id = wx.NewId()
+            parent.Append(id=id, text=u'Load an older ISAW .integrate or .peaks file with sequential det. numbers', kind=wx.ITEM_NORMAL,
+                        help='Load a peaks file from ISAW to compare predicted and real peaks. Use this menu for older files (made with ISAW before ~April 2011).')
+            self.Bind(wx.EVT_MENU, self.OnMenuLoadIntegrateOld, id=id)
+
+            id = wx.NewId()
             parent.Append(id=id, text=u'Load an ISAW .integrate or .peaks file...\tCtrl+I', kind=wx.ITEM_NORMAL,
                         help='Load a peaks file from ISAW to compare predicted and real peaks.')
-            self.Bind(wx.EVT_MENU, self.OnMenuLoadIntegrate, id=id)
+            self.Bind(wx.EVT_MENU, self.OnMenuLoadIntegrateNew, id=id)
 
             id = wx.NewId()
             parent.Append(id=id, text=u'Load an ISAW UB matrix (.mat) file...\tCtrl+U', kind=wx.ITEM_NORMAL,
@@ -184,8 +188,12 @@ class FrameMain(wx.Frame):
         gui_utils.save_experiment_file_dialog(self)
         event.Skip()
 
-    def OnMenuLoadIntegrate(self,event):
-        gui_utils.load_integrate_file_dialog(self)
+    def OnMenuLoadIntegrateNew(self,event):
+        gui_utils.load_integrate_file_dialog(self, sequential_detector_numbers=False)
+        event.Skip()
+
+    def OnMenuLoadIntegrateOld(self,event):
+        gui_utils.load_integrate_file_dialog(self, sequential_detector_numbers=True)
         event.Skip()
 
     def OnMenuLoadIntegrateHFIR(self, event):

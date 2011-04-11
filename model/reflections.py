@@ -254,6 +254,7 @@ class ReflectionRealMeasurement(ReflectionMeasurement):
         """Constructor."""
         #The phi,chi,omega angles, in radians.
         self.angles = []
+        # Detector number, AKA index in the instrument.detectors list.
         self.detector_num = 0
         self.wavelength = 0
         self.distance = 0

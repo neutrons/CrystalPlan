@@ -156,7 +156,7 @@ def load_experiment_file_dialog(parent):
     return filename
 
 last_integrate_path = ''
-def load_integrate_file_dialog(parent):
+def load_integrate_file_dialog(parent, sequential_detector_numbers):
     """Opens a dialog asking the user where to load the integrate."""
     filters = 'ISAW .integrate or .peaks files (*.peaks;*.integrate)|*.peaks;*.integrate|All files (*)|*|'
     if is_mac(): filters = '' #Filters tend to crash on mac
@@ -176,7 +176,7 @@ def load_integrate_file_dialog(parent):
     do_append = (res == wx.ID_NO)
     print "do_append", do_append
     #Load it
-    model.experiment.exp.load_peaks_file(filename, append=do_append)
+    model.experiment.exp.load_peaks_file(filename, append=do_append, sequential_detector_numbers=sequential_detector_numbers)
     #This hopefully redraws everything
     display_thread.handle_change_of_qspace()
     return filename
