@@ -682,7 +682,7 @@ def make_all_point_groups():
         point_groups.append( PointGroup("m", "m (Monoclinic)", 2, 'k', "-2;0,0,1"))
         
         point_groups.append( PointGroup("222", "222 (Orthorombic)", 4, 'lkh', "2;1,0,0", "2;0,1,0" ))
-        point_groups.append( PointGroup("mm2", "mm3 (Orthorombic)", 4, 'lkh', "-2;1,0,0", "2;0,0,1" ))
+        point_groups.append( PointGroup("mm2", "mm2 (Orthorombic)", 4, 'lkh', "-2;1,0,0", "2;0,0,1" ))
 
         point_groups.append( PointGroup("4", "4 (Tetragonal)", 4, 'lkh', "4;0,0,1"))
         point_groups.append( PointGroup("-4", "-4 (Tetragonal)", 4, 'lkh', "-4;0,0,1"))
