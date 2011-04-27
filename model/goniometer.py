@@ -1003,7 +1003,6 @@ class LimitedGoniometer(Goniometer):
                 (best_rot_angle, best_angles) = optimize_c_code(best_rot_angle-step, best_rot_angle+step, newstep)
                 step = newstep
 
-        print "best_angles is", best_angles
         #Optimized angles
         return best_angles
 
