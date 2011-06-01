@@ -838,17 +838,17 @@ def make_all_reflection_conditions():
         refl_conds.append(reflcond);
         
     add( ReflectionCondition("Primitive", applies_to="h==h", reflection_condition="h==h"))
-    add( ReflectionCondition("C-face centred", applies_to="h==h", reflection_condition="((h+k)%2)==0"))
-    add( ReflectionCondition("A-face centred", applies_to="h==h", reflection_condition="((k+l)%2)==0"))
-    add( ReflectionCondition("B-face centred", applies_to="h==h", reflection_condition="((h+l)%2)==0"))
-    add( ReflectionCondition("Body centred", applies_to="h==h", reflection_condition="((h+k+l)%2)==0"))
+    add( ReflectionCondition("C centred", applies_to="h==h", reflection_condition="((h+k)%2)==0"))
+    add( ReflectionCondition("A centred", applies_to="h==h", reflection_condition="((k+l)%2)==0"))
+    add( ReflectionCondition("B centred", applies_to="h==h", reflection_condition="((h+l)%2)==0"))
+    add( ReflectionCondition("I centred", applies_to="h==h", reflection_condition="((h+k+l)%2)==0"))
     
     # condition: h+k, h+l and k+l==2n; or all even, or all odd.
-    add( ReflectionCondition("All-face centred", applies_to="h==h", 
+    add( ReflectionCondition("F centred", applies_to="h==h", 
                              reflection_condition="((((h+k)%2)==0) & (((h+l)%2)==0) & (((k+l)%2)==0)) | ((h%2==0) & (k%2==0) & (l%2==0)) | ((h%2==1) & (k%2==1) & (l%2==1))"))
     
-    add( ReflectionCondition("Rhombohedrally centred, obverse", applies_to="h==h", reflection_condition="((-h+k+l)%3)==0"))
-    add( ReflectionCondition("Rhombohedrally centred, reverse", applies_to="h==h", reflection_condition="((h-k+l)%3)==0"))
+    add( ReflectionCondition("R centred, obverse", applies_to="h==h", reflection_condition="((-h+k+l)%3)==0"))
+    add( ReflectionCondition("R centred, reverse", applies_to="h==h", reflection_condition="((h-k+l)%3)==0"))
     add( ReflectionCondition("Hexagonally centred, reverse", applies_to="h==h", reflection_condition="((h-k)%3)==0"))
 
 #================================================================================
@@ -883,7 +883,7 @@ class TestReflectionCondition(unittest.TestCase):
     """Unit test for the Crystal class."""
 
     def test_CFC(self):
-        rc = get_refl_cond("C-face centred")
+        rc = get_refl_cond("C centred")
         h = [0,0,0,1,1,1,2,2,2]
         k = [0,1,2,0,1,2,0,1,2]
         l = [0,1,3,4,5,6,7,8,9]
@@ -897,7 +897,7 @@ class TestReflectionCondition(unittest.TestCase):
         assert matches(v, res_vis2)
         
     def test_All_FC(self):
-        rc = get_refl_cond("All-face centred")
+        rc = get_refl_cond("F centred")
         h = [0,1,0,1,1]
         k = [0,1,0,3,2]
         l = [0,1,1,1,3]
