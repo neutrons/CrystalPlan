@@ -600,7 +600,8 @@ def run_optimization(optim_params, step_callback=None):
 
     # Save the fixed orientations at the start of it
     if op.fixed_orientations:
-        op.fixed_orientations_list = instr.positions
+        # Copy the list
+        op.fixed_orientations_list = list(instr.positions)
 
     # In general, we want to init 
     skip_initializer = False
@@ -693,47 +694,55 @@ if __name__ == "__main__":
     exp.initialize_reflections()
     exp.verbose = False
     
-    #Run
-    op=OptimizationParameters()
-    op.desired_coverage = 85
-    op.number_of_orientations = 4
-    op.mutation_rate = 0.02
-    op.crossover_rate = 0.1
-    op.pre_mutation_rate = 1.5
-    op.use_symmetry = False
-    op.max_generations = 5
-    op.population = 15
-    op.use_multiprocessing = False
     
-    op.fixed_orientations = True
+    # Go through a bunch of cases
+    for use_multiprocessing in [True, False]:
+        for fixed_orientations in [True, False]:
+            for use_volume in [False]: 
 
-    (ga, a1, a2) = run_optimization( op, print_pop)
-    
-    
-    if True:
-        #Keep going!
-        op.use_old_population = True
-        op.add_trait("old_population", ga.getPopulation())
-        op.population = 15
-        op.number_of_orientations = 4
-        (ga, a1, a2) = run_optimization( op, print_pop)
-        
-        #Keep going, changing pop size
-        op.use_old_population = True
-        op.add_trait("old_population", ga.getPopulation())
-        op.population = 20
-        op.number_of_orientations = 4
-        (ga, a1, a2) = run_optimization( op, print_pop)
-        
-        # Change the number of orientations?
-        op.use_old_population = True
-        op.add_trait("old_population", ga.getPopulation())
-        op.population = 20
-        op.number_of_orientations = 8
-        (ga, a1, a2) = run_optimization( op, print_pop)
+                #Run
+                op=OptimizationParameters()
+                op.desired_coverage = 85
+                op.number_of_orientations = 4
+                op.mutation_rate = 0.02
+                op.crossover_rate = 0.1
+                op.pre_mutation_rate = 1.5
+                op.use_symmetry = False
+                op.max_generations = 5
+                op.population = 10
+                op.use_multiprocessing = use_multiprocessing
+                op.use_volume = use_volume
+                
+                op.fixed_orientations = fixed_orientations
+                op.use_old_population = False
+            
+                (ga, a1, a2) = run_optimization( op, print_pop)
+                
+                
+                if True:
+                    #Keep going!
+                    op.use_old_population = True
+                    op.add_trait("old_population", ga.getPopulation())
+                    op.population = 10
+                    op.number_of_orientations = 4
+                    (ga, a1, a2) = run_optimization( op, print_pop)
+                    
+                    #Keep going, changing pop size
+                    op.use_old_population = True
+                    op.add_trait("old_population", ga.getPopulation())
+                    op.population = 12
+                    op.number_of_orientations = 4
+                    (ga, a1, a2) = run_optimization( op, print_pop)
+                    
+                    # Change the number of orientations?
+                    op.use_old_population = True
+                    op.add_trait("old_population", ga.getPopulation())
+                    op.population = 12
+                    op.number_of_orientations = 6
+                    (ga, a1, a2) = run_optimization( op, print_pop)
     
    
-    print "----------best-----------", ga.bestIndividual()
-    print "best coverage = ", ga.bestIndividual().coverage
+                print "----------best-----------", ga.bestIndividual()
+                print "best coverage = ", ga.bestIndividual().coverage
 
     
