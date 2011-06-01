@@ -387,8 +387,13 @@ class OptimizerController():
         """Apply the best results."""
         #TODO: Confirmation message box?
 
-        #Get the angles of the best one
+        # Get the angles of the best one
         positions = model.optimization.get_angles(self.best)
+        
+        # And add the fixed ones, if any
+        if self.params.fixed_orientations:
+            positions += self.params.fixed_orientations_list
+            
         print "Applying best individual", self.best
 
         #This deletes everything in the list in the instrument

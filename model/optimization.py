@@ -31,6 +31,7 @@ from pyevolve import Initializators
 from enthought.traits.api import HasTraits,Int,Float,Str,Property,Bool, List
 from enthought.traits.ui.api import View,Item,Label,Heading, Spring, Handler, Group
 from enthought.traits.ui.menu import OKButton, CancelButton
+from model.instrument import PositionCoverage
 
 
 # ===========================================================================================
@@ -39,6 +40,7 @@ class OptimizationParameters(HasTraits):
     optimization_running = Bool(False)
 
     number_of_orientations = Int(10, desc="the number of orientations you want in the sample plan.")
+    fixed_orientations = Bool(label="Add Fixed Orientations?", desc="to keep the list of sample orientations currently in the Experiment Plan as fixed orientations. \nThe number of orientations calculated by the optimizer is ADDED to the fixed orientations from the list.")
     desired_coverage = Float(85.0, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
     use_volume = Bool(False, label='Optimize Q-volume rather than reflections?', desc='That the optimization will be performed using the reciprocal space volume calculation. \nIf unchecked, the coverage will be calculated as the % of individual reflections that were measured.')
     use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection/volume coverage. For example, with mmm symmetry, each reflection has 8 equivalent hkl values. A peak is considered measured if any of the hkl were measured.")
@@ -66,6 +68,7 @@ class OptimizationParameters(HasTraits):
     view = View(
         Group(
             Item('number_of_orientations', enabled_when="not optimization_running"),
+            Item('fixed_orientations', enabled_when="not optimization_running"),
             Item('desired_coverage'),
             Item('use_volume', enabled_when="not optimization_running"),
             Item('use_symmetry', enabled_when="not optimization_running"),
@@ -358,16 +361,18 @@ def ChromosomeCrossoverSinglePoint(genome, **args):
 
 #-----------------------------------------------------------------------------------------------
 def get_angles(genome):
-    """Extract the list of lists of angles."""
+    """Extract the list of lists of angles from the genome; for use by eval_func"""
+    global op #@type op OptimizationParameters
     #@type instr Instrument
     instr = instrument.inst
     exp = experiment.exp
     
     num_positions = len(genome)
     umatrix = exp.crystal.get_u_matrix()
-
-    #Create a list of positions
+    
+    #Create a new of positions
     positions = []
+
     for i in xrange(num_positions):
         #angles = chromosome[i*num_angles:(i+1)*num_angles]
         angles = genome[i].angles
@@ -383,14 +388,19 @@ def get_angles(genome):
 def eval_func(genome, verbose=False):
     """Fitness evaluation function for a chromosome in coverage optimization."""
     global op #@type op OptimizationParameters
-    instr = instrument.inst
 
     positions = get_angles(genome)
+    # Copy
+    all_positions = list(positions)
+    
+    if op.fixed_orientations:
+        # Append the fixed positions?
+        all_positions += op.fixed_orientations_list
 
     #@type exp Experiment
     exp = experiment.exp
     #Calculate (this calculates the stats)
-    exp.recalculate_reflections(positions, calculation_callback=None)
+    exp.recalculate_reflections(all_positions, calculation_callback=None)
     #Calculate the stats with edge avoidance if an option
     exp.calculate_reflection_coverage_stats(op.avoid_edges, op.edge_x_mm, op.edge_y_mm)
 
@@ -426,8 +436,10 @@ def eval_func(genome, verbose=False):
             if refl.is_primary and refl.times_measured(None, add_equivalent_ones=op.use_symmetry) == 1:
                 #Non-redundant measurement
                 poscovid = refl.get_all_measurements()[0][0]
-                #Find the index in positions list, add 1
-                unique_measurements[poscovid_map[poscovid]] += 1
+                # Ignore measurements from the fixed orientations
+                if poscovid in positions_id:
+                    #Find the index in positions list, add 1
+                    unique_measurements[poscovid_map[poscovid]] += 1
 
     else:
         #Check without considering symmetry
@@ -436,8 +448,10 @@ def eval_func(genome, verbose=False):
             if len(refl.measurements)==1:
                 #Non-redundant measurement
                 poscovid = refl.measurements[0][0]
-                #Find the index in positions list, add 1
-                unique_measurements[poscovid_map[poscovid]] += 1
+                # Ignore measurements from the fixed orientations
+                if poscovid in positions_id:
+                    #Find the index in positions list, add 1
+                    unique_measurements[poscovid_map[poscovid]] += 1
 
     #Sort them by the # of unique measurements
     decorated = zip(unique_measurements, range(len(positions_id)))
@@ -453,7 +467,7 @@ def eval_func(genome, verbose=False):
 
     #Score is equal to the coverage
     score = coverage
-    invalid_positions = len(genome)-len(positions)
+    invalid_positions = len(genome)-len(all_positions)
     if invalid_positions > 0:
         #There some invalid positions. Penalize the score
         score -= (1.0 * invalid_positions) / len(genome)
@@ -474,11 +488,17 @@ def eval_func_volume(genome, verbose=False):
     instr.verbose = False
 
     positions = get_angles(genome)
+    # Copy
+    all_positions = list(positions)
+    
+    if op.fixed_orientations:
+        # Append the fixed positions?
+        all_positions += op.fixed_orientations_list
 
     #Calculate everything
     instr.positions = []
     pd = {}
-    for poscov in positions: #@type poscov PositionCoverage
+    for poscov in all_positions: #@type poscov PositionCoverage
         new_poscov = instr.simulate_position(poscov.angles, poscov.sample_U_matrix, use_multiprocessing=False)
         pd[id(new_poscov)] = True
 
@@ -516,7 +536,7 @@ def eval_func_volume(genome, verbose=False):
 
     #Score is equal to the coverage
     score = coverage
-    invalid_positions = len(genome)-len(positions)
+    invalid_positions = len(genome)-len(all_positions)
     if invalid_positions > 0:
         #There some invalid positions. Penalize the score
         score -= (1.0 * invalid_positions) / len(genome)
@@ -577,6 +597,10 @@ def run_optimization(optim_params, step_callback=None):
 
     # Genome instance, list of list of angles
     genome = ChromosomeAngles( op.number_of_orientations )
+
+    # Save the fixed orientations at the start of it
+    if op.fixed_orientations:
+        op.fixed_orientations_list = instr.positions
 
     # In general, we want to init 
     skip_initializer = False
@@ -660,10 +684,15 @@ if __name__ == "__main__":
     #Inits
     instrument.inst = instrument.Instrument("../instruments/TOPAZ_geom_all_2011.csv")
     instrument.inst.set_goniometer(goniometer.TopazInHouseGoniometer())
+    
+    # Create a default position of 0,0,0
+    instrument.inst.positions = [PositionCoverage([0.0, 0.0, 0.0], None, np.identity(3)), PositionCoverage([1.0, 0.0, 0.0], None, np.identity(3))]
+                                                  
     experiment.exp = experiment.Experiment(instrument.inst)
     exp = experiment.exp
     exp.initialize_reflections()
     exp.verbose = False
+    
     #Run
     op=OptimizationParameters()
     op.desired_coverage = 85
@@ -674,30 +703,34 @@ if __name__ == "__main__":
     op.use_symmetry = False
     op.max_generations = 5
     op.population = 15
-    op.use_multiprocessing = True
+    op.use_multiprocessing = False
+    
+    op.fixed_orientations = True
 
     (ga, a1, a2) = run_optimization( op, print_pop)
     
-    #Keep going!
-    op.use_old_population = True
-    op.add_trait("old_population", ga.getPopulation())
-    op.population = 15
-    op.number_of_orientations = 4
-    (ga, a1, a2) = run_optimization( op, print_pop)
     
-    #Keep going, changing pop size
-    op.use_old_population = True
-    op.add_trait("old_population", ga.getPopulation())
-    op.population = 20
-    op.number_of_orientations = 4
-    (ga, a1, a2) = run_optimization( op, print_pop)
-    
-    # Change the number of orientations?
-    op.use_old_population = True
-    op.add_trait("old_population", ga.getPopulation())
-    op.population = 20
-    op.number_of_orientations = 8
-    (ga, a1, a2) = run_optimization( op, print_pop)
+    if True:
+        #Keep going!
+        op.use_old_population = True
+        op.add_trait("old_population", ga.getPopulation())
+        op.population = 15
+        op.number_of_orientations = 4
+        (ga, a1, a2) = run_optimization( op, print_pop)
+        
+        #Keep going, changing pop size
+        op.use_old_population = True
+        op.add_trait("old_population", ga.getPopulation())
+        op.population = 20
+        op.number_of_orientations = 4
+        (ga, a1, a2) = run_optimization( op, print_pop)
+        
+        # Change the number of orientations?
+        op.use_old_population = True
+        op.add_trait("old_population", ga.getPopulation())
+        op.population = 20
+        op.number_of_orientations = 8
+        (ga, a1, a2) = run_optimization( op, print_pop)
     
    
     print "----------best-----------", ga.bestIndividual()
