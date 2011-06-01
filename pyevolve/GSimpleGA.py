@@ -748,7 +748,7 @@ class GSimpleGA:
       self.dbAdapter.insert(self)
 
     #----------------------------------------------------------
-   def evolve(self, freq_stats=0):
+   def evolve(self, freq_stats=0, skip_initialize=False):
       """ Do all the generations until the termination criteria, accepts
       the freq_stats (default is 0) to dump statistics at n-generation
 
@@ -784,8 +784,9 @@ class GSimpleGA:
          if gp_function_prefix is not None:
             self.__gp_catch_functions(gp_function_prefix)
 
-      #Create the population
-      self.initialize()
+      if not skip_initialize: 
+          #Create the population
+          self.initialize()
 
       #Initial fitness evaluation
       self.internalPop.evaluate()

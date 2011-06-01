@@ -326,7 +326,7 @@ def getq_python(azimuth, elevation, wl_output, rot_matrix, wl_input=None):
         azimuth, elevation: azimuth, elevation angle of pixel(s). Can be an array, should be only 1-D though.
             Shapes of az and elev need to match.
         wl_output: output (scattered) wavelength considered; can be scalar or array matching az and elev.
-        rot_matrix: The rotation matrix corresponding to the sample orientation (phi, chi, omega)
+        rot_matrix: The rotation matrix to apply to the q in the lab frame (should be the inverse of the goniometer rotation).
         wl_input: input (incident) wavelength; if not specified, defaults to wl_output
 
     Returns:
@@ -909,4 +909,10 @@ class TestCrystalCalc(unittest.TestCase):
 
 #---------------------------------------------------------------------
 if __name__ == "__main__":
-    unittest.main()
+    rot_matrix = np.identity(3)
+    ub_matrix = np.identity(3) * 0.05
+    hkl = np.zeros((3,1))
+    hkl[:,0] = [9,9,-9];
+    beam = get_scattered_beam(hkl, rot_matrix, ub_matrix)
+    print beam
+    #unittest.main()

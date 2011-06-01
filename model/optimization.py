@@ -211,29 +211,29 @@ class ChromosomeAngles(G1DList.G1DList):
 
 # ===========================================================================================
 def ChromosomeInitializatorRandom(genome, **args):
-   """ Randomized Initializator for the Chromosome
-   """
-#   print "ChromosomeInitializatorRandom"
-   #Make a list of new chromosome objects, which are randomized by default
-   genome.genomeList = [GeneAngles() for i in xrange(genome.getListSize())]
+    """ Randomized Initializator for the Chromosome
+    """
+    #   print "ChromosomeInitializatorRandom"
+    #Make a list of new chromosome objects, which are randomized by default
+    genome.genomeList = [GeneAngles() for i in xrange(genome.getListSize())]
 
 
 # ===========================================================================================
 def ChromosomeInitializatorUseOldPopulation(genome, **args):
-   """ Initializator that takes old individuals instead of new ones.
-   """
-#   print "ChromosomeInitializatorUseOldPopulation"
-   #Pick an old individual using roulette wheel
-   old_pop = genome.getParam("old_population")
-   old_pop_ID = genome.getParam("old_population_ID")
-   old_individual = Selectors.GRouletteWheel(old_pop, popID=old_pop_ID)
-   if len(old_individual[0].angles) != len(instrument.inst.angles):
-       #There is a difference in the list of angles, so copying the population is impossible.
-       #We create a random one
-       genome.randomize()
-   else:
-       #Copy all the genes
-       old_individual.copy(genome, keep_list_size=True)
+    """ Initializator that takes old individuals instead of new ones.
+    """
+    #   print "ChromosomeInitializatorUseOldPopulation"
+    #Pick an old individual using roulette wheel
+    old_pop = genome.getParam("old_population")
+    old_pop_ID = genome.getParam("old_population_ID")
+    old_individual = Selectors.GRouletteWheel(old_pop, popID=old_pop_ID)
+    if len(old_individual[0].angles) != len(instrument.inst.angles):
+        print "The number of angles in the goniometer has changed, so copying the population is impossible. Re-starting from scratch."
+        #We create a random one
+        genome.randomize()
+    else:
+        #Copy all the genes
+        old_individual.copy(genome, keep_list_size=True)
 
 
 # ===========================================================================================
@@ -578,13 +578,22 @@ def run_optimization(optim_params, step_callback=None):
     # Genome instance, list of list of angles
     genome = ChromosomeAngles( op.number_of_orientations )
 
+    # In general, we want to init 
+    skip_initializer = False
+
     #Make the initializator
+    genome.initializator.set(ChromosomeInitializatorRandom)
+
+    # But we may use a different way?    
     if op.use_old_population:
-        #Save the population and a random ID as parameters
-        genome.setParams( old_population=op.old_population, old_population_ID=random.randint(0, 10000000) )
-        genome.initializator.set(ChromosomeInitializatorUseOldPopulation)
-    else:
-        genome.initializator.set(ChromosomeInitializatorRandom)
+        if op.population == len(op.old_population) and (op.old_population[0].listSize != op.number_of_orientations):
+            skip_initializer = True;
+            print "Population size and number of orientations are identical. Using the old population as starting point."
+        else:
+            print "Population size and/or number of orientations are different. Will generate new population, picked randomly from the old one."
+            #Save the population and a random ID as parameters
+            genome.setParams( old_population=op.old_population, old_population_ID=random.randint(0, 10000000) )
+            genome.initializator.set(ChromosomeInitializatorUseOldPopulation)
 
     #Set the pre- and pos-mutators
     genome.premutator.set(ChromosomeMutatorRandomizeWorst)
@@ -613,7 +622,13 @@ def run_optimization(optim_params, step_callback=None):
     # Set the Roulette Wheel selector method
     ga.selector.set(Selectors.GRouletteWheel)
 
-    #Changeable settings
+    # If keep_going, then use the old population that was saved instead.
+    if op.use_old_population and skip_initializer:
+        ga.internalPop = op.old_population
+        # Clear the process pool to re-initialize it when running in multiple processes
+        ga.internalPop.proc_pool = None 
+        
+    #Changeable settings. Also copies the individuals to the copies for multiprocessing
     set_changeable_parameters(op, ga)
 
     #This is the function that can abort the progress.
@@ -622,10 +637,10 @@ def run_optimization(optim_params, step_callback=None):
         
     #And this is the termination function
     ga.terminationCriteria.set(termination_func)
-    
+        
     freq_stats = 0
     if __name__ == "__main__": freq_stats = 1
-    (best, aborted, converged) = ga.evolve(freq_stats=freq_stats)
+    (best, aborted, converged) = ga.evolve(freq_stats=freq_stats, skip_initialize=skip_initializer)
 
     ga.getPopulation().sort()
 
@@ -657,19 +672,34 @@ if __name__ == "__main__":
     op.crossover_rate = 0.1
     op.pre_mutation_rate = 1.5
     op.use_symmetry = False
-    op.max_generations = 100
-    op.population = 100
+    op.max_generations = 5
+    op.population = 15
     op.use_multiprocessing = True
 
     (ga, a1, a2) = run_optimization( op, print_pop)
-#    print_pop(ga)
-#    print "Keep going!"
-#    op.add_trait('old_population', ga.getPopulation())
-#    #op.number_of_orientations = 2
-#    op.use_old_population = True
-##    instrument.inst.set_goniometer(goniometer.TopazAmbientGoniometer())
-#    (ga, a1, a2) = run_optimization( op, print_pop )
-
+    
+    #Keep going!
+    op.use_old_population = True
+    op.add_trait("old_population", ga.getPopulation())
+    op.population = 15
+    op.number_of_orientations = 4
+    (ga, a1, a2) = run_optimization( op, print_pop)
+    
+    #Keep going, changing pop size
+    op.use_old_population = True
+    op.add_trait("old_population", ga.getPopulation())
+    op.population = 20
+    op.number_of_orientations = 4
+    (ga, a1, a2) = run_optimization( op, print_pop)
+    
+    # Change the number of orientations?
+    op.use_old_population = True
+    op.add_trait("old_population", ga.getPopulation())
+    op.population = 20
+    op.number_of_orientations = 8
+    (ga, a1, a2) = run_optimization( op, print_pop)
+    
+   
     print "----------best-----------", ga.bestIndividual()
     print "best coverage = ", ga.bestIndividual().coverage
 

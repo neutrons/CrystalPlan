@@ -247,12 +247,20 @@ class OptimizerController():
     def keep_going(self, event):
         """Continue optimization, using the last saved population."""
         if self.last_population is None:
-            wx.MessageDialog("Error! No saved population. You need to start the optimization at least once.").ShowModal()
+            wx.MessageDialog(self.frame, "Error! No saved population. You need to start the optimization at least once.").ShowModal()
             return
 
+#        if s:
+#            wx.MessageDialog("Number of sample orientations has changed. Cannot keep going with the old population.").ShowModal()
+#            return;
+        
+        if (self.params.population != len(self.last_population)) or (self.last_population[0].listSize != self.params.number_of_orientations):
+            wx.MessageDialog(self.frame, "Population size/number of orientations changed. The new population will be selected randomly from the old one, and may not be as good.", style=wx.OK).ShowModal()
+        
         self._want_abort = False
         self.start_time = time.time()
         self.init_data()
+        
         #Start the thread
         self.params.use_old_population = True
         self.params.add_trait("old_population", self.last_population)
