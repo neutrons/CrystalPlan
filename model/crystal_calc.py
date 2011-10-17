@@ -71,8 +71,9 @@ def get_scattered_beam(hkl, rot_matrix, ub_matrix):
         2pi/wl = - norm(q)^2 / (2*qz)
     So this goes into the kf_z = (qz+2pi/wl) 
     """
-    #Calcualte the scattered q-vector.
+    # Calculate the scattered q-vector.
     matrix = np.dot(rot_matrix, ub_matrix)
+    # This is the scattered Q in the L frame. 
     q_vector = np.dot(matrix, hkl)
     squared_norm_of_q = np.sum( q_vector**2, axis=0)
     # 2pi/wl = - norm(q)^2 / (2*qz)
@@ -909,10 +910,12 @@ class TestCrystalCalc(unittest.TestCase):
 
 #---------------------------------------------------------------------
 if __name__ == "__main__":
-    rot_matrix = np.identity(3)
-    ub_matrix = np.identity(3) * 0.05
-    hkl = np.zeros((3,1))
-    hkl[:,0] = [9,9,-9];
-    beam = get_scattered_beam(hkl, rot_matrix, ub_matrix)
-    print beam
+    rot_matrix = numpy_utils.rotation_matrix(np.rad2deg(45), np.rad2deg(90), 0)
+    print rot_matrix
+
+    start = column([-1,0,0])
+    print start
+    
+    rot = np.dot(rot_matrix, start)
+    print rot
     #unittest.main()

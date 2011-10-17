@@ -351,6 +351,9 @@ class Crystal(HasTraits):
             #assert np.allclose(U2, np.eye(3), atol=1e-2), "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
             if not np.allclose(U2, np.eye(3), atol=1e-2):
                 print "The U matrix must be orthonormal. Instead, we got:\nU*U.transpose()=%s" % U2
+            U_det = np.linalg.det(U)
+            #print "Its determinant is %s" % U_det
+            assert (abs(U_det-1) < 1e-3), "The U matrix must be a proper reflection. Its determinant is %s" % U_det
 
             return U
         except np.linalg.LinAlgError:

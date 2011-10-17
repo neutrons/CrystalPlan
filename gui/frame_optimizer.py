@@ -159,10 +159,17 @@ class OptimizationThread(threading.Thread):
     def run(self):
         #Just run the optimization
         self.controller.params.optimization_running = True
-        (ga, aborted, converged) = model.optimization.run_optimization(self.controller.params, self.controller.step_callback)
-        self.controller.params.optimization_running = False
-        #Call the completion function.
-        self.controller.complete( ga, aborted, converged )
+        try:
+            (ga, aborted, converged) = model.optimization.run_optimization(self.controller.params, self.controller.step_callback)
+            self.controller.params.optimization_running = False
+            #Call the completion function.
+            self.controller.complete( ga, aborted, converged )
+        except Exception as inst:
+            print "Error while running optimization"
+            print inst
+            self.controller.restore_buttons()
+        finally:
+            self.controller.params.optimization_running = False
             
 
 #================================================================================================
@@ -192,6 +199,14 @@ class OptimizerController():
         self.last_plot_time = time.time()-10
         #Frequency of plotting
         self.plot_time_interval = 1
+
+    #--------------------------------------------------------------------
+    def restore_buttons(self):
+        """ Restore the button states to the initial value """
+        self.frame.buttonStart.Enable(True)
+        self.frame.buttonKeepGoing.Enable(False)
+        self.frame.buttonApply.Enable(False)
+        self.frame.buttonStop.Enable(False)
 
     #--------------------------------------------------------------------
     def update(self):
