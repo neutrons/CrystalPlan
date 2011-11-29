@@ -605,6 +605,26 @@ class FlatDetector(Detector):
 
 
 
+#========================================================================================================
+#========================================================================================================
+#========================================================================================================
+class CylindricalDetector(Detector):
+    """Base class for a cylindrical detector."""
+
+    #---------------------------------------------------------------------------------------------
+    def __init__(self, detector_name):
+        """Constructor for a CylindricalDetector object.
+        """
+        Detector.__init__(self, detector_name)
+        self.axis = np.array([0,1,0])
+        self.zeroaxis = np.array([0,0,-1])
+        self.origin = np.array([0,-225,0])
+        self.radius = 200
+        self.height = 450
+        self.angle_start = 0
+        self.angle_end = 6.283185
+
+
 #==============================================================================
 #           TEST FUNCTIONS
 #==============================================================================
@@ -924,10 +944,37 @@ class TestHitsFlatDetector(unittest.TestCase):
         assert np.allclose(det.edge_avoidance(60, -80, 10, 10), 0.0), "edge avoidance tests."
 
 
+
+#==================================================================
+class TestCylindricalDetector(unittest.TestCase):
+    """Unit test for the CylindricalDetector base class."""
+    #----------------------------------------------------
+    def setUp(self):
+        self.det = CylindricalDetector("my_name")
+        assert self.det.name == "my_name"
+        #Some default values
+        assert self.det.xpixels == 256
+        assert self.det.ypixels == 256
+
+    #----------------------------------------------------
+    def test_calculate_pixel_angles(self):
+        """Detector.calculate_pixel_angles() tests."""
+        #Smaller size
+        self.det.xpixels = 16
+        self.det.ypixels = 10
+        self.det.calculate_pixel_angles()
+
+        #Check some shapes
+        assert self.det.pixels.shape == (3, 10, 16)
+        assert self.det.azimuthal_angle.shape == (10, 16)
+
+
 #==================================================================
 if __name__ == "__main__":
-    unittest.main()
-#    import time
-#    test_hits_detector_inlineC()
+
+    suite = unittest.makeSuite(TestCylindricalDetector)
+    unittest.TextTestRunner().run(suite)
+    
+#    unittest.main()
 
 

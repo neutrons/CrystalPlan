@@ -2284,7 +2284,6 @@ class TestGoniometers(unittest.TestCase):
 
 #===============================================================================================
 if __name__ == "__main__":
-   
     unittest.main()
 #    initialize_goniometers()
 #    sample_pin_position_range()

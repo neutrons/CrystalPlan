@@ -1,0 +1,9 @@
+"#Cylindrical",,,,,,,,,,,,
+"# Axis XYZ: Vector pointing in the direction of the axis of the cylinder. 0,1,0 = vertical",,,,,,,,,,,,
+"# ZeroAxis : vector pointing in the direction of angle 0. “0,0,-1” = towards the moderator from the sample.",,,,,,,,,,,,
+"# Origin : coordinates of the center of the base of the cylinder. In mm",,,,,,,,,,,,
+"# Radius : radius of the cylinder. In mm",,,,,,,,,,,,
+"# Height : Height of the cylinder above the origin. In mm",,,,,,,,,,,,
+"# AngleStart/End: In radians, angle of the start and end of the coverage of the detector.",,,,,,,,,,,,
+"AxisX","AxisY","AxisZ","ZeroAxisX","ZeroAxisY","ZeroAxisZ","OriginX","OriginY","OriginZ","Radius","Height","AngleStart","AngleEnd"
+0,1,0,0,0,-1,0,-225,0,200,450,0,6.283185
