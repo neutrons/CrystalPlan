@@ -3,6 +3,10 @@
 "# Origin : coordinates of the center of the base of the cylinder. In mm",,,,,,,
 "# Radius : radius of the cylinder. In mm",,,,,,,
 "# Height : Height of the cylinder above the origin. In mm",,,,,,,
-"# AngleStart/End: In radians, angle of the start and end of the coverage of the detector. The zero point is the +Z direction (along the beam), going positive counterclockwise as seen from above.",,,,,,,
+"# AngleStart/End: In radians, angle of the start and end of the coverage of the detector. ",,,,,,,
+"# … Positive angles only! The zero point is the +Z direction (along the beam), going positive counterclockwise as seen from above.",,,,,,,
 "Name","OriginX","OriginY","OriginZ","Radius","Height","AngleStart","AngleEnd"
-"det1",0,-225,0,200,450,0,6.283185
+"det1",0,-225,0,200,450,0,1.57079633
+"det2",0,-225,0,200,450,1.57079633,3.14159266
+"det3",0,-225,0,200,450,3.14159266,4.71238899
+"det4",0,-225,0,200,450,4.71238899,6.28318531

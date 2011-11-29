@@ -602,7 +602,7 @@ class Instrument:
             Returns: the 3D array.
         """
         if self.qx_list is None:  
-            warnings.warn("instrument.make_blank_qspace(): called before instrument was properly initialized!")
+            warnings.warn("instrument.make_blank_qspace(): called before instrument was properly initialized. Call make_qspace() first!")
             return None
         #Find the size and make the array
         n = self.qx_list.size
@@ -827,7 +827,6 @@ class Instrument:
 
         #Start with zeros
         number_of_ints = self.get_coverage_number_of_ints()
-
         coverage = self.make_blank_qspace(np.uint32, number_of_ints=number_of_ints)
         count = 0
         if self.verbose: sys.stdout.write( "For angles [%s], calculating coverage of detectors... " % angles_string)
@@ -875,6 +874,8 @@ class Instrument:
             #The pixels to look at (dont look at all of them)
             nx = (vector_length(q_xmax - q0) / self.q_resolution) * 1.5
             ny = (vector_length(q_ymax - q0) / self.q_resolution) * 1.5
+            if (nx < 1): nx = 1
+            if (ny < 1): ny = 1
 
             #So this is the list of the pixels in the detectors that we pick to calculate where they are in q-space
             #   (convert to int and take only unique values; convert back to list).
@@ -1959,7 +1960,7 @@ class TestImagine(unittest.TestCase):
     """Unit test for the 4-circle class."""
     def setUp(self):
         self.tst_inst = Instrument("../instruments/IMAGINE_detectors.csv")
-        self.tst_inst.set_goniometer(goniometer.Goniometer())
+        self.tst_inst.set_goniometer(goniometer.ImagineGoniometer())
         self.tst_inst.d_min = 0.7
         self.tst_inst.q_resolution = 0.15
         self.tst_inst.wl_min = 0.7
@@ -1968,8 +1969,31 @@ class TestImagine(unittest.TestCase):
     def test_creation(self):
         #@type ti InstrumenFourCircle
         ti = self.tst_inst
-        assert len(ti.detectors) == 1
+        assert len(ti.detectors) == 4
         
+    def test_calculate_coverage(self):
+        tst_inst = self.tst_inst
+        self.assertRaises(ArgumentError, tst_inst.calculate_coverage, [], [1, 2])
+        self.assertRaises(ArgumentError, tst_inst.calculate_coverage, None, [1, 2, 3, 4])
+
+        # Intialize        
+        tst_inst.make_qspace()
+
+        #Only one detector
+        det_list = [tst_inst.detectors[0]]
+        # Phi = 0
+        angles = [0]
+            
+        for use_inline_c in [False, True]:
+            #Calculate it (using C)
+            msg = ["(python only)", "(inline C)"][use_inline_c]
+            ret = tst_inst.calculate_coverage(det_list, angles, use_inline_c=use_inline_c)
+            assert np.any(ret == 1), "Coverage %s has some bits equal to 1." % msg
+            if use_inline_c: c_ret = ret
+            
+        #Find differences
+        (x,y,z,byte) = np.nonzero(ret != c_ret)
+        assert len(x) < 20, "Coverage calculated by C and python match within 20 differences. We found %s differences" % len(x)
 
 #---------------------------------------------------------------------
 if __name__ == "__main__":

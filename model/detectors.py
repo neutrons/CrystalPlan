@@ -673,8 +673,8 @@ class CylindricalDetector(Detector):
         Returns: (horizontal, vertical, wavelength, hits_it), which are all N-sized arrays.
         --------
             horizontal: horizontal position in the detector coordinates (in mm)
-                        (relative to the base_point, the center of the detector)
-            vertical: vertical position in the detector coordinates (in mm)
+                        (relative to the center of the detector)
+            vertical: vertical position in the detector coordinates (in mm, relative to center)
             wavelength: wavelength detected (in Angstroms)
             distance: distance between sample and spot on detector, in mm
             hits_it: a N-sized array of booleans, set to True for the points that hit
@@ -701,15 +701,19 @@ class CylindricalDetector(Detector):
         
         # Azimuthal angle of the beam, relative to the start of the detector
         az_angle = np.arctan2(x, z) - self.angle_start
+        # Make sure all angles are above 0.
+        below_zero = (az_angle < 0)
+        az_angle[below_zero] += np.pi * 2.
+        
         # Horizontal position = relative to the start angle, in mm 
-        h_out = self.radius * az_angle
+        h_out = self.radius * az_angle - self.width / 2.
         
         # Height of the beam, relative to the bottom of the cylinder
         elev_angle = np.arctan(y / np.sqrt(x**2 + z**2))
-        v_out = self.radius * np.tan(elev_angle) - self.origin[1]
+        v_out = self.radius * np.tan(elev_angle) - self.origin[1] - self.height / 2.
         
         # Distance to the pixel
-        pixely = v_out + self.origin[1];
+        pixely = self.radius * np.tan(elev_angle);
         distance_out = np.sqrt( self.radius**2 + pixely**2)
         
         # Now the wavelength
@@ -717,7 +721,9 @@ class CylindricalDetector(Detector):
         wl_out = 6.2831853071795862/beam_length;
 
         # Hits the detector if it is within the range
-        hits_it = (v_out >= 0) & (v_out <= self.height) & (h_out >= 0) & (h_out <= self.width) \
+        H = self.height / 2.
+        W = self.width / 2.
+        hits_it = (v_out >= -H) & (v_out <= H) & (h_out >= -W) & (h_out <= W) \
                   & (wl_out >= wl_min) & (wl_out <= wl_max)
         
         # Return everything
@@ -731,29 +737,22 @@ class CylindricalDetector(Detector):
 
         Parameters:
             horizontal, vertical: position in mm on the face of the detector.
-                0,0 = bottom-right of the detector
+                0,0 = center of the detector
 
         Returns:
             3x1 column vector of the beam direction, normalized.
         """
         # Vertical position, relative to 0,0
-        y = vertical + self.origin[1]
+        y = vertical + self.origin[1] + self.height/2.
         # Position in the XZ plane
-        angle = horizontal / self.radius + self.angle_start
-        x = sin(angle) * self.radius
-        z = cos(angle) * self.radius
+        angle = horizontal / self.radius + self.angle_start + self.width/2.
+        x = np.sin(angle) * self.radius
+        z = np.cos(angle) * self.radius
         pixel = column([x, y, z])
 
         #Normalize
         pixel = pixel / vector_length(pixel)
         return pixel
-
-
-#==============================================================================
-#           TEST FUNCTIONS
-#==============================================================================
-
-
 
 
 
@@ -996,6 +995,8 @@ class TestCylindricalDetector(unittest.TestCase):
         #Check some shapes
         assert self.det.pixels.shape == (3, 10, 16)
         assert self.det.azimuthal_angle.shape == (10, 16)
+        print self.det.azimuthal_angle
+        print self.det.elevation_angle
 
 
     def test_detector_coord(self):
@@ -1012,21 +1013,21 @@ class TestCylindricalDetector(unittest.TestCase):
 
         beam = column([1.0, 0.0, 1.0])*2*pi
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
-        assert np.allclose(h, 200 * np.pi / 4), "H is right in the middle of the detector."
-        assert np.allclose(v, 225.0), "V is right in the middle of the detector."
+        assert np.allclose(h, 0 * np.pi / 4, atol=1e-5), "H is right in the middle of the detector."
+        assert np.allclose(v, 0.0), "V is right in the middle of the detector."
         assert np.allclose(distance, 200.0), "Distance is equal to the detector radius."
         assert np.all(hits_it), "... and it hits it."
         
         beam = column([-1.0, 0.0, 1.0])*2*pi
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
-        assert np.allclose(h, -200 * np.pi / 4), "H is off to the right"
-        assert np.allclose(v, 225.0), "V is right in the middle of the detector."
+        assert np.allclose(h, +6 * 200 * np.pi / 4), "H is off to the right"
+        assert np.allclose(v, 0.0), "V is right in the middle of the detector."
         assert not np.all(hits_it), "... and it misses."
 
         beam = column([1.0, 0.0, -1.0])*2*pi
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
-        assert np.allclose(h, 200 * 3 * np.pi / 4), "H is off to the left"
-        assert np.allclose(v, 225.0), "V is right in the middle of the detector."
+        assert np.allclose(h, 2 * 200 * np.pi / 4), "H is off to the left"
+        assert np.allclose(v, 0.0), "V is right in the middle of the detector."
         assert not np.all(hits_it), "... and it misses."
         
         
@@ -1036,28 +1037,28 @@ class TestCylindricalDetector(unittest.TestCase):
 
         beam = column([0., 1., 1.]) 
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
-        assert np.allclose(h, 0 * np.pi / 4), "H is on the edge"
-        assert np.allclose(v, 425.0), "V is 200 mm above horizontal"
+        assert np.allclose(h, -200 * np.pi / 4), "H is on the edge"
+        assert np.allclose(v, 200.0), "V is 200 mm above horizontal"
         assert np.allclose(distance, np.sqrt(2*200.**2)), "Distance is correct"
         assert np.all(hits_it), "... and it hits it."
 
         beam = column([0., -1., 1.]) 
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
-        assert np.allclose(h, 0 * np.pi / 4), "H is on the edge"
-        assert np.allclose(v, 25.0), "V is 200 mm below horizontal"
+        assert np.allclose(h, -200 * np.pi / 4), "H is on the edge"
+        assert np.allclose(v, -200.0), "V is 200 mm below horizontal"
         assert np.allclose(distance, np.sqrt(2*200.**2)), "Distance is correct"
         assert np.all(hits_it), "... and it hits it."
 
         beam = column([0., 2., 1.]) 
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
-        assert np.allclose(h, 0 * np.pi / 4), "H is on the edge"
-        assert np.allclose(v, 625.0), "V is 400 mm above horizontal"
+        assert np.allclose(h, -200 * np.pi / 4), "H is on the edge"
+        assert np.allclose(v, 400.0), "V is 400 mm above horizontal"
         assert not np.all(hits_it), "... and it misses."
         
         beam = column([0., -2., 1.]) 
         (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
-        assert np.allclose(h, 0 * np.pi / 4), "H is on the edge"
-        assert np.allclose(v, -175.0), "V is 400 mm below horizontal"
+        assert np.allclose(h, -200 * np.pi / 4), "H is on the edge"
+        assert np.allclose(v, -400.0), "V is 400 mm below horizontal"
         assert not np.all(hits_it), "... and it misses."
         
         

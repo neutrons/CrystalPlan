@@ -576,10 +576,11 @@ class LimitedGoniometer(Goniometer):
         """
         ret = True
         reason = ""
+        all_angle_infos = self.get_angles() 
 
         for i in xrange(len(angles)):
             #@type AngleInfo ai
-            ai = self.gonio_angles[i]
+            ai = all_angle_infos[i]
             angle = angles[i]
             if angle < ai.random_range[0] or angle > ai.random_range[1]:
                 ret = False
@@ -1217,38 +1218,14 @@ class ImagineGoniometer(LimitedGoniometer):
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
-        #C code for the fitness of phi,chi, omega.
-        args = []
-        for i in xrange(2):
-            for j in xrange(2):
-                args.append(self.gonio_angles[i].random_range[j])
-        # Last argument is the fixed chi value.
-        args.append( self.chi )
-        args = tuple(args)
-
-        s = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+        """C code for the fitness of phi,chi, omega.
+        Fitness is always good since the goniometer has no limits"""
+        s = """FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
         {
-            FLOAT phi_min = %f;
-            FLOAT phi_max = %f;
-            FLOAT omega_min = %f;
-            FLOAT omega_max = %f;
-
-            FLOAT phi_mid = (phi_min + phi_max) / 2;
-            FLOAT chi_mid = %f;
-            FLOAT omega_mid = (omega_min + omega_max) / 2;
-
-            FLOAT fitness = absolute(chi - chi_mid)*10.0 + absolute(omega - omega_mid)/10.0 + absolute(phi - phi_mid)/10.0;
-
-            // Big penalties for being out of the range
-            if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
-            if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
-            if (omega < omega_min) fitness += (omega_min - omega) * 1.0;
-            if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
-
+            FLOAT fitness = absolute(phi);
             return fitness;
         }
-        """ % (args)
+        """ 
         return s
 
 

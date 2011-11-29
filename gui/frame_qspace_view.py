@@ -336,9 +336,9 @@ class QspaceViewController(HasTraits):
         iso.actor.actor.scale = tuple(np.array([1.0, 1.0, 1.0]) * model.experiment.exp.inst.q_resolution)
         #And we offset the position so that the center is at q-space (0,0,0)
         iso.actor.actor.position = tuple(np.array([1.0, 1.0, 1.0]) * -model.experiment.exp.inst.qlim)
-        #This helps them to show up right in partially transparent mode.
-        iso.actor.property.backface_culling = 1
-        iso.actor.property.frontface_culling = 1
+        # When set to 1, This helps them to show up right in partially transparent mode.
+        iso.actor.property.backface_culling = 0
+        iso.actor.property.frontface_culling = 0
         #Add the module to the data source, to make it plot that data
         self.data_src.add_module(iso)
 
@@ -739,9 +739,15 @@ class QspaceViewController(HasTraits):
         if display.show_redundancy:
             iso.contour.contours = list(np.arange(1, max_coverage+1))
             iso.actor.property.opacity = 0.6
+            # When set to 1, This helps them to show up right in partially transparent mode.
+            iso.actor.property.backface_culling = 1
+            iso.actor.property.frontface_culling = 1
         else:
             iso.contour.contours = [1.0]
             iso.actor.property.opacity = 1.0
+            # When set to 1, this does not look good in solid ISO mode
+            iso.actor.property.backface_culling = 0
+            iso.actor.property.frontface_culling = 0
 
         #Don't use opacity in inverted mode
         if display_thread.is_inverted():
