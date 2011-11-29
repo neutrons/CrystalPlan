@@ -30,7 +30,7 @@ import crystal_calc
 from crystal_calc import getq, getq_python
 import goniometer
 from goniometer import Goniometer, TopazInHouseGoniometer
-from detectors import Detector, FlatDetector
+from detectors import Detector, FlatDetector, CylindricalDetector
 import config
 import utils
 
@@ -320,10 +320,42 @@ class Instrument:
 
         try:
             reader = csv.reader( open(filename) )
-            count = 0
+            row = reader.next()
+            cylindrical = False
+            if row[0].startswith("#Cyl"):
+                cylindrical = True
+                
+            # Skip other comment rows
+            while True:
+                row = reader.next()
+                if len(row) > 0:
+                    if len(row[0]) > 0:
+                        if row[0][0] != '#': break
+                    else:
+                        break
+                else:
+                    break
+            
+            count = 1
             for row in reader:
-                #Ignore the header row
-                if count > 0:
+                if cylindrical:
+                    # -------- Cylindrical Detector ---------
+                    name = row[0].strip()
+                    if name == "":  name = "d%d" % number
+                    det = CylindricalDetector( name )
+                    det.origin[0] = float(row[1])
+                    det.origin[1] = float(row[2])
+                    det.origin[2] = float(row[3])
+                    det.radius = float(row[4])
+                    det.height = float(row[5])
+                    det.angle_start = float(row[6])
+                    det.angle_end = float(row[7])
+                    #Calculate the pixel angles
+                    det.calculate_pixel_angles()
+                    self.detectors.append(det)
+                    
+                else:
+                    # -------- Flat Detector ---------
                     number = round(float(row[0]))
                     name = row[1].strip()
                     if name == "":
@@ -1922,21 +1954,35 @@ class TestFourCircleInstrument(unittest.TestCase):
         ti = self.tst_inst
         assert len(ti.detectors) == 1
         
+#==================================================================
+class TestImagine(unittest.TestCase):
+    """Unit test for the 4-circle class."""
+    def setUp(self):
+        self.tst_inst = Instrument("../instruments/IMAGINE_detectors.csv")
+        self.tst_inst.set_goniometer(goniometer.Goniometer())
+        self.tst_inst.d_min = 0.7
+        self.tst_inst.q_resolution = 0.15
+        self.tst_inst.wl_min = 0.7
+        self.tst_inst.wl_max = 3.6
+
+    def test_creation(self):
+        #@type ti InstrumenFourCircle
+        ti = self.tst_inst
+        assert len(ti.detectors) == 1
+        
 
 #---------------------------------------------------------------------
 if __name__ == "__main__":
 #    #Test just the inelastic one
-#    suite = unittest.makeSuite(TestFourCircleInstrument)
-#    unittest.TextTestRunner().run(suite)
+    suite = unittest.makeSuite(TestImagine)
+    unittest.TextTestRunner().run(suite)
 
 #    tst = TestInstrumentWithDetectors('test_load_detcal')
 #    tst.setUp()
 #    tst.test_load_detcal()
 
-    unittest.main()
+#    unittest.main()
 
 #    test_setup()
-#    test_hits_detector()
-#    test_hits_detector_inlineC()
 #    test_calculate_coverage()
 

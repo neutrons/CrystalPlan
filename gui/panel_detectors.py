@@ -72,8 +72,23 @@ class DetectorVisualization(HasTraits):
         """Plot the location of the detector in real space, as an outline."""
         col=color
         rad=None
-        #Plot between each corner and connect back to 1st corner
-        lines(det.corners+[det.corners[0]], color=col, tube_radius=rad, mlab=self.scene.mlab)
+        if det.__class__.__name__=='FlatDetector':
+            #Plot between each corner and connect back to 1st corner
+            lines(det.corners+[det.corners[0]], color=col, tube_radius=rad, mlab=self.scene.mlab)
+        else:
+            # Cylindrical
+            # Bottom circle
+            points = [tuple(det.pixels[:, 0, x]) for x in xrange(det.xpixels)]
+            lines(points, color=col, tube_radius=rad, mlab=self.scene.mlab)
+            # Top circle
+            points = [tuple(det.pixels[:, -1, x]) for x in xrange(det.xpixels)]
+            lines(points, color=col, tube_radius=rad, mlab=self.scene.mlab)
+            # Vertical lines
+            points = [det.pixels[:, -1, 0], det.pixels[:, 0, 0]]
+            lines(points, color=col, tube_radius=rad, mlab=self.scene.mlab)
+            points = [det.pixels[:, -1, -1], det.pixels[:, 0, -1]]
+            lines(points, color=col, tube_radius=rad, mlab=self.scene.mlab)
+            
         #Plot the normal, out of the center
 #        lines([det.base_point.flatten(), (det.base_point+det.normal*det.width/2).flatten()], color=col, tube_radius=rad, mlab=self.scene.mlab)
         #Find the middle and put text there

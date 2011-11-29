@@ -59,11 +59,6 @@ class Detector:
         return utils.equal_objects(self, other)
 
     #-------------------------------------------------------------------------------
-    def hits_detector(self, az, elev):
-        """Virtual method to check if the given azimuth and elevation angles hit the detector."""
-        raise NotImplementedError("Detector base class virtual method hits_detector was called.")
-
-    #-------------------------------------------------------------------------------
     def get_pixel_direction(self, horizontal, vertical):
         """Return a 3x1 column vector giving the direction of a pixel
         on the face of the detector.
@@ -124,18 +119,6 @@ class FlatDetector(Detector):
         #Rotation matrix to use to convert detector horiz, vert to XYZ in real space
         self.pixel_rotation_matrix = np.identity(3)
 
-
-    #-------------------------------------------------------------------------------
-    def hits_detector(self, az, elev, bool_array):
-        """Check if the given azimuth and elevation angles hit the detector."""
-        if False:
-            bool_array |= self.get_detector_coordinates(az, elev, bool_array)
-        else:
-            #Python version
-            (h,v,d) = self.detector_coord(az, elev)
-            #Do an element-wise OR with this check
-            bool_array |= ((h >= 0) & (h <= self.width)) & ((v >= 0) & (v <= self.height))
-        return bool_array
 
     #-------------------------------------------------------------------------------
     def edge_avoidance(self, h, v, edge_x, edge_y):
@@ -610,116 +593,140 @@ class FlatDetector(Detector):
 #========================================================================================================
 class CylindricalDetector(Detector):
     """Base class for a cylindrical detector."""
+    
+    # Distance = radius of the cylinder
+    def get_distance(self):
+        return self.radius
+    distance = property(get_distance)
+    
+    # Width = arc length of the bottom of the cylinder
+    def get_width(self):
+        return self.radius * (self.angle_end - self.angle_start)
+    width = property(get_width)
 
     #---------------------------------------------------------------------------------------------
     def __init__(self, detector_name):
         """Constructor for a CylindricalDetector object.
         """
         Detector.__init__(self, detector_name)
-        self.axis = np.array([0,1,0])
-        self.zeroaxis = np.array([0,0,-1])
         self.origin = np.array([0,-225,0])
         self.radius = 200
         self.height = 450
         self.angle_start = 0
-        self.angle_end = 6.283185
+        self.angle_end = 1.57079638
 
+
+
+    #-------------------------------------------------------------------------------
+    def calculate_pixel_angles(self):
+        """Given the center angle and other geometry of the detector, calculate the
+        azimuth and elevation angle of every pixel."""
+
+        # This is the "azimuthal angle"
+        thetas = np.linspace(self.angle_start, self.angle_end, self.xpixels)
+        # This is the height above 
+        heights = np.linspace(0, self.height, self.ypixels)
+        # Number of pixels
+        num = self.xpixels * self.ypixels
+
+        #Grid of angle and height
+        (ptheta, pheight) = np.meshgrid(thetas,heights)
+        # The circle is in the X-Z direction
+        px = self.origin[0] + np.cos(ptheta) * self.radius
+        pz = self.origin[2] + np.sin(ptheta) * self.radius
+        # This is the height
+        py = self.origin[1] + pheight
+        
+        #Reshape into a nx3 buncha columns, where the columns are the pixels XYZ positions
+        pixels = np.array( [ px.flatten(), py.flatten(), pz.flatten()] )
+
+        #Save em - for plotting, mostly. Indices go Z, Y, X
+        self.pixels = np.reshape(pixels, (3, self.ypixels, self.xpixels) )
+
+        #Save the corners
+        self.corners = list()
+        self.corners.append(self.pixels[:,  0,  0]) #One corner
+        self.corners.append(self.pixels[:,  0, -1]) #The end in X
+        self.corners.append(self.pixels[:, -1, -1]) #Max x and Y
+        self.corners.append(self.pixels[:, -1,  0]) #The end in Y
+
+        #Now, we calculate the azimuth and elevation angle of each pixel.
+        x=pixels[0,:]
+        y=pixels[1,:]
+        z=pixels[2,:]
+
+        self.azimuthal_angle = np.reshape( np.arctan2(x, z), (self.ypixels, self.xpixels) )
+        self.elevation_angle = np.reshape( np.arctan(y / np.sqrt(x**2 + z**2)), (self.ypixels, self.xpixels) )
+
+
+    #-------------------------------------------------------------------------------
+    def get_detector_coordinates(self, beam, wl_min=0.0, wl_max=1e6):
+        """Returns the coordinates of the point(s) touched on the detector (if any).
+
+        Parameters:
+        -----------
+            beam: 3xN array with the first dimension giving a vector of the direction
+                of the scattered beam. The length of the vector = 2*pi/wavelength of the neutron.
+            wl_min, wl_max: float, minimum and maximum wavelength that the detector
+                can measure, in Angstroms.
+                
+        Returns: (horizontal, vertical, wavelength, hits_it), which are all N-sized arrays.
+        --------
+            horizontal: horizontal position in the detector coordinates (in mm)
+                        (relative to the base_point, the center of the detector)
+            vertical: vertical position in the detector coordinates (in mm)
+            wavelength: wavelength detected (in Angstroms)
+            distance: distance between sample and spot on detector, in mm
+            hits_it: a N-sized array of booleans, set to True for the points that hit
+                the detector.
+
+        Optimized using inline-C.
+        """
+        #Some checks
+        if len(beam.shape) != 2 or beam.shape[0] != 3:
+            raise ValueError("'beam' parameter has incorrect shape. Should be 3xN array")
+
+#        #output h,v, wl coordinate arrays
+#        (ignored, array_size) = beam.shape
+#        h_out = np.zeros( array_size )
+#        v_out = np.zeros( array_size )
+#        wl_out = np.zeros( array_size )
+#        distance_out = np.zeros( array_size )
+#        hits_it = np.zeros( array_size, dtype=bool )
+        
+        # Beam directions
+        x = beam[0,:]
+        y = beam[1,:]
+        z = beam[2,:]
+        
+        # Azimuthal angle of the beam, relative to the start of the detector
+        az_angle = np.arctan2(x, z) - self.angle_start
+        # Horizontal position = relative to the start angle, in mm 
+        h_out = self.radius * az_angle
+        
+        # Height of the beam, relative to the bottom of the cylinder
+        elev_angle = np.arctan(y / np.sqrt(x**2 + z**2))
+        v_out = self.radius * np.tan(elev_angle) - self.origin[1]
+        
+        # Distance to the pixel
+        pixely = v_out + self.origin[1];
+        distance_out = np.sqrt( self.radius**2 + pixely**2)
+        
+        # Now the wavelength
+        beam_length = np.sqrt( x**2 + y**2 + z**2 )
+        wl_out = 6.2831853071795862/beam_length;
+
+        # Hits the detector if it is within the range
+        hits_it = (v_out >= 0) & (v_out <= self.height) & (h_out >= 0) & (h_out <= self.width) \
+                  & (wl_out >= wl_min) & (wl_out <= wl_max)
+        
+        # Return everything
+        return (h_out, v_out, wl_out, distance_out, hits_it)
 
 #==============================================================================
 #           TEST FUNCTIONS
 #==============================================================================
 
-
-#---------------------------------------------------------------------
-def test_hits_detector():
-    global inst
-
-    det = inst.detectors[0]
-    det = inst.detectors[0]
-    det2 = inst.detectors[1]
-
-    (az_list, elev_list) = np.mgrid[-180:180:0.5, -90:90:0.5]
-    print "Looking at an array of", az_list.shape, " shape. # of points = ", az_list.size
-
-    from pylab import close, figure, show, plot, axis, title
-    close()
-    close()
-
-    #Vectorized way
-    t1 = time.time()
-    az_list_rad = np.deg2rad(az_list)
-    elev_list_rad = np.deg2rad(elev_list)
-    b1 = np.zeros(az_list.shape, dtype=bool)
-    b1 = inst.detectors[0].hits_detector(az_list_rad, elev_list_rad, b1)
-    for i in xrange(1, 48):
-        b1 = inst.detectors[i].hits_detector(np.deg2rad(az_list), np.deg2rad(elev_list), b1)
-    print "Vectorized took ", (time.time() - t1), " seconds."
-
-    figure(1)
-    plot(az_list[b1], elev_list[b1], 'b.')
-    plot(az_list[~b1], elev_list[~b1], 'r.')
-    axis('equal')
-    title('vectorized version')
-
-
-    if False:
-        print "Starting for loop version... This may take a while!"
-        b2 = b1.copy()
-        t1 = time.time()
-        s = az_list.shape
-        for ia in xrange(s[0]):
-            for ip in xrange(s[1]):
-                az = az_list[ia, ip]
-                elev = elev_list[ia, ip]
-                b = False
-                for i in xrange(48):
-                    b = inst.detectors[i].hits_detector(np.deg2rad(az), np.deg2rad(elev))
-                    if b: break
-                b2[ia, ip] = b
-
-        print "Triple for loops took ", (time.time() - t1), " seconds."
-
-        print "The two results are identical?", np.all(b1 == b2)
-
-        figure(2)
-        plot(az_list[b2], elev_list[b2], 'b.')
-        plot(az_list[~b2], elev_list[~b2], 'r.')
-        axis('equal')
-        title('for loop version')
-
-    show()
-
-
-
-
-#---------------------------------------------------------------------
-def test_hits_detector_inlineC():
-    import time
-    det = FlatDetector("test_detector")
-    det.calculate_pixel_angles()
-
-    (az_list, elev_list) = np.mgrid[-180:180:5, -95:95:0.5]
-    az_list_rad = np.deg2rad(az_list)
-    elev_list_rad = np.deg2rad(elev_list)
-    print "Looking at an array of", az_list.shape, " shape. # of points = ", az_list.size
-
-    t = time.time()
-#    (h1,v1,d1) = det.detector_coord(az_list_rad, elev_list_rad)
-
-    t1 = time.time()-t
-    t = time.time()
-    bool_array = np.zeros(az_list_rad.shape, dtype=bool)
-    det.get_detector_coordinates(az_list_rad, elev_list_rad, bool_array)
-    t2 = time.time()-t
-
-    print "Python version took %s sec, inline-C took %s sec. Speed up factor is %s" % (t1, t2, t1/t2)
-#    print h1 - h2
-#    print v1 - v2
-#    print (v1 - v2).max()
-#    print d1, d2
-    atol = 0.01
-#    print "The resulting arrays are the same (h,v,d)?", np.allclose(h1, h2, atol=atol), np.allclose(v1, v2, atol=atol), np.allclose(d1, d2, atol=atol)
-    #print "The resulting arrays are the same (h,v,d)?", np.allclose(h1, h2, atol=atol), np.allclose(v1, v2, atol=atol), np.allclose(d1, d2, atol=atol)
 
 
 
@@ -734,10 +741,6 @@ class TestDetector(unittest.TestCase):
     """Unit test for the Detector base class."""
     def setUp(self):
         self.det = Detector("detector_name")
-
-    def test_notimplemented(self):
-        """Make sure Detector's virtual methods raise NotImplementedError."""
-        self.assertRaises(NotImplementedError,   self.det.hits_detector, None, None)
 
 #==================================================================
 class TestFlatDetector(unittest.TestCase):
@@ -968,6 +971,70 @@ class TestCylindricalDetector(unittest.TestCase):
         assert self.det.pixels.shape == (3, 10, 16)
         assert self.det.azimuthal_angle.shape == (10, 16)
 
+
+    def test_detector_coord(self):
+        """CylindricalDetector.get_detector_coordinates()"""
+        det = self.det
+        func = det.get_detector_coordinates
+        #Invalid parameter errors
+        self.assertRaises(ValueError, func, np.zeros( (2,10) ))
+        self.assertRaises(ValueError, func, np.zeros(3) )
+
+        beam = column([10.0, 0.0, 0.0])*2*pi
+        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
+        assert np.allclose(wl, 0.1), "Correct wavelength"
+
+        beam = column([1.0, 0.0, 1.0])*2*pi
+        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
+        assert np.allclose(h, 200 * np.pi / 4), "H is right in the middle of the detector."
+        assert np.allclose(v, 225.0), "V is right in the middle of the detector."
+        assert np.allclose(distance, 200.0), "Distance is equal to the detector radius."
+        assert np.all(hits_it), "... and it hits it."
+        
+        beam = column([-1.0, 0.0, 1.0])*2*pi
+        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
+        assert np.allclose(h, -200 * np.pi / 4), "H is off to the right"
+        assert np.allclose(v, 225.0), "V is right in the middle of the detector."
+        assert not np.all(hits_it), "... and it misses."
+
+        beam = column([1.0, 0.0, -1.0])*2*pi
+        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
+        assert np.allclose(h, 200 * 3 * np.pi / 4), "H is off to the left"
+        assert np.allclose(v, 225.0), "V is right in the middle of the detector."
+        assert not np.all(hits_it), "... and it misses."
+        
+        
+    def test_detector_coord_vertical(self):
+        """CylindricalDetector.get_detector_coordinates()"""
+        det = self.det
+
+        beam = column([0., 1., 1.]) 
+        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
+        assert np.allclose(h, 0 * np.pi / 4), "H is on the edge"
+        assert np.allclose(v, 425.0), "V is 200 mm above horizontal"
+        assert np.allclose(distance, np.sqrt(2*200.**2)), "Distance is correct"
+        assert np.all(hits_it), "... and it hits it."
+
+        beam = column([0., -1., 1.]) 
+        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
+        assert np.allclose(h, 0 * np.pi / 4), "H is on the edge"
+        assert np.allclose(v, 25.0), "V is 200 mm below horizontal"
+        assert np.allclose(distance, np.sqrt(2*200.**2)), "Distance is correct"
+        assert np.all(hits_it), "... and it hits it."
+
+        beam = column([0., 2., 1.]) 
+        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
+        assert np.allclose(h, 0 * np.pi / 4), "H is on the edge"
+        assert np.allclose(v, 625.0), "V is 400 mm above horizontal"
+        assert not np.all(hits_it), "... and it misses."
+        
+        beam = column([0., -2., 1.]) 
+        (h, v, wl, distance, hits_it) = det.get_detector_coordinates(beam)
+        assert np.allclose(h, 0 * np.pi / 4), "H is on the edge"
+        assert np.allclose(v, -175.0), "V is 400 mm below horizontal"
+        assert not np.all(hits_it), "... and it misses."
+        
+        
 
 #==================================================================
 if __name__ == "__main__":
