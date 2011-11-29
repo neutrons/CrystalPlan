@@ -723,6 +723,32 @@ class CylindricalDetector(Detector):
         # Return everything
         return (h_out, v_out, wl_out, distance_out, hits_it)
 
+
+    #---------------------------------------------------------------------
+    def get_pixel_direction(self, horizontal, vertical):
+        """Return a 3x1 column vector giving the direction of a pixel
+        on the face of the detector.
+
+        Parameters:
+            horizontal, vertical: position in mm on the face of the detector.
+                0,0 = bottom-right of the detector
+
+        Returns:
+            3x1 column vector of the beam direction, normalized.
+        """
+        # Vertical position, relative to 0,0
+        y = vertical + self.origin[1]
+        # Position in the XZ plane
+        angle = horizontal / self.radius + self.angle_start
+        x = sin(angle) * self.radius
+        z = cos(angle) * self.radius
+        pixel = column([x, y, z])
+
+        #Normalize
+        pixel = pixel / vector_length(pixel)
+        return pixel
+
+
 #==============================================================================
 #           TEST FUNCTIONS
 #==============================================================================
