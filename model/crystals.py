@@ -10,11 +10,12 @@ Data structures for crystal information.
 import copy
 from ctypes import ArgumentError
 import numpy as np
+from numpy import cos, sin
 
 #--- Model Imports ---
 import crystal_calc
 import numpy_utils
-from numpy_utils import column, vector_length
+from numpy_utils import column, vector_length, rotation_matrix
 import ubmatrixreader
 import utils
 
@@ -241,6 +242,163 @@ class Crystal(HasTraits):
             # and re-calc the real-space a,b,c vectors
             self.calculate_abc()
 
+    #--------------------------------------------------------------------
+    def read_LDM_file(self, filename):
+        """Load an Lauegen .ldm format file into this crystal.
+        
+        Lauegen uses the coordinate system of MOSFLM, see:
+         http://www.mrc-lmb.cam.ac.uk/harry/mosflm/mosflm_user_guide.html#a3
+        for a description.
+        
+        For Lauegen:
+        http://www.ccp4.ac.uk/ccp4bin/viewcvs/laue/doc/lauegen.txt?rev=HEAD&only_with_tag=JC&content-type=text/vnd.viewcvs-markup
+        
+        ROTATION_AXIS   This defines which 'signed' reciprocal
+                        axial direction is the one closest to the
+                        crystal rotation axis. It may be +a*,
+                        +b*, +c*, -a*, -b* or -c*. The code may
+                        be entered or the value selected from the
+                        drop down menu.
+        
+        BEAM_AXIS       This defines which 'signed' reciprocal
+                        axial  direction is the one closest to
+                        the X-ray beam direction away from the
+                        source. It may be +a*, +b*, +c*, -a*, -b*
+                        or -c*. The code may be entered or the
+                        value selected from the drop down menu.
+                        
+        PHIX[], PHIY[], PHIZ[]
+                         The crystal missetting angles in degrees
+                         around the laboratory frame X, Y and Z
+                         axes. (see Appendix 4  for coordinate
+                         systems)
+                         
+        MOSFLM coordinates:
+            +X = x-ray beam direction
+            +Z = crystal rotation axis = vertical?
+            +Y = defined by XYZ forming right-handed coordinate system
+        
+        LDM file format: The second line:
+        
+        BEAM_AXIS +a* ROTATION_AXIS +c*
+        
+        This means that:
+        
+        - Start with the a* vector along the beam axis
+           = in the same direction as the neutron movement
+           = +Z in our usual convention (e.g. in ISAW, CrystalPlan and Mantid)
+           = +X axis in the MOSFLM convention
+        - Start with the c* vector pointing towards the rotation axis
+           = the vertical axis pointing upwards (+Y in our usual convention).
+           = +Z in the MOSFLM convention 
+           = This means that c* is in the YZ plane, with the Y component positive.
+        - Use right-handed coordinates, so that the b* vector is inferred
+            to be somewhere towards the +X direction.
+        
+        Then from this starting orientation, we apply the rotations e.g.:
+        
+        PHIX 85.279 PHIY -47.330 PHIZ 41.879
+        
+        Here I am not sure if the XYZ match our usual convention. If they do, it would be:
+        
+        * 85 degrees right-handed rotation about the +X (left) axis
+        * -47 degrees right-handed rotation about the +Y (vertical upwards) axis
+        * 41 degrees right-handed rotation about the +Z (beam direction) axis
+        
+        Parameters:
+            filename: text file to load
+        """
+        f = open(filename, 'r')
+        
+        beam_axis = ""
+        rotation_axis = ""
+        phix = 0
+        phiy = 0
+        phiz = 0
+        
+        for line in f:
+            line = line.strip()
+            if line.startswith("BEAM_AXIS"):
+                try:
+                    tokens = line.split(" ")
+                    beam_axis = tokens[1]
+                    rotation_axis = tokens[3]
+                except:
+                    raise Exception("Error interpreting LDM string '%s'" % line )
+            
+            if line.startswith("A "):
+                try:
+                    # Lattice parameters A 33.920 B 34.874 C 43.478 ALPHA 90.0 BETA 90.0 GAMMA 90.0
+                    tokens = line.split(" ")
+                    # Convert the odd-numbered ones
+                    values = [float(tokens[i]) for i in range(1, len(tokens), 2)]
+                    
+                    # Lengths in angstroms
+                    lattice_lengths = tuple(values[0:3])
+                    self.set_lattice_lengths(lattice_lengths)
+                    # Angles in degrees
+                    angles_deg = tuple(values[3:])
+                    angles_rad = tuple([np.deg2rad(x) for x in angles_deg])
+                    self.set_lattice_angles_deg(angles_deg)
+                    self.set_lattice_angles(angles_rad)
+                except:
+                    raise Exception("Error interpreting LDM string '%s'" % line )
+                
+            if line.startswith("PHIX "):
+                try:
+                    # Rotations PHIX 146.449 PHIY 4.792 PHIZ -171.550
+                    tokens = line.split(" ")
+                    # Convert the odd-numbered ones
+                    values = [float(tokens[i]) for i in range(1, len(tokens), 2)]
+                    # Rotation angles in radians
+                    (phix, phiy, phiz) = np.deg2rad([x for x in values])
+                except:
+                    raise Exception("Error interpreting LDM string '%s'" % line )
+            
+        f.close()
+
+        #If all the sample mounting angles are zero, the sample's crystal
+        #lattice coordinate system is aligned with the instrument coordinates.
+        #The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
+        #'c' goes towards +z.
+        
+        #Start with the orientation ABOVE.
+        #Now let's make a* point towards +X (in LDM) = +Z (in ISAW)
+        R1 = rotation_matrix(phi=-np.pi/2, chi=0, omega=0)
+        R = R1
+        # Now let's make the b* point towards +Y (in LDM) = +X (in ISAW)
+        R2 = rotation_matrix(phi=0, chi=-np.pi/2, omega=0)
+        R = np.dot(R2, R)
+        
+        # Now add the ccw rotation along the LDM +X axis, phix
+        # = rotation around ISAW +Z axis
+        c = cos(phix)
+        s = sin(phix)
+        R_phix = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+        R = np.dot(R_phix, R)
+        
+        # Now add the rotation along the LDM +Y axis, phiy
+        # = rotation around ISAW +X axis
+        c = cos(phiy)
+        s = sin(phiy)
+        R_phiy = np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
+        R = np.dot(R_phiy, R)
+        
+        # Now add the rotation along the LDM +Z axis, phiz
+        # = rotation around ISAW +Y axis
+        R_phiz = rotation_matrix(phi=phiz, chi=0, omega=0)
+        R = np.dot(R_phiy, R)
+        
+        # This R is our U matrix
+        self.u_matrix = R
+
+        #Now the UB matrix
+        self.ub_matrix = crystal_calc.make_UB_matrix(self.lattice_lengths, self.lattice_angles, 0,0,0,
+                                                     U_matrix=R)
+        self.ub_matrix_is_from = "\nFile %s.\n" % filename
+
+        # and re-calc the real-space a,b,c vectors
+        self.calculate_abc()
 
 
     #--------------------------------------------------------------------
@@ -1097,14 +1255,21 @@ class TestCrystal(unittest.TestCase):
         UB = c.ub_matrix
         print "UB matrix loaded (including 2pi) is:\n", UB
 
+    def test_read_LDM_file(self):
+        #@type c Crystal
+        c = self.c
+        c.read_LDM_file("data/LADI_fd14.ldm")
+        UB = c.ub_matrix
+        print "UB matrix loaded (including 2pi) is:\n", UB
+
 
 #---------------------------------------------------------------------
 if __name__ == "__main__":
-    unittest.main()
+#    unittest.main()
 
-#    tst = TestCrystal('test_read_HFIR_ubmatrix_file')
-#    tst.setUp()
-#    tst.test_read_HFIR_ubmatrix_file()
+    tst = TestCrystal('test_read_LDM_file')
+    tst.setUp()
+    tst.test_read_LDM_file()
 
 
 

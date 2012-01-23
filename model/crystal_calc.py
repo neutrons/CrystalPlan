@@ -248,7 +248,8 @@ def make_lattice_vectors(lattice_lengths, lattice_angles):
 
 
 #========================================================================================================
-def make_UB_matrix(lattice_lengths, lattice_angles, sample_phi, sample_chi, sample_omega):
+def make_UB_matrix(lattice_lengths, lattice_angles, sample_phi, sample_chi, sample_omega,
+                   U_matrix=None):
     """Make a UB matrix from the given parameters.
 
     Parameters:
@@ -267,6 +268,8 @@ def make_UB_matrix(lattice_lengths, lattice_angles, sample_phi, sample_chi, samp
                 4 - Do the omega rotation = around the Y axis again.
             For example, if 'a' is pointing up, use 0, +90, 0.
                 if 'a' is pointing down along the beam direction, use -90, 0, 0 (I think)
+                
+        U_matrix : specify to use this U matrix instead of the angles
     """
     #Get the reciprocal vectors
     (a_star, b_star, c_star) = make_reciprocal_lattice(lattice_lengths, lattice_angles)
@@ -279,6 +282,9 @@ def make_UB_matrix(lattice_lengths, lattice_angles, sample_phi, sample_chi, samp
     #Now lets make a rotation matrix U to account for sample mounting.
     #   We used the same set of phi,chi,omega rotations as for sample orientations.
     U = numpy_utils.rotation_matrix(sample_phi, sample_chi, sample_omega)
+    
+    if not U_matrix is None:
+        U = U_matrix
 
     #Return the UB matrix product. U*Bget_q_from_hkl
     return np.dot(U, B)

@@ -84,6 +84,12 @@ class FrameMain(wx.Frame):
             self.Bind(wx.EVT_MENU, self.OnMenuLoadUB, id=id)
 
 
+            id = wx.NewId()
+            parent.Append(id=id, text=u'Load a Lauegen .ldm UB matrix file...\tCtrl+M', kind=wx.ITEM_NORMAL,
+                        help='Load a Lauegen .ldm file containing the crystal orientation for the IMAGINE instrument.')
+            self.Bind(wx.EVT_MENU, self.OnMenuLoadLDM, id=id)
+
+
         parent.AppendSeparator()
 
         id = wx.NewId()
@@ -208,6 +214,11 @@ class FrameMain(wx.Frame):
     def OnMenuLoadHFIRUB(self, event):
         self.load_HFIR_ubmatrix_file_dialog(self)
         event.Skip()
+        
+    def OnMenuLoadLDM(self,event):
+        self.load_ldm_file_dialog(self)
+        event.Skip()
+        
 
 
     def load_HFIR_ubmatrix_file_dialog(self, parent):
@@ -273,6 +284,29 @@ class FrameMain(wx.Frame):
         #Load the file with no goniometer correction
         model.experiment.exp.crystal.read_ISAW_ubmatrix_file(filename, angles=[0,0,0])
         #TODO: Check if ISAW matrix file has line saying NOT GONIOMETER CORRECTED
+
+        #Now this handles updating all the gui etc.
+        self.tab_sample.OnReturningFromEditCrystal(old_U)
+
+    def load_ldm_file_dialog(self, parent):
+        """Opens a dialog asking the user where to load the .ldm file."""
+        filters = 'Lauegen .ldm file (*.ldm)|*.ldm|All files (*)|*|'
+        (path, filename) = os.path.split(self.last_ldm_path)
+        dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an Lauegen .ldm file', wildcard=filters, style=wx.OPEN )
+        if dialog.ShowModal() == wx.ID_OK:
+            filename = dialog.GetPath()
+            self.last_ldm_path = filename
+            dialog.Destroy()
+        else:
+            #'Nothing was selected.
+            dialog.Destroy()
+            return None
+
+        #The old U matrix, before messing with it.
+        old_U = model.experiment.exp.crystal.get_u_matrix()
+
+        #Load the file 
+        model.experiment.exp.crystal.read_LDM_file(filename)
 
         #Now this handles updating all the gui etc.
         self.tab_sample.OnReturningFromEditCrystal(old_U)
@@ -455,6 +489,7 @@ class FrameMain(wx.Frame):
     def __init__(self, parent):
         self.last_ubmatrix_path = ''
         self.last_lattice_path = ''
+        self.last_ldm_path = ''
 
         self._init_ctrls(parent)
         #Make the tabs for the notebook
