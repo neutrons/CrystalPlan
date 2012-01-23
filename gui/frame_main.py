@@ -25,6 +25,7 @@ import dialog_preferences
 import CrystalPlan_version
 import display_thread
 import frame_optimizer
+import detector_plot
 
 #--- Model Imports ---
 import model
@@ -139,6 +140,10 @@ class FrameMain(wx.Frame):
         id = wx.NewId()
         parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Find angles for all HKL.')
         self.Bind(wx.EVT_MENU, self.OnMenuFourCircleAllHKL, id=id)
+
+        id = wx.NewId()
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'Simple Laue Plots')
+        self.Bind(wx.EVT_MENU, self.OnMenuLauePlot, id=id)
 
 
     def _init_menuHelp(self, parent):
@@ -437,8 +442,58 @@ class FrameMain(wx.Frame):
             #'Nothing was selected.
             dialog.Destroy()
             return
+        
+    def make_Laue_plot(self, det, detnum, parent):
+        """ Create a simple Laue plot.
+        Parameters
+             det :: detector object
+             detnum :: index of the detector
+             parent :: parent wxWindow
+        """
+#        frame = wx.Window(parent)
+#        boxSizer = wx.BoxSizer(orient=wx.VERTICAL)
+#        frame.SetSizer(boxSizer)
+#        
+        # Now show the detector
+        plot = detector_plot.DetectorPlot(parent)
+        plot.set_detector(det)
+        plot.SetToolTip(wx.ToolTip("Detector %s" % det.name))
+        
+        # Collect all the measurements
+        measures = []
+        for ref in model.experiment.exp.reflections:
+            n = 0
+            for meas in ref.measurements:
+                # each tuple holds  (poscov_id, detector_num, horizontal, vertical, wavelength, distance)
+                if meas[1] == detnum:
+                    measures.append( model.reflections.ReflectionMeasurement(ref, n))
+        # Set them all for this detector
+        plot.set_measurements(measures, det)
+                
+#        # Do layout        
+#        label = wx.StaticText(parent, -1, "Detector %s" % det.name)
+#        boxSizer.Add(label,1, flag=wx.EXPAND)
+#        boxSizer.Add(plot,1, flag=wx.EXPAND)
+#        return frame
+    
+        return plot
 
-    def OnMenu(self, event):
+    def OnMenuLauePlot(self, event):
+        """ Do a laue plot for each detector """
+        #Simple frame
+        frame = wx.Frame(None, title='Laue Plot')
+        boxSizer = wx.BoxSizer(orient=wx.HORIZONTAL)
+        frame.SetSizer(boxSizer)
+        
+        # Make a plot for each detector
+        detnum = 0
+        for det in model.instrument.inst.detectors:
+            plot = self.make_Laue_plot(det, detnum, frame)
+            #Make it resize
+            boxSizer.Add(plot, 1, flag=wx.EXPAND)
+            detnum += 1
+            
+        frame.Show()
         event.Skip()
 
     def OnMenu(self, event):

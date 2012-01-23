@@ -63,6 +63,14 @@ class DetectorPlot(wx.Window):
         if (meas.detector_num >= 0) and (meas.detector_num < len(model.instrument.inst.detectors)):
             self.set_detector(model.instrument.inst.detectors[meas.detector_num])
         self.Refresh()
+        
+    def set_measurements(self, measures, det):
+        """ Sets a LIST of ReflectionMeasurement objects to plot
+        Parameters
+            measures :: list of ReflectionMeasurement objects
+        """
+        self.set_detector(det)
+        self.meas = measures
 
     #---------------------------------------------------------------------------
     def set_detector(self, detector):
@@ -122,7 +130,12 @@ class DetectorPlot(wx.Window):
             dc.DrawBitmap(bmp, self.xoffset, self.yoffset)
 
         if not self.meas is None:
-            self.plot_measurement(dc)
+            if hasattr([], '__len__'):
+                # LIST of measurements. Draw each (no crosshairs)
+                for meas in self.meas:
+                    self.plot_measurement(meas, dc, draw_crosshairs=False)
+            else:
+                self.plot_measurement(self.meas, dc)
 
         if self.show_coordinates:
             dc.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL))
@@ -133,19 +146,20 @@ class DetectorPlot(wx.Window):
 
 
     #---------------------------------------------------------------------------
-    def plot_measurement(self, dc):
+    def plot_measurement(self, meas, dc, draw_crosshairs=True):
         """Plot a reflection measurement."""
         #Plot where the peak was found
-        x = self.xoffset + self.scaling * (self.det_width/2 + self.meas.horizontal)
+        x = self.xoffset + self.scaling * (self.det_width/2 + meas.horizontal)
         #We flip the y measurement value because we want negative y to be at the bottom, on screen.
-        y = self.yoffset + self.scaling * (self.det_height/2 - self.meas.vertical)
+        y = self.yoffset + self.scaling * (self.det_height/2 - meas.vertical)
         #Make cross-hairs, size relative to size of plot
         length = self.plot_size.width/10
         #Get the radius in pixels from the peak width in mm
-        r = self.plot_size.width * self.meas.peak_width / self.det_width
+        r = self.plot_size.width * meas.peak_width / self.det_width
         if r <= 0: r = 1
 
         def crosshairs():
+            if not draw_crosshairs: return
             #Make crosshairs
 #            dc.SetPen( pen=wx.Pen(colour="blue", width=3, style=wx.SOLID) )
 #            dc.DrawLine(x+length,y, x-length,y)
@@ -220,4 +234,5 @@ if __name__ == "__main__":
     det.width = 250
     det.height = 125
     pnl.set_detector(det)
+    
     app.MainLoop()
