@@ -7,7 +7,6 @@ Provides useful functions that extend the mlab (enthought.mayavi.mlab)
 # Version: $Id$
 
 #--- General Imports ---
-from vtk.util.colors import antique_white
 import numpy as np
 
 #--- GUI Imports ---
