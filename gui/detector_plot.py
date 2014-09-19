@@ -130,7 +130,7 @@ class DetectorPlot(wx.Window):
             dc.DrawBitmap(bmp, self.xoffset, self.yoffset)
 
         if not self.meas is None:
-            if hasattr([], '__len__'):
+            if hasattr(self.meas, '__len__'):
                 # LIST of measurements. Draw each (no crosshairs)
                 for meas in self.meas:
                     self.plot_measurement(meas, dc, draw_crosshairs=False)
