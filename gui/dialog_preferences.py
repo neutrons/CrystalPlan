@@ -15,10 +15,10 @@ import config_gui
 import model
 
 #--- Traits imports ---
-from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array
-from enthought.traits.ui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor
-from enthought.traits.ui.menu import OKButton, CancelButton,RevertButton
-from enthought.traits.ui.menu import Menu, Action, Separator
+from traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array
+from traitsui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor
+from traitsui.menu import OKButton, CancelButton,RevertButton
+from traitsui.menu import Menu, Action, Separator
 
 
 def create(parent):

@@ -22,9 +22,9 @@ import model
 # ===========================================================================================
 # ===========================================================================================
 # ===========================================================================================
-from enthought.traits.api import HasTraits,Int,Float,Str,Property,Bool,Range
-from enthought.traits.ui.api import View,Item,Label,Heading, Spring, Handler, Group
-from enthought.traits.ui.menu import OKButton, CancelButton,RevertButton
+from traits.api import HasTraits,Int,Float,Str,Property,Bool,Range
+from traitsui.api import View,Item,Label,Heading, Spring, Handler, Group
+from traitsui.menu import OKButton, CancelButton,RevertButton
 
 
 # ===========================================================================================

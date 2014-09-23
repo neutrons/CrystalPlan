@@ -22,9 +22,9 @@ from pygene.organism import Organism, MendelOrganism
 from pygene.population import Population
 
 #--- Traits Imports ---
-from enthought.traits.api import HasTraits,Int,Float,Str,Property,Bool, List
-from enthought.traits.ui.api import View,Item,Label,Heading, Spring, Handler
-from enthought.traits.ui.menu import OKButton, CancelButton
+from traits.api import HasTraits,Int,Float,Str,Property,Bool, List
+from traitsui.api import View,Item,Label,Heading, Spring, Handler
+from traitsui.menu import OKButton, CancelButton
 
 
 # ===========================================================================================

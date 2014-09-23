@@ -18,10 +18,10 @@ import frame_optimizer
 import model
 
 #--- Traits Imports ---
-from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
-from enthought.traits.ui.api import View,Item,Label,Heading, Spring, Handler, Group
-from enthought.traits.ui.menu import OKButton, CancelButton
-from enthought.traits.ui.editors import EnumEditor
+from traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
+from traitsui.api import View,Item,Label,Heading, Spring, Handler, Group
+from traitsui.menu import OKButton, CancelButton
+from traitsui.editors import EnumEditor
 
 
 [wxID_PANELEXPERIMENT, wxID_PANELEXPERIMENTBUTTONDELETEALL, 

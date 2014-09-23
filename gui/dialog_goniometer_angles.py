@@ -12,10 +12,10 @@ import numpy as np
 import sys
 
 #--- Traits imports ---
-from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array
-from enthought.traits.ui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor
-from enthought.traits.ui.editors import EnumEditor
-from enthought.traits.ui.menu import OKButton, CancelButton
+from traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array
+from traitsui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor
+from traitsui.editors import EnumEditor
+from traitsui.menu import OKButton, CancelButton
 
 #--- GUI Imports ---
 

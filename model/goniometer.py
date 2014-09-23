@@ -29,15 +29,15 @@ from numpy_utils import column, vector_length, rotation_matrix, get_translated_v
 import utils
 
 #--- Traits Imports ---
-from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
-from enthought.traits.ui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor, ListEditor
-from enthought.traits.ui.menu import OKButton, CancelButton,RevertButton
-from enthought.traits.ui.menu import Menu, Action, Separator
+from traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
+from traitsui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor, ListEditor
+from traitsui.menu import OKButton, CancelButton,RevertButton
+from traitsui.menu import Menu, Action, Separator
 
 
 #---- For plotting ----
 if __name__=="__main__":
-    import enthought.mayavi.mlab as mlab
+    import mayavi.mlab as mlab
     import pylab
 
 #===============================================================================================

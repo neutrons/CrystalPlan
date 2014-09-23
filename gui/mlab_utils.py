@@ -1,6 +1,6 @@
 """ mlab utils module
 
-Provides useful functions that extend the mlab (enthought.mayavi.mlab)
+Provides useful functions that extend the mlab (mayavi.mlab)
 3d plot scripting tools.
 """
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov
@@ -10,7 +10,7 @@ Provides useful functions that extend the mlab (enthought.mayavi.mlab)
 import numpy as np
 
 #--- GUI Imports ---
-import enthought.mayavi.mlab as mlab_module
+import mayavi.mlab as mlab_module
 
 #--- Model Imports ---
 from model.numpy_utils import *

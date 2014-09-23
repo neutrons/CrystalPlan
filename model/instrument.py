@@ -135,9 +135,9 @@ class PositionCoverage:
 #========================================================================================================
 
 #For traits
-from enthought.traits.api import HasTraits,Int,Float,Str,Property
-from enthought.traits.ui.api import View,Item,Label,Heading, Spring, Handler
-from enthought.traits.ui.menu import OKButton, CancelButton,RevertButton
+from traits.api import HasTraits,Int,Float,Str,Property
+from traitsui.api import View,Item,Label,Heading, Spring, Handler
+from traitsui.menu import OKButton, CancelButton,RevertButton
 
 
 #========================================================================================================

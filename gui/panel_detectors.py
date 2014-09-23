@@ -15,17 +15,17 @@ import numpy as np
 #--- GUI Imports ---
 import display_thread
 import gui_utils
-from enthought.traits.api import HasTraits, Range, Instance, on_trait_change
-from enthought.traits.ui.api import View, Item, HGroup
+from traits.api import HasTraits, Range, Instance, on_trait_change
+from traitsui.api import View, Item, HGroup
 #try:
 if 1:
     from mlab_utils import *
-    from enthought.tvtk.pyface.scene_editor import SceneEditor
-    from enthought.mayavi.tools.mlab_scene_model import MlabSceneModel
-    from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
-    from enthought.mayavi.core.scene import Scene
-    from enthought.mayavi.api import Engine
-    from enthought.mayavi.tools.engine_manager import engine_manager
+    from tvtk.pyface.scene_editor import SceneEditor
+    from mayavi.tools.mlab_scene_model import MlabSceneModel
+    from mayavi.core.ui.mayavi_scene import MayaviScene
+    from mayavi.core.scene import Scene
+    from mayavi.api import Engine
+    from mayavi.tools.engine_manager import engine_manager
 #except ImportError, e:
 #    print "PanelDetectors: ERROR IMPORTING MAYAVI - 3D WILL NOT WORK!"
 

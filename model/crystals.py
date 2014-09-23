@@ -20,7 +20,7 @@ import ubmatrixreader
 import utils
 
 #--- Traits Imports ---
-from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
+from traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
 
 
 # ===========================================================================================

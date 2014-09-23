@@ -4,7 +4,7 @@
 # Version: $Id$
 
 #--- Traits Imports ---
-from enthought.traits.api import HasTraits,Int,Float,Str,Property,Bool, List, String
+from traits.api import HasTraits,Int,Float,Str,Property,Bool, List, String
 
 
 # ===========================================================================================

@@ -18,10 +18,10 @@ import display_thread
 import detector_plot
 
 #--- Traits imports ---
-from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Range, Enum
-from enthought.traits.ui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor
-from enthought.traits.ui.menu import OKButton, CancelButton,RevertButton
-from enthought.traits.ui.menu import Menu, Action, Separator
+from traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Range, Enum
+from traitsui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor
+from traitsui.menu import OKButton, CancelButton,RevertButton
+from traitsui.menu import Menu, Action, Separator
 
 #--- Model Imports ---
 import model

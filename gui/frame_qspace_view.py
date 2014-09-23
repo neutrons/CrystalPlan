@@ -24,28 +24,28 @@ import CrystalPlan_version
 
 #--- Mayavi Imports ---
 try:
-    from enthought.traits.api import HasTraits, Instance
-    from enthought.traits.ui.api import View, Item
-    from enthought.mayavi.sources.api import ArraySource
-    from enthought.mayavi.core.ui.mayavi_scene import MayaviScene
-    from enthought.mayavi.modules.iso_surface import IsoSurface
-    from enthought.mayavi.modules.api import Volume, Surface
-    from enthought.mayavi.filters.contour import Contour
-    from enthought.mayavi.filters.api import PolyDataNormals
-    from enthought.mayavi.filters.set_active_attribute import SetActiveAttribute
+    from traits.api import HasTraits, Instance
+    from traitsui.api import View, Item
+    from mayavi.sources.api import ArraySource
+    from mayavi.core.ui.mayavi_scene import MayaviScene
+    from mayavi.modules.iso_surface import IsoSurface
+    from mayavi.modules.api import Volume, Surface
+    from mayavi.filters.contour import Contour
+    from mayavi.filters.api import PolyDataNormals
+    from mayavi.filters.set_active_attribute import SetActiveAttribute
 
-    from enthought.mayavi.modules.outline import Outline
-    from enthought.mayavi.modules.grid_plane import GridPlane
-    from enthought.mayavi.modules.contour_grid_plane import ContourGridPlane
-    from enthought.mayavi.modules.scalar_cut_plane import ScalarCutPlane
-    from enthought.mayavi.api import Engine
-    from enthought.tvtk.pyface.scene_editor import SceneEditor
-    from enthought.mayavi.tools.mlab_scene_model import MlabSceneModel
-    import enthought.mayavi.mlab as mlab
+    from mayavi.modules.outline import Outline
+    from mayavi.modules.grid_plane import GridPlane
+    from mayavi.modules.contour_grid_plane import ContourGridPlane
+    from mayavi.modules.scalar_cut_plane import ScalarCutPlane
+    from mayavi.api import Engine
+    from tvtk.pyface.scene_editor import SceneEditor
+    from mayavi.tools.mlab_scene_model import MlabSceneModel
+    import mayavi.mlab as mlab
 
-    from enthought.tvtk.api import tvtk
-    from enthought.mayavi.sources.vtk_data_source import VTKDataSource
-    from enthought.mayavi.modules.api import Outline, Surface, Glyph, Text
+    from tvtk.api import tvtk
+    from mayavi.sources.vtk_data_source import VTKDataSource
+    from mayavi.modules.api import Outline, Surface, Glyph, Text
 
 except ImportError, e:
     print "FrameQspaceView: ERROR IMPORTING MAYAVI MODULES - 3D WILL NOT WORK!"

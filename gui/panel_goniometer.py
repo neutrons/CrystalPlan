@@ -19,10 +19,10 @@ import gui_utils
 import model
 
 #--- Traits Imports ---
-from enthought.traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
-from enthought.traits.ui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor, ListEditor, TableEditor
-from enthought.traits.ui.menu import OKButton, CancelButton,RevertButton
-from enthought.traits.ui.menu import Menu, Action, Separator
+from traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
+from traitsui.api import View,Item,Group,Label,Heading, Spring, Handler, TupleEditor, TabularEditor, ArrayEditor, TextEditor, CodeEditor, ListEditor, TableEditor
+from traitsui.menu import OKButton, CancelButton,RevertButton
+from traitsui.menu import Menu, Action, Separator
 
 
 [wxID_PANELGONIOMETER, wxID_PANELGONIOMETERCHOICEGONIO, 
