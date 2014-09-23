@@ -93,7 +93,7 @@ class DetectorVisualization(HasTraits):
         #Plot the normal, out of the center
 #        lines([det.base_point.flatten(), (det.base_point+det.normal*det.width/2).flatten()], color=col, tube_radius=rad, mlab=self.scene.mlab)
         #Find the middle and put text there
-        center = det.pixels[:, det.xpixels/2,  det.ypixels/2]
+        center = det.pixels[:, det.ypixels/2,  det.xpixels/2]
         text3d(center, det.name, font_size=15, color=col, mlab=self.scene.mlab)
 
     #---------------------------------------------------------------------------------------------
