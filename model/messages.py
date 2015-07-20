@@ -7,7 +7,7 @@ Enables model code to send messages back to the GUI, when needed.
 
 #--- General Imports ---
 import wx
-from wx.lib.pubsub import Publisher as pub
+from wx.lib.pubsub import pub
 from threading import Thread
 import time
 
@@ -46,7 +46,7 @@ class FunctionCall:
         self.function = function
         self.args = args
         self.kwargs = kwargs
-        
+
 
 #----------------------------------------------------------------------
 def send_message(message_id, data=None):
