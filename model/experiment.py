@@ -2475,6 +2475,8 @@ def load_from_file(filename):
     f = open(filename, 'r') #@type f file
     datas = f.read()
     f.close()
+    #working with old files
+    datas=datas.replace('enthought.','')
     the_experiment = loads(datas)
     return the_experiment
 
