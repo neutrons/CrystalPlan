@@ -48,7 +48,7 @@ if __name__ == "__main__":
           package_dir=package_dir,
           data_files=data_files,
           package_data=package_data,
-          include_package_data=True,
+          #include_package_data=True,
           install_requires=install_requires,
           #test_suite='model.test_all.get_all_tests'
           )
