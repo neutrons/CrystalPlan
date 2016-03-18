@@ -1181,6 +1181,136 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
 #===============================================================================================
 #===============================================================================================
 #===============================================================================================
+class MandiGoniometer(LimitedGoniometer):
+    """Goniometer for MANDI instrument. Totally free in phi rotation, no freedom otherwise"""
+
+    #Chi is 130
+    chi = Float(+130.0*np.pi/180.0, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
+    #Omega is 90
+    omega = Float(+90.0*np.pi/180.0, label="Fixed Omega angle (rad)", desc="the fixed Omega angle that the goniometer has, in radians.")
+
+    view = View(Item('name'), Item('description'),
+                Item('wavelength_control'),
+                Item('wavelength_bandwidth', visible_when="wavelength_control"),        Item('wavelength_minimum', visible_when="wavelength_control"),        Item('wavelength_maximum', visible_when="wavelength_control"),
+                Item('chi'), Item('angles_desc', style='readonly'),
+                Item('omega'), Item('angles_desc', style='readonly'))
+
+    #-------------------------------------------------------------------------
+    def __init__(self, wavelength_control=False):
+        """Constructor"""
+        #Init the base class
+        LimitedGoniometer.__init__(self, wavelength_control)
+
+        #Some info about the goniometer
+        self.name = "Mandi goniometer"
+        self.description = "Mandi goniometer with one degree of freedom (phi), with chi fixed at 130 degrees and omega at 90 degrees."
+
+        #Chi is +130 degrees 
+        self.chi = +130.0*np.pi/180.0
+        #Omega is 90 degrees
+        self.omega = +90.0*np.pi/180.0
+
+        #Make the angle info object
+        self.gonio_angles = [
+            AngleInfo('Phi')
+            ]
+
+    #-------------------------------------------------------------------------
+    def __eq__(self, other):
+        """Return True if the contents of self are equal to other."""
+        return LimitedGoniometer.__eq__(self,other) and \
+            (self.chi == other.chi) and \
+            (self.omega == other.omega)
+
+    #-------------------------------------------------------------------------
+    def get_fitness_function_c_code(self):
+        """C code for the fitness of phi,chi, omega.
+        Fitness is always good since the goniometer has no limits"""
+        s = """FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+        {
+            FLOAT fitness = absolute(phi);
+            return fitness;
+        }
+        """ 
+        return s
+
+
+    #-------------------------------------------------------------------------------
+    def get_phi_chi_omega(self, angles):
+        """Given a list of angles (which may have more or less angles depending on goniometer type),
+        return the equivalent (phi, chi, omega) in radians."""
+        (phi) = angles[0]
+        chi = self.chi
+        omega = self.omega
+        return (phi, chi, omega)
+
+    #-------------------------------------------------------------------------------
+    def make_q_rot_matrix(self, angles):
+        """Generate the necessary rotation matrix for use in the getq method.
+        The q rotation matrix corresponds to the opposite (negative) angles that
+        are the sample rotation angles.
+
+        Parameters:
+            angles: should be a list of angle values, in unfriendly units, that matches the
+                # of angles of this goniometer.
+        """
+        #For other instruments, this method may be different.
+        (phi, chi, omega) = self.get_phi_chi_omega(angles)
+
+        #In Q space, detector coverage rotates OPPOSITE to what the real space rotation is.
+        #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
+
+        #So wee need to invert the sample orientation matrix to find the one that will apply to the Q vector.
+        return numpy_utils.opposite_rotation_matrix(phi, chi, omega)
+
+
+    #-------------------------------------------------------------------------------
+    def make_sample_rot_matrix(self, angles):
+        """Generate the sample rotation matrix, from the given sample orientation angles.
+        Unlike make_q_rot_matrix(), the direct angles are used here.
+        This matrix will be used to calculate the scattering angle of specific reflections.
+
+        Parameters:
+            angles: should be a list of angle values, in unfriendly units, that matches the
+                # of angles of this goniometer.
+        """
+        (phi, chi, omega) = self.get_phi_chi_omega(angles)
+        return numpy_utils.rotation_matrix(phi, chi, omega)
+
+
+    #-------------------------------------------------------------------------
+    def calculate_angles_to_rotate_vector(self, *args, **kwargs):
+        """Calculate a set of sample orientation angles that rotate a single vector.
+        TRY to return a sample orientation that is achievable by the goniometer.
+
+        Parameters:
+            see  LimitedGoniometer.calculate_angles_to_rotate_vector()
+
+        Return:
+            best_angles: list of the 2 angles found. None if invalid inputs were given
+        """
+        #The parent class does the work
+        best_angles = LimitedGoniometer.calculate_angles_to_rotate_vector(self, *args, **kwargs)
+
+        if best_angles is None:
+            return None
+        else:
+            (phi, chi, omega) = best_angles
+            #Chi needs to be 130 degrees! So we take it out
+
+            if not np.abs(chi - self.chi) < 0.1/57 and  not np.abs(omega - self.omega) < 0.1/57:
+                #Chi is not within +-0.1 degree of the fixed chi value degrees!
+                #Omega is not within +-0.1 degree of the fixed chi value degrees!
+                #print "Warning! Found angles", np.rad2deg(best_angles), " where chi is more than 1 degree off of fixed value."
+                return None
+            else:
+                #Okay, we found a decent phi
+                return [phi]
+
+
+#===============================================================================================
+#===============================================================================================
+#===============================================================================================
 class ImagineGoniometer(LimitedGoniometer):
     """Goniometer for IMAGINE instrument. Totally free in phi rotation, no freedom otherwise"""
 
@@ -2494,6 +2624,7 @@ def initialize_goniometers():
     goniometers.append( TopazInHouseGoniometer() )
     goniometers.append( TopazAmbientGoniometer() )
     goniometers.append( SNAPLimitedGoniometer() )
+    goniometers.append( MandiGoniometer() )
     goniometers.append( ImagineGoniometer() )
     goniometers.append( CorelliGoniometer() )
 
