@@ -1212,7 +1212,7 @@ class MandiGoniometer(LimitedGoniometer):
 
         #Make the angle info object
         self.gonio_angles = [
-            AngleInfo('Phi')
+            AngleInfo('Phi', friendly_range=[0, 360], random_range=[0.0, np.deg2rad(360)])
             ]
 
     #-------------------------------------------------------------------------

@@ -423,6 +423,7 @@ class OptimizerController():
         model.messages.send_message(model.messages.MSG_POSITION_LIST_CHANGED)
         
         #Add it to the list of selected items
+        model.instrument.inst.sort_positions_by(0)
         display_thread.select_position_coverage(model.instrument.inst.positions, update_gui=True)
 
         if not event is None: event.Skip()
