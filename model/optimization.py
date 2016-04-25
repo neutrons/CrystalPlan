@@ -41,9 +41,9 @@ class OptimizationParameters(HasTraits):
 
     number_of_orientations = Int(10, desc="the number of orientations you want in the sample plan.")
     fixed_orientations = Bool(label="Add Fixed Orientations?", desc="to keep the list of sample orientations currently in the Experiment Plan as fixed orientations. \nThe number of orientations calculated by the optimizer is ADDED to the fixed orientations from the list.")
-    desired_coverage = Float(99.9, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
+    desired_coverage = Float(85.0, desc="the percent reciprocal-space coverage you want. The optimization will stop when it reaches this point.")
     use_volume = Bool(False, label='Optimize Q-volume rather than reflections?', desc='That the optimization will be performed using the reciprocal space volume calculation. \nIf unchecked, the coverage will be calculated as the % of individual reflections that were measured.')
-    use_symmetry = Bool(True, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection/volume coverage. For example, with mmm symmetry, each reflection has 8 equivalent hkl values. A peak is considered measured if any of the hkl were measured.")
+    use_symmetry = Bool(False, label='Use crystal symmetry', desc="to consider crystal symmetry in determining reflection/volume coverage. For example, with mmm symmetry, each reflection has 8 equivalent hkl values. A peak is considered measured if any of the hkl were measured.")
     auto_increment = Bool(False, label='Auto increment # of orientations?', desc="that if the optimization does not converge in the # of generations, add one to the # of sample orientations and try again.")
     avoid_edges = Bool(True, desc="to try to keep reflections away from the detector edges. Any reflection measured close to an edge (within the distance specified below, edge_x, or edge_y) is not considered as 'measured'.")
     edge_x_mm = Float(5.0, label="X-edge in mm", desc="how far away from the edges reflections should be (in X, so how far from the vertical edges)")
@@ -51,7 +51,7 @@ class OptimizationParameters(HasTraits):
 
 
     population = Int(10, desc="the number of individuals to evolve.")
-    max_generations = Int(10, desc="the maximum number of generations to evolve before giving up.")
+    max_generations = Int(10000, desc="the maximum number of generations to evolve before giving up.")
     pre_mutation_rate = Float(0.5, label='Worst-gene mutation rate', desc="that the n-th worst sample orientations will be mutated prior to mating.")
     worst_gene_location_randomizer = Float(0.4, label='Randomizer of worst-gene location', desc='When picking the worst gene to randomize, randomize the selection by this much so that perhaps the 2nd-worst gene gets changed instead.')
     mutation_rate = Float(0.02, desc="the probability of randomized mutation per gene.")
