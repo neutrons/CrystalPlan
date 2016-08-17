@@ -401,13 +401,14 @@ class OptimizerController():
     def apply(self, event, *args):
         """Apply the best results."""
         #TODO: Confirmation message box?
+        positions = []
 
-        # Get the angles of the best one
-        positions = model.optimization.get_angles(self.best)
-        
         # And add the fixed ones, if any
         if self.params.fixed_orientations:
             positions += self.params.fixed_orientations_list
+
+        # Get the angles of the best one
+        positions += model.optimization.get_angles(self.best)
             
         print "Applying best individual", self.best
 
@@ -423,7 +424,8 @@ class OptimizerController():
         model.messages.send_message(model.messages.MSG_POSITION_LIST_CHANGED)
         
         #Add it to the list of selected items
-        model.instrument.inst.sort_positions_by(0)
+        if len(model.instrument.inst.angles) == 1:
+	    model.instrument.inst.sort_positions_by(0)
         display_thread.select_position_coverage(model.instrument.inst.positions, update_gui=True)
 
         if not event is None: event.Skip()

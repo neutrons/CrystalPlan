@@ -195,12 +195,12 @@ class Instrument:
         self.verbose = True
 
         #Minimum detectable wavelength in Angstroms
-        self.wl_min = .9
+        self.wl_min = 0.4
         #And max
-        self.wl_max = 4
+        self.wl_max = 3.4
 
         #The limits to d (interplanar spacing) to consider. In A^-1
-        self.d_min = 1
+        self.d_min = 0.7
         self.d_max = 5
 
         #Resolution of the coverage map of q-space, in Angstroms^-1
