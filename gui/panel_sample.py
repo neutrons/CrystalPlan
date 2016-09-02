@@ -40,7 +40,7 @@ class HKLRangeSettings(HasTraits):
     h_range = Array( shape=(1,2), dtype=Int)
     k_range = Array( shape=(1,2), dtype=Int)
     l_range = Array( shape=(1,2), dtype=Int)
-    automatic = Bool(False)
+    automatic = Bool(True)
     limit_to_sphere = Bool(False)
 
     view = View( Item("h_range", enabled_when="not automatic"), Item("k_range", enabled_when="not automatic"), Item("l_range", enabled_when="not automatic"),
