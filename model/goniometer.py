@@ -711,7 +711,7 @@ class LimitedGoniometer(Goniometer):
 
         fitnesses.append( fitness_calc(phi, chi, omega) )
         # (phi-pi, -chi, omega-pi) is always equivalent
-        #fitnesses.append( fitness_calc(phi-pi, -chi, omega-pi) )
+        fitnesses.append( fitness_calc(phi-pi, -chi, omega-pi) )
 
         #The minimum (fitness) is the best fitness
         (fitness, best_angles) = min(fitnesses)
@@ -855,7 +855,7 @@ class LimitedGoniometer(Goniometer):
             omega_list.append(omega);
 
             //(phi-pi, -chi, omega-pi) is always equivalent
-            /*phi = old_phi-PI;
+            phi = old_phi-PI;
             chi = -old_chi;
             omega = old_omega-PI;
             if (phi > PI) phi -= 2*PI;
@@ -868,7 +868,7 @@ class LimitedGoniometer(Goniometer):
             fitnesses.append(fitness);
             phi_list.append(phi);
             chi_list.append(chi);
-            omega_list.append(omega);*/
+            omega_list.append(omega);
         }
         """
         #Workaround for bug in weave, where it ignores any changes in the support code.
@@ -1861,10 +1861,10 @@ class TopazInHouseGoniometer(LimitedGoniometer):
 
         (phi, chi, omega) = angles
         allowed = check_these(phi, chi, omega)
-#        if not allowed:
-#            #This set of goniometer angles is always equivalent, resulting
-#            #   in the same rotation matrix!
-#            allowed = check_these(phi-pi, -chi, omega-pi)
+        if not allowed:
+            #This set of goniometer angles is always equivalent, resulting
+            #   in the same rotation matrix!
+            allowed = check_these(phi-pi, -chi, omega-pi)
 
         if return_reason:
             reason = ""
