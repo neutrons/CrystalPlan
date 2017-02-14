@@ -503,18 +503,18 @@ class Goniometer(HasTraits):
         -----------
             fileobj: an already open, writable file object.
         """
-        fileobj.write(csv_line( ["#Title:", title] ) )
-        fileobj.write(csv_line( ["#Comment:", comment] ) )
-        fileobj.write('#\n')
-        fileobj.write('#"Goniometer used: %s"\n' % self.name)
-        fileobj.write('#\n')
-        fileobj.write('#"The first columns are the sample orientations:"\n' )
-        for anginfo in self.angles:
-            fileobj.write('#"     %s, %s; unit is [%s]."\n' % (anginfo.name, anginfo.type, anginfo.das_units))
-        fileobj.write('#"Next are 2 columns for the stopping criterion parameters."\n' )
-        fileobj.write('#\n')
+#        fileobj.write(csv_line( ["#Title:", title] ) )
+#        fileobj.write(csv_line( ["#Comment:", comment] ) )
+#        fileobj.write('#\n')
+#        fileobj.write('#"Goniometer used: %s"\n' % self.name)
+#        fileobj.write('#\n')
+#        fileobj.write('#"The first columns are the sample orientations:"\n' )
+#        for anginfo in self.angles:
+#            fileobj.write('#"     %s, %s; unit is [%s]."\n' % (anginfo.name, anginfo.type, anginfo.das_units))
+#        fileobj.write('#"Next are 2 columns for the stopping criterion parameters."\n' )
+#        fileobj.write('#\n')
         #Line of header info
-        fileobj.write(csv_line( [x.name for x in self.angles] + ['CountFor', 'CountValue',  'Comment'] ) )
+        fileobj.write(csv_line( ['Comment'] + [x.name.lower() for x in self.angles] + ['Wait For', 'Value'] ) )
 
 
     #===============================================================================================
@@ -530,13 +530,16 @@ class Goniometer(HasTraits):
         (allowed, reason) = self.are_angles_allowed(angle_values, return_reason=True)
         #Convert from internal to DAS units.
         das_angles = [self.angles[i].internal_to_das(angle_values[i]) for i in xrange(len(self.angles))]
+        stopping_criterion = count_for
+        if stopping_criterion == "runtime":
+            stopping_criterion = "seconds"
         if not allowed:
             #Can't reach this position
             fileobj.write("#"" ----- ERROR! This sample orientation could not be achieved with the goniometer, because of '%s'. THE FOLLOWING LINE HAS BEEN COMMENTED OUT ------ ""\n" % reason )
-            fileobj.write('#' + csv_line( das_angles + [count_for, count_value, comment] ) )
+            fileobj.write('#' + csv_line( comment, das_angles + [stopping_criterion, count_value] ) )
         else:
             #They are okay
-            fileobj.write(csv_line( das_angles + [count_for, count_value, comment] ) )
+            fileobj.write(csv_line( [comment] + das_angles + [stopping_criterion, count_value] ) )
 
     #===============================================================================================
     def get_phi_chi_omega(self, angles):
