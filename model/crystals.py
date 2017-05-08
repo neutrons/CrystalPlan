@@ -387,7 +387,7 @@ class Crystal(HasTraits):
         # Now add the rotation along the LDM +Z axis, phiz
         # = rotation around ISAW +Y axis
         R_phiz = rotation_matrix(phi=phiz, chi=0, omega=0)
-        R = np.dot(R_phiy, R)
+        R = np.dot(R_phiz, R)
         
         # This R is our U matrix
         self.u_matrix = R

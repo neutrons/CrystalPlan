@@ -746,8 +746,8 @@ class CylindricalDetector(Detector):
         y = vertical + self.origin[1] + self.height/2.
         # Position in the XZ plane
         angle = horizontal / self.radius + self.angle_start + self.width/2.
-        x = np.sin(angle) * self.radius
-        z = np.cos(angle) * self.radius
+        x = np.cos(angle) * self.radius
+        z = np.sin(angle) * self.radius
         pixel = column([x, y, z])
 
         #Normalize
