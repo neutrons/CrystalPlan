@@ -315,6 +315,9 @@ class Crystal(HasTraits):
         phix = 0
         phiy = 0
         phiz = 0
+        d_min = -1
+        wl_min = -1
+        wl_max = -1
         
         for line in f:
             line = line.strip()
@@ -344,6 +347,18 @@ class Crystal(HasTraits):
                 except:
                     raise Exception("Error interpreting LDM string '%s'" % line )
                 
+            if line.startswith("LMIN "):
+                try:
+                    # Wavelength min and max; Dspace min
+                    tokens = line.split(" ")
+                    # Convert the odd-numbered ones
+                    values = [float(tokens[i]) for i in range(1, len(tokens), 2)]
+                    wl_min = values[0]
+                    wl_max = values[1]
+                    d_min = values[2]
+                except:
+                    raise Exception("Error interpreting LDM string '%s'" % line )
+            
             if line.startswith("PHIX "):
                 try:
                     # Rotations PHIX 146.449 PHIY 4.792 PHIZ -171.550
@@ -399,6 +414,7 @@ class Crystal(HasTraits):
 
         # and re-calc the real-space a,b,c vectors
         self.calculate_abc()
+        return (d_min, wl_min, wl_max)
 
 
     #--------------------------------------------------------------------

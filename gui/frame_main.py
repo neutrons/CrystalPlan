@@ -222,6 +222,9 @@ class FrameMain(wx.Frame):
         
     def OnMenuLoadLDM(self,event):
         self.load_ldm_file_dialog(self)
+        self.RefreshAll()
+        #This message will make the experiment lists update, etc.
+        model.messages.send_message(model.messages.MSG_GONIOMETER_CHANGED, "")
         event.Skip()
         
 
@@ -306,16 +309,30 @@ class FrameMain(wx.Frame):
             #'Nothing was selected.
             dialog.Destroy()
             return None
+        model.experiment.exp.inst = model.instrument.Instrument("instruments/IMAGINE_detectors.csv")
+        model.experiment.exp.inst.set_goniometer(model.goniometer.ImagineGoniometer())
 
         #The old U matrix, before messing with it.
         old_U = model.experiment.exp.crystal.get_u_matrix()
 
         #Load the file 
-        model.experiment.exp.crystal.read_LDM_file(filename)
+        (d_min,wl_min,wl_max) = model.experiment.exp.crystal.read_LDM_file(filename)
+        if d_min > 0:
+            model.experiment.exp.inst.d_min = d_min
+            import numpy as np
+            model.experiment.exp.inst.q_resolution = 2*np.pi / d_min
+            model.experiment.exp.inst.wl_min = wl_min
+            model.experiment.exp.inst.wl_max = wl_max
+            model.experiment.exp.inst.make_qspace()
 
         #Now this handles updating all the gui etc.
         self.tab_sample.OnReturningFromEditCrystal(old_U)
-
+        #Now we need to fix a lot of stuff
+        model.instrument.inst = model.experiment.exp.inst
+        #This hopefully redraws everything
+        display_thread.handle_change_of_qspace()
+        #Make sure we select it all, by default.
+        display_thread.select_position_coverage(poscov_list=model.instrument.inst.positions, update_gui=True)
 
     def OnMenuLoad(self,event):
         if not gui_utils.load_experiment_file_dialog(self) is None:
