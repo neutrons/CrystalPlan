@@ -15,7 +15,7 @@ from numpy import cos, sin
 #--- Model Imports ---
 import crystal_calc
 import numpy_utils
-from numpy_utils import column, vector_length, rotation_matrix
+from numpy_utils import column, vector_length, rotation_matrix, z_rotation_matrix
 import ubmatrixreader
 import utils
 
@@ -367,7 +367,7 @@ class Crystal(HasTraits):
         R1 = rotation_matrix(phi=-np.pi/2, chi=0, omega=0)
         R = R1
         # Now let's make the b* point towards +Y (in LDM) = +X (in ISAW)
-        R2 = rotation_matrix(phi=0, chi=-np.pi/2, omega=0)
+        R2 = z_rotation_matrix(-np.pi/2)
         R = np.dot(R2, R)
         
         # Now add the ccw rotation along the LDM +X axis, phix

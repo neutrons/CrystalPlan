@@ -60,6 +60,42 @@ def rotation_matrix(phi=0, chi=0, omega=0):
 
     return M;
 
+#===============================================================================================
+def kappa_rotation_matrix(phi=0, alpha=0, kappa=0, omega=0):
+    """Generate a rotation matrix M for 3 rotation angles:
+       Uses convention of IPNS and ISAW for angles.
+       PHI = first rotation, around the y axis
+       ALPHA = Constant for mini-kappa
+       KAPPA = second rotation, around the z axis
+       OMEGA = third rotation, around the y axis again.
+
+       Angles in radians.
+       Use rotated_vector = matrix * initial_vector"""
+
+    #s and c are temp. variables for sin(x) and cos(x)
+    c = cos(phi)
+    s = sin(phi)
+    M_phi = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+
+    # kappa for mini-kappa goniometer
+    c = cos(kappa)
+    s = sin(kappa)
+    ca = cos(alpha)
+    sa = sin(alpha)
+    s2a = sa * sa
+    c2a = ca * ca
+    # See The Geometry of X-Ray Diffraction p. 180 for matrix
+    M_kappa = np.array([[c, s*sa, s*ca], [-s*sa, c*s2a+c2a, -ca*sa*(1-c)], [-s*ca, -ca*sa*(1-c), c*c2a+s2a]])
+
+    c = cos(omega)
+    s = sin(omega)
+    M_omega = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+
+    #rotated =  M_omega * (M_kappa * (M_phi * vector));
+    M = np.dot(M_omega, np.dot(M_kappa, M_phi))
+
+    return M;
+
 
 #===============================================================================================
 def angles_from_rotation_matrix(rot_matrix):
@@ -133,6 +169,54 @@ def opposite_rotation_matrix(phi=0, chi=0, omega=0):
 
     return M;
 
+
+#===============================================================================================
+def kappa_opposite_rotation_matrix(phi=0, alpha=0, kappa=0, omega=0):
+    """Generate the opposite rotation matrix that rotation_matrix() gives.
+       Uses convention of IPNS and ISAW for angles.
+
+       #1. Rotate by -OMEGA, around the y axis
+       #2. Rotate by -KAPPA around the z axis
+       #3. Rotate by -PHI, around the y axis
+
+       Angles in radians.
+       Use rotated_vector = matrix * initial_vector"""
+
+    #s and c are temp. variables for sin(x) and cos(x)
+    c = cos(-phi)
+    s = sin(-phi)
+    M_phi = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+
+    # kappa for mini-kappa goniometer
+    c = cos(-kappa)
+    s = sin(-kappa)
+    ca = cos(alpha)
+    sa = sin(alpha)
+    s2a = sa * sa
+    c2a = ca * ca
+    # See The Geometry of X-Ray Diffraction p. 180 for matrix
+    M_kappa = np.array([[c, s*sa, s*ca], [-s*sa, c*s2a+c2a, -ca*sa*(1-c)], [-s*ca, -ca*sa*(1-c), c*c2a+s2a]])
+
+    c = cos(-omega)
+    s = sin(-omega)
+    M_omega = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+
+    #Multiply matrices in the reversed order
+    M = np.dot(M_phi, np.dot(M_kappa, M_omega))
+
+    return M;
+
+
+#===============================================================================================
+def z_rotation_matrix(polar=0):
+    """Generate a rotation matrix for a polar rotation,
+    i.e. a rotation about the x axis."""
+
+    #s and c are temp. variables for sin(x) and cos(x)
+    c = cos(polar)
+    s = sin(polar)
+    M = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+    return M;
 
 #===============================================================================================
 def x_rotation_matrix(polar=0):
