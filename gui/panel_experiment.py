@@ -361,6 +361,7 @@ class StoppingCriterionParams(HasTraits):
     """Small class to make a quick GUI for the stopping parameters."""
     criterion_value = Float(60.0, desc="the value corresponding to the specified criterion.")
     criterion_list = ["1"]
+    stopping_criterion = "1"
     
     def get_view(self):
         return View(

@@ -326,8 +326,9 @@ class Crystal(HasTraits):
                     tokens = line.split(" ")
                     beam_axis = tokens[1]
                     rotation_axis = tokens[3]
+                    assert(line == "BEAM_AXIS +a* ROTATION_AXIS +c*"),"Wrong axis"
                 except:
-                    raise Exception("Error interpreting LDM string '%s'" % line )
+                    raise Exception("Must be BEAM_AXIS +a* ROTATION_AXIS +c* not %s'" % line )
             
             if line.startswith("A "):
                 try:
