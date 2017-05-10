@@ -403,19 +403,16 @@ class OptimizerController():
         #TODO: Confirmation message box?
         positions = []
 
-        # And add the fixed ones, if any
-        if self.params.fixed_orientations:
-            positions += self.params.fixed_orientations_list
-
         # Get the angles of the best one
         positions += model.optimization.get_angles(self.best)
             
         print "Applying best individual", self.best
 
         #This deletes everything in the list in the instrument
-        del model.instrument.inst.positions[:]
-        #Make sure to clear the parameters too, by giving it an empty dict() object.
-        display_thread.clear_positions_selected()
+        if not self.params.fixed_orientations:
+            del model.instrument.inst.positions[:]
+            #Make sure to clear the parameters too, by giving it an empty dict() object.
+            display_thread.clear_positions_selected()
 
         #This function does the calc. and shows a progress bar. Can be aborted too.
         gui_utils.do_calculation_with_progress_bar(positions)
