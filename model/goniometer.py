@@ -503,16 +503,6 @@ class Goniometer(HasTraits):
         -----------
             fileobj: an already open, writable file object.
         """
-#        fileobj.write(csv_line( ["#Title:", title] ) )
-#        fileobj.write(csv_line( ["#Comment:", comment] ) )
-#        fileobj.write('#\n')
-#        fileobj.write('#"Goniometer used: %s"\n' % self.name)
-#        fileobj.write('#\n')
-#        fileobj.write('#"The first columns are the sample orientations:"\n' )
-#        for anginfo in self.angles:
-#            fileobj.write('#"     %s, %s; unit is [%s]."\n' % (anginfo.name, anginfo.type, anginfo.das_units))
-#        fileobj.write('#"Next are 2 columns for the stopping criterion parameters."\n' )
-#        fileobj.write('#\n')
         #Line of header info
         fileobj.write(csv_line( ['Comment'] + [x.name.lower() for x in self.angles] + ['Wait For', 'Value'] ) )
 
@@ -1876,6 +1866,42 @@ class TopazAmbientGoniometer(LimitedGoniometer):
             else:
                 #Okay, we found a decent chi
                 return [phi, omega]
+
+    #===============================================================================================
+    def csv_make_header(self, fileobj, title, comment=""):
+        """Make the header text of the motor positions CSV file. This is general for universal
+        goniometers, but can be subclassed by specific ones.
+
+        Parameters:
+        -----------
+            fileobj: an already open, writable file object.
+        """
+        fileobj.write(csv_line( ["#Title:", title] ) )
+        fileobj.write(csv_line( ["#Comment:", comment] ) )
+        #Line of header info
+        fileobj.write(csv_line( [x.name for x in self.angles] + ['CountFor', 'CountValue',  'Comment'] ) )
+
+
+    #===============================================================================================
+    def csv_add_position(self, fileobj, angle_values, count_for, count_value, comment):
+        """Add a line to an existing CSV file containing the motor positions, etc. for
+        that part of the experiment.
+
+        Parameters:
+            angles: list of angles in the sample orientation.
+            count_for, count_value: stopping criterion
+        """
+        #Calculate if its allowed
+        (allowed, reason) = self.are_angles_allowed(angle_values, return_reason=True)
+        #Convert from internal to DAS units.
+        das_angles = [self.angles[i].internal_to_das(angle_values[i]) for i in xrange(len(self.angles))]
+        if not allowed:
+            #Can't reach this position
+            fileobj.write("#"" ----- ERROR! This sample orientation could not be achieved with the goniometer, because of '%s'. THE FOLLOWING LINE HAS BEEN COMMENTED OUT ------ ""\n" % reason )
+            fileobj.write('#' + csv_line( das_angles + [count_for, count_value, comment] ) )
+        else:
+            #They are okay
+            fileobj.write(csv_line( das_angles + [count_for, count_value, comment] ) )
 
 
 
