@@ -353,7 +353,9 @@ class Crystal(HasTraits):
                     # Wavelength min and max; Dspace min
                     tokens = line.split(" ")
                     # Convert the odd-numbered ones
-                    self.point_group_name = get_point_group_from_long_name_substring(tokens[1])
+                    # Orthorhombic is misspelled in CrystalPlan, but cannot change or old exp files cannot be loaded
+                    pg = tokens[1].replace('Orthorhombic','Orthorombic')
+                    self.point_group_name = get_point_group_from_long_name_substring(pg)
                     self.reflection_condition = get_refl_cond_substring(tokens[3])
                 except:
                     self.point_group_name = '-1 (Triclinic)'
@@ -852,7 +854,7 @@ def make_all_point_groups():
     point_groups.append( PointGroup("-1", "-1 (Triclinic)", 2, 'lkh', "-1") )
     point_groups.append( PointGroup("1 2/m 1", "1 2/m 1 (Monoclinic, unique axis b)", 4, 'kl', "2;0,1,0", "-1" ))
     point_groups.append( PointGroup("1 1 2/m", "1 1 2/m (Monoclinic, unique axis c)", 4, 'kl', "2;0,0,1", "-1" ))
-    point_groups.append( PointGroup("mmm", "mmm (Orthorhombic)", 8, 'lkh', "-2;1,0,0", "-2;0,1,0", "-2;0,0,1" ))
+    point_groups.append( PointGroup("mmm", "mmm (Orthorombic)", 8, 'lkh', "-2;1,0,0", "-2;0,1,0", "-2;0,0,1" ))
     point_groups.append( PointGroup("4/m", "4/m (Tetragonal)", 8, 'lkh', "2;0,0,1", "4;0,0,1", "-1" ))
     point_groups.append( PointGroup("4/mmm", "4/mmm (Tetragonal)", 16, 'lkh', "2;0,0,1", "4;0,0,1", "2;0,1,0", "-1" ))
     point_groups.append( PointGroup("-3", "-3 (Trigonal - Hexagonal)", 6, '3kh', "-H3;0,0,1"))
@@ -871,8 +873,8 @@ def make_all_point_groups():
         point_groups.append( PointGroup("2", "2 (Monoclinic)", 2, 'k', "2;0,1,0"))
         point_groups.append( PointGroup("m", "m (Monoclinic)", 2, 'k', "-2;0,0,1"))
         
-        point_groups.append( PointGroup("222", "222 (Orthorhombic)", 4, 'lkh', "2;1,0,0", "2;0,1,0" ))
-        point_groups.append( PointGroup("mm2", "mm2 (Orthorhombic)", 4, 'lkh', "-2;1,0,0", "2;0,0,1" ))
+        point_groups.append( PointGroup("222", "222 (Orthorombic)", 4, 'lkh', "2;1,0,0", "2;0,1,0" ))
+        point_groups.append( PointGroup("mm2", "mm2 (Orthorombic)", 4, 'lkh', "-2;1,0,0", "2;0,0,1" ))
 
         point_groups.append( PointGroup("4", "4 (Tetragonal)", 4, 'lkh', "4;0,0,1"))
         point_groups.append( PointGroup("-4", "-4 (Tetragonal)", 4, 'lkh', "-4;0,0,1"))
@@ -1239,7 +1241,7 @@ class TestCrystal(unittest.TestCase):
         pg2 = PointGroup("4/m", "4/m (Tetragonal)", 8, 'lkh', "4;0,0,1", "-1" )
         assert pg1.table_is_equivalent(pg2), "4/m generated 2 ways"
 
-        pg2 = PointGroup("mmm", "mmm (Orthorhombic)", 8, 'lkh', "-2;1,0,0", "-2;0,1,0", "-2;0,0,1" )
+        pg2 = PointGroup("mmm", "mmm (Orthorombic)", 8, 'lkh', "-2;1,0,0", "-2;0,1,0", "-2;0,0,1" )
         assert not pg1.table_is_equivalent(pg2), "4/m isn't equivalent to mmm"
 
         pg1 = PointGroup("6/m", "6/m (Hexagonal)", 12, 'lkh', "H6;0,0,1", "-2;0,0,1" )
