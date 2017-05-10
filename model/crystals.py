@@ -422,9 +422,12 @@ class Crystal(HasTraits):
         # This R is our U matrix
         self.u_matrix = R
 
-        #Now the UB matrix
-        self.ub_matrix = crystal_calc.make_UB_matrix(self.lattice_lengths, self.lattice_angles, 0,0,0,
-                                                     U_matrix=R)
+        #Make the B matrix etc.
+        self.calculate_reciprocal()
+
+        #Re-create a UB matrix that uses the SNS convention now
+        new_ub_matrix = np.dot(self.u_matrix, self.get_B_matrix())
+        self.ub_matrix = new_ub_matrix
         self.ub_matrix_is_from = "\nFile %s.\n" % filename
 
         # and re-calc the real-space a,b,c vectors

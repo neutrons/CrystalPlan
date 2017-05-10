@@ -320,7 +320,6 @@ class FrameMain(wx.Frame):
         if d_min > 0:
             model.experiment.exp.inst.d_min = d_min
             import numpy as np
-            model.experiment.exp.inst.q_resolution = 2*np.pi / d_min
             model.experiment.exp.inst.wl_min = wl_min
             model.experiment.exp.inst.wl_max = wl_max
             model.experiment.exp.inst.make_qspace()

@@ -755,6 +755,19 @@ class CylindricalDetector(Detector):
         return pixel
 
 
+    #---------------------------------------------------------------------
+    def edge_avoidance(self, h, v, edge_x, edge_y):
+        """Returns a value 1.0 since cylindrical detector is small and has no edges.
+        With this function the default optimization works for this detector.
+        Assumes h,v are actually on the detector otherwise.
+
+        Parameters:
+            h,v: horizontal and vertical position on detector. 0 = center
+            edge_x, edge_y: edge size, in mm, on either side of x and y.
+        """
+        return 1.0
+
+
 
 #================================================================================
 #============================ UNIT TESTING ======================================
