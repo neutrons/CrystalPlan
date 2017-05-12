@@ -309,7 +309,7 @@ class FrameMain(wx.Frame):
             #'Nothing was selected.
             dialog.Destroy()
             return None
-        model.experiment.exp.inst = model.instrument.Instrument("instruments/IMAGINE_detectors.csv")
+        model.experiment.exp.inst = model.instrument.Instrument(os.path.join(os.path.dirname(__file__), "../instruments/IMAGINE_detectors.csv"))
         model.experiment.exp.inst.set_goniometer(model.goniometer.ImagineGoniometer())
 
         #The old U matrix, before messing with it.
