@@ -1023,6 +1023,9 @@ class Experiment:
         #We make the array of how many times REALLY measured, for all the positions
         self.get_reflections_times_real_measured(None)
 
+        #Now we find the primary reflections using crystal symmetry.
+        self.find_primary_reflections()
+
         #Continue on with masking
         self.calculate_reflections_mask()
 
