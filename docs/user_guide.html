@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>CrystalPlan 1.1 User Guide</title>
+<title>OldCrystalPlan 1.1 User Guide</title>
 <meta content="Bluefish 1.0.7" name="generator" />
 <meta content="Janik Zikovsky" name="author" />
 <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
@@ -74,9 +74,9 @@ text-align: left;
 
 <body bgcolor="white">
 
-<img align="right" alt="CrystalPlan Icon" border="0" height="256" src="../gui/icons/CrystalPlan_icon.png" width="256" />
+<img align="right" alt="OldCrystalPlan Icon" border="0" height="256" src="../gui/icons/OldCrystalPlan_icon.png" width="256" />
 
-<h1>CrystalPlan 1.1 User Guide</h1>
+<h1>OldCrystalPlan 1.1 User Guide</h1>
 by Janik Zikovsky (zikovskyjl@ornl.gov)<br />
 <br />
 Document started April 14, 2010; Last modified on June 25, 2010.
@@ -85,7 +85,7 @@ Document started April 14, 2010; Last modified on June 25, 2010.
   
 <h2>Introduction</h2>
 
-<p>CrystalPlan is an experiment planning tool for crystallography; CrystalPlan...
+<p>OldCrystalPlan is an experiment planning tool for crystallography; OldCrystalPlan...
 </p>
 <ul>
 <li>Lets you put in a list of sample orientation angles, and...</li>
@@ -98,7 +98,7 @@ Document started April 14, 2010; Last modified on June 25, 2010.
 <h2>Table of Contents</h2>
 
 <ol>
-<li><a href="#starting-crystalplan">Starting CrystalPlan</a></li>
+<li><a href="#starting-crystalplan">Starting OldCrystalPlan</a></li>
 <li><a href="#defining-reciprocal-space-interest-and-wavelengths">Defining the Reciprocal Space of Interest and Wavelengths</a></li>
 <li><a href="#detectors">Detectors</a></li>
 <li><a href="#goniometer">Goniometer</a></li>
@@ -155,10 +155,10 @@ Document started April 14, 2010; Last modified on June 25, 2010.
 
 
 
-<h2>Quick Overview of CrystalPlan</h2>
+<h2>Quick Overview of OldCrystalPlan</h2>
 
 <ul>
-<li>CrystalPlan shows you what you expect to measure, in reciprocal space, in the <a href="#FrameQspaceView">3D viewer.</a></li>
+<li>OldCrystalPlan shows you what you expect to measure, in reciprocal space, in the <a href="#FrameQspaceView">3D viewer.</a></li>
 <li>First, you define <a href="#PanelStartup">how much of reciprocal space you expect to measure.</a></li>
 <li>Then, you enter or load your <a href="#PanelSample">crystal lattice parameters</a> as well as the UB matrix containing your sample's mounting orientation.</li>
 <li>Then you can <a href="#PanelTryPosition">try sample orientations</a> or <a href="#PanelAddPositions">add several</a>. </li>
@@ -174,19 +174,19 @@ Document started April 14, 2010; Last modified on June 25, 2010.
 
 <h2>Step-by-Step Tutorial</h2>
 
-<p>This tutorial will show you how to use most of the features of CrystalPlan by going through a typical run, step-by-step.</p>
+<p>This tutorial will show you how to use most of the features of OldCrystalPlan by going through a typical run, step-by-step.</p>
 
 
 
 
-<h3 id='starting-crystalplan'>1. Starting CrystalPlan</h3>
+<h3 id='starting-crystalplan'>1. Starting OldCrystalPlan</h3>
 
 <p>From the terminal command line, type:
-<div align="center"><font face="Courier">crystalplan.py</font></div>
+<div align="center"><font face="Courier">oldcrystalplan.py</font></div>
 The GUI launches in two new windows. Select the main window:
 </p>
 <br />
-<img alt="The main CrystalPlan GUI window." border="0" class="frameshot" src="screenshots/frame_main.png" width="400" /><br />
+<img alt="The main OldCrystalPlan GUI window." border="0" class="frameshot" src="screenshots/frame_main.png" width="400" /><br />
 <br />
 Most of your workflow will occur by navigating between these notebook tabs:
 <br /><img border="0" src="animations/frame_main-tab_anim.png" />
@@ -226,7 +226,7 @@ button. Changing these settings requires re-doing a lot of calculations, which m
 <a name="PanelDetectors" />
 <h3 id='detectors'>3. Detectors</h3>
 
-Here, you ensure that CrystalPlan has the correct detector geometry loaded.
+Here, you ensure that OldCrystalPlan has the correct detector geometry loaded.
 
 <ul>
 <li>Click the "Detectors" tab.</li>
@@ -252,7 +252,7 @@ which displays them in a window like this one:
 <h3 id='goniometer'>4. Goniometer</h3>
 
 
-Now, you want to make sure that CrystalPlan is aware of which goniometer is currently in
+Now, you want to make sure that OldCrystalPlan is aware of which goniometer is currently in
 use in your instrument.
 
 <ul>
@@ -357,12 +357,12 @@ would revert all the changed made in the dialog.
 <li>Still in the Sample tab, the following GUI allows you to pick which HKL to display:
 <br /><img src="screenshots/sample-range_control.png" />
 </li>
-<li>These H,K,L ranges limit which peak indices that CrystalPlan will calculate and display.
+<li>These H,K,L ranges limit which peak indices that OldCrystalPlan will calculate and display.
 </li>
 <li>You can type in your ranges manually, however, I recommend that you keep both checkboxes checked:</li>
 <ul>
 <li>They use the <i>d_min</i> parameter you set earlier in the "Q-Space" tab. </li>
-<li>The first checkbox tells CrystalPlan to calculate the H,K,L ranges that fill a box of side in q-space corresponding to 
+<li>The first checkbox tells OldCrystalPlan to calculate the H,K,L ranges that fill a box of side in q-space corresponding to 
 <span class="eq"><img alt="$d_{min}$" src="eq/equser_guide_source3.png" title="$d_{min}$" /></span>. </li>
 <ul>
 <li>But, the resulting peaks will form a cube only if all the lattice angles are 90 degrees.</li>
@@ -409,7 +409,7 @@ any changes you have made. All reflections are re-calculated.
 our simulated detector coverage.</p>
 
 <ul>
-<li>Switch window to the Reciprocal Space 3D Viewer (this window opens with CrystalPlan, so it should already be open - otherwise, you can open it from the "View" menu).
+<li>Switch window to the Reciprocal Space 3D Viewer (this window opens with OldCrystalPlan, so it should already be open - otherwise, you can open it from the "View" menu).
 <img class="frameshot" src="screenshots/frame_qspace.png" />
 </li>
 
@@ -480,7 +480,7 @@ the selected goniometer.
 <ul>
 <li>Not all goniometers have such limitations; for instance, if you select the "Simple Goniometer", there are no limits to the angles you can reach.</li>
 <li>However, the currently selected "TOPAZ In-House Goniometer" is limited in Chi tilt because of its design (a 3-legged "tripod" design). It can only tilt by a few degrees above or below zero.</li>
-<li>CrystalPlan calculated which angles are possible and warns you if they are not. A string describing the <i>reason</i> why this angle is not possible is displayed, if available. </li>
+<li>OldCrystalPlan calculated which angles are possible and warns you if they are not. A string describing the <i>reason</i> why this angle is not possible is displayed, if available. </li>
 </ul>
 <li>You can still simulate this sample orientation, but be aware that you will not be able to achieve it experimentally.</li>
 </ul>
@@ -604,9 +604,9 @@ experiment plan (which we will see in the next section).</li>
 </ul>
 <li>When you are happy with your experiment plan, click the
 <img src="screenshots/exp-buttonSaveToCSV.png" />
-button to make a CSV (comma-separated values) file containing the list of sample orientation and runtime criteria. This file can then be loaded on the DAS computers (using PyDas, for example) to run the experiment. Note: CrystalPlan cannot re-load these CSV file; if you need to do this, you should ALSO save as a .exp file (see below). 
+button to make a CSV (comma-separated values) file containing the list of sample orientation and runtime criteria. This file can then be loaded on the DAS computers (using PyDas, for example) to run the experiment. Note: OldCrystalPlan cannot re-load these CSV file; if you need to do this, you should ALSO save as a .exp file (see below). 
 </li>
-<li>You can also save your experiment to CrystalPlan experiment format (normal file extension: .exp), from the <b>File-&gt;Save Experiment to file Menu</b>. Later, you can re-load this using the <b>File-&gt;Load Experiment from file Menu</b>, and 
+<li>You can also save your experiment to OldCrystalPlan experiment format (normal file extension: .exp), from the <b>File-&gt;Save Experiment to file Menu</b>. Later, you can re-load this using the <b>File-&gt;Load Experiment from file Menu</b>, and 
 continue your work. </li>
 <li>A very useful feature is the automatic coverage optimizer, covered in <a href="#FrameOptimizer">this section</a>. Click the
 <img src="screenshots/exp-buttonOptimizer.png" />
@@ -830,14 +830,14 @@ to view only a slice, (or shell) at a given q radius and given thickness.
 <a name="MeasuredReflections" />
 <h4 id='comparing-real-measurements'>12.6. Comparing to Real Measurements</h4> 
 
-<p>CrystalPlan allows you to compare your <i>predicted</i> measurements with the <i>actual</i> peaks found,
+<p>OldCrystalPlan allows you to compare your <i>predicted</i> measurements with the <i>actual</i> peaks found,
 after you have acquired and saved your data. 
 Remember to save your full experiment to a .exp file, using the <b>File-&gt;Save Experiment to file Menu</b>, 
 to make it easier to reload the predicted measurements after completing your experiment. 
 </p>
 
 <ul>
-<li>First, analyze your data using ISAW or ISAWev. You can generate a .peaks file (with the positions of the peaks only) or a .integrate file (with the integrated counts under the peaks also); CrystalPlan can load both.</li>
+<li>First, analyze your data using ISAW or ISAWev. You can generate a .peaks file (with the positions of the peaks only) or a .integrate file (with the integrated counts under the peaks also); OldCrystalPlan can load both.</li>
 <li>Use the <b>File-&gt;Load an ISAW .integrate or .peaks file</b> and browse to the file you created. You will be asked if you want to REPLACE or APPEND to the current measurements. Use APPEND if you need to consider several files, or REPLACE if one holds all your peaks.</li>
 <li>In the 3D viewer, under the Reflections View tab, you may have noticed this line:
 <img src="screenshots/refl-measurements.png" /><br /> 

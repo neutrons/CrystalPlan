@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-"""CrystalPlan GUI Main file.
+"""OldCrystalPlan GUI Main file.
 Includes GUI launcher, logger, error handler."""
-#Boa:App:CrystalPlanApp
+#Boa:App:OldCrystalPlanApp
 
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov
-# Version: $Id: CrystalPlan.py 1127 2010-04-01 19:28:43Z 8oz $
+# Version: $Id: OldCrystalPlan.py 1127 2010-04-01 19:28:43Z 8oz $
 
 #--- General Imports ---
 from __future__ import with_statement
@@ -109,7 +109,7 @@ def excepthook(type, value, tb, thread_information="Main Loop"):
 
 
 #-------------------------------------------------------------------------
-class CrystalPlanApp(wx.App):
+class OldCrystalPlanApp(wx.App):
     def OnInit(self):
         #Create the main GUI frame
         import frame_main
@@ -125,17 +125,17 @@ class CrystalPlanApp(wx.App):
 
 #-------------------------------------------------------------------------
 def launch_gui(inelastic, hb3a):
-    """Launch the CrystalPlan GUI.
+    """Launch the OldCrystalPlan GUI.
 
     Parameters:
         inelastic: boolean, to indicate whether the instrument is for inelastic scattering.
         hb3a: boolean, for the HB3A beamline
         """
 
-    import CrystalPlan_version
+    import OldCrystalPlan_version
         
     #Since imports take a while, print out this status line first.
-    print "-------------- %s %s GUI is starting -----------------" % (CrystalPlan_version.package_name, CrystalPlan_version.version)
+    print "-------------- %s %s GUI is starting -----------------" % (OldCrystalPlan_version.package_name, OldCrystalPlan_version.version)
     
     #--- GUI Imports ---
     import display_thread
@@ -145,7 +145,7 @@ def launch_gui(inelastic, hb3a):
 
     #Create a StdOut wrapper
     global out_wrapper
-    out_wrapper = OutWrapper(sys.stdout, r'/tmp/CrystalPlan_Log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".txt" )
+    out_wrapper = OutWrapper(sys.stdout, r'/tmp/OldCrystalPlan_Log_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".txt" )
     sys.stdout = out_wrapper
 
     #Attach our exception hook
@@ -184,7 +184,7 @@ def launch_gui(inelastic, hb3a):
     model.experiment.exp.recalculate_reflections(None)
 
     #Initialize the application
-    application = CrystalPlanApp(0)
+    application = OldCrystalPlanApp(0)
 
     #Start the thread that monitors changes to the q-space coverage calculation.
     if True: #To try it with and without
@@ -204,29 +204,29 @@ def launch_gui(inelastic, hb3a):
 
 
     #Exit the program and do all necessary clean-up.
-    print "Exiting %s %s. Have a nice day!" % (CrystalPlan_version.package_name, CrystalPlan_version.version)
+    print "Exiting %s %s. Have a nice day!" % (OldCrystalPlan_version.package_name, OldCrystalPlan_version.version)
     background_display.abort()
 
 
 
 def handle_arguments_and_launch(InstalledVersion):
-    #Parameter: InstalledVersion: True if launching from the installed crystalplan.py scrip
+    #Parameter: InstalledVersion: True if launching from the installed oldcrystalplan.py scrip
     #           False if launching from the gui/ folder
 
 #    if InstalledVersion:
-#        import CrystalPlan
-#        print dir(CrystalPlan)
-#        from CrystalPlan import *
-#        print "Version ", CrystalPlan_version.version
+#        import OldCrystalPlan
+#        print dir(OldCrystalPlan)
+#        from OldCrystalPlan import *
+#        print "Version ", OldCrystalPlan_version.version
 #    else:
     #Manipulate the PYTHONPATH to put model directly in view of it
     #   This way, "import model" works.
     sys.path.insert(0, "..")
-    import CrystalPlan_version
+    import OldCrystalPlan_version
 
     # --- Handle Command Line Arguments -----
-#    usage = "---- Welcome to " + CrystalPlan_version.package_name + " v." + CrystalPlan_version.version + " ----\n\nUsage: %prog [options] arg1 arg2"
-    parser = OptionParser(prog=CrystalPlan_version.package_name+".py", version="%s v.%s" % (CrystalPlan_version.package_name, CrystalPlan_version.version))
+#    usage = "---- Welcome to " + OldCrystalPlan_version.package_name + " v." + OldCrystalPlan_version.version + " ----\n\nUsage: %prog [options] arg1 arg2"
+    parser = OptionParser(prog=OldCrystalPlan_version.package_name+".py", version="%s v.%s" % (OldCrystalPlan_version.package_name, OldCrystalPlan_version.version))
     parser.add_option("-t", "--test", dest="test",
                      action="store_true", default=False,
                      help="perform a suite of unit tests on the software")

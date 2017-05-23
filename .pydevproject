@@ -5,7 +5,7 @@
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">python</pydev_property>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.6</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
-<path>/CrystalPlan/src</path>
-<path>/CrystalPlan</path>
+<path>/OldCrystalPlan/src</path>
+<path>/OldCrystalPlan</path>
 </pydev_pathproperty>
 </pydev_project>

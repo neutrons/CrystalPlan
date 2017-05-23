@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""The CrystalPlan application.
+"""The OldCrystalPlan application.
 
-CrystalPlan is an experiment planning tool for crystallography.
+OldCrystalPlan is an experiment planning tool for crystallography.
 You can choose an instrument and supply your sample's lattice
 parameters to simulate which reflections will be measured,
 by which detectors and at what wavelengths.
@@ -13,5 +13,5 @@ Version: $Id$
 # Version: $Id$
 
 #Simply import and launch the GUI
-import CrystalPlan.gui.main
-CrystalPlan.gui.main.handle_arguments_and_launch(InstalledVersion=True)
+import OldCrystalPlan.gui.main
+OldCrystalPlan.gui.main.handle_arguments_and_launch(InstalledVersion=True)

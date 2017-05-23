@@ -54,7 +54,7 @@ I01
 sS'real_measurement_filenames'
 p19
 (lp20
-S'/home/8oz/Code/GenUtils/trunk/python/CrystalPlan/model/data/TOPAZ_1241.integrate'
+S'/home/8oz/Code/GenUtils/trunk/python/OldCrystalPlan/model/data/TOPAZ_1241.integrate'
 p21
 asS'range_hkl'
 p22
@@ -78,7 +78,7 @@ S'3.2.0'
 p30
 sS'ub_matrix_is_from'
 p31
-S'ISAW UB matrix file at\n /home/janik/Code/GenUtils/trunk/python/CrystalPlan/model/data/TOPAZ_1241.mat\nmodified by phi, chi, omega of 0.0, 0.0, 0.0'
+S'ISAW UB matrix file at\n /home/janik/Code/GenUtils/trunk/python/OldCrystalPlan/model/data/TOPAZ_1241.mat\nmodified by phi, chi, omega of 0.0, 0.0, 0.0'
 p32
 sS'name'
 p33
@@ -258,7 +258,7 @@ p82
 g70
 sS'ub_matrix_last_filename'
 p83
-V/home/8oz/Code/GenUtils/trunk/python/CrystalPlan/model/data/TOPAZ_1241.mat
+V/home/8oz/Code/GenUtils/trunk/python/OldCrystalPlan/model/data/TOPAZ_1241.mat
 p84
 sS'description'
 p85

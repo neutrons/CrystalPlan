@@ -1,5 +1,5 @@
 """Module to generate screenshots for the
-CrystalPlan user guide.
+OldCrystalPlan user guide.
 """
 
 import wx
@@ -706,7 +706,7 @@ class FakeClickObject:
 
 #========================================================================================================
 def generate_user_guide(fm, fv):
-    """Script to generate screenshots for the CrystalPlan user guide.
+    """Script to generate screenshots for the OldCrystalPlan user guide.
 
     Parameters:
         fm: the FrameMain object.
@@ -714,7 +714,7 @@ def generate_user_guide(fm, fv):
     """
     #Make sure we don't load the .pyc file
     filename = os.path.splitext(__file__)[0] + ".py"
-#    filename = "/home/janik/Code/GenUtils/trunk/python/CrystalPlan/doc_maker/user_guide.py"
+#    filename = "/home/janik/Code/GenUtils/trunk/python/OldCrystalPlan/doc_maker/user_guide.py"
     print "Reading script from", filename
     #Read the code
     code = []

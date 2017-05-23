@@ -1,4 +1,4 @@
-"""Various tools and other CrystalPlan useful calculations.
+"""Various tools and other OldCrystalPlan useful calculations.
 """
 
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov

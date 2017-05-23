@@ -286,7 +286,7 @@ class Crystal(HasTraits):
         
         - Start with the a* vector along the beam axis
            = in the same direction as the neutron movement
-           = +Z in our usual convention (e.g. in ISAW, CrystalPlan and Mantid)
+           = +Z in our usual convention (e.g. in ISAW, OldCrystalPlan and Mantid)
            = +X axis in the MOSFLM convention
         - Start with the c* vector pointing towards the rotation axis
            = the vertical axis pointing upwards (+Y in our usual convention).

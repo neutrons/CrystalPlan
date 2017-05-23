@@ -6,7 +6,7 @@
 
 #--- General Imports ---
 import wx
-import CrystalPlan_version
+import OldCrystalPlan_version
 
 #--- GUI Imports ---
 import config_gui
@@ -68,7 +68,7 @@ class DialogPreferences(wx.Dialog):
         self.SetClientSize(wx.Size(500, 400))
 
         import os
-        icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file_config)
+        icon_file = os.path.join(os.path.dirname(__file__), OldCrystalPlan_version.icon_file_config)
         self.SetIcon( wx.Icon(icon_file, wx.BITMAP_TYPE_PNG) )
 
         self.buttonOK = wx.Button(id=wxID_DIALOGPREFERENCESBUTTONOK,

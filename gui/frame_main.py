@@ -1,4 +1,4 @@
-"""FrameMain: main GUI window for the CrystalPlan application.
+"""FrameMain: main GUI window for the OldCrystalPlan application.
 """
 import os.path
 # Author: Janik Zikovsky, zikovskyjl@ornl.gov
@@ -22,7 +22,7 @@ import gui_utils
 import frame_qspace_view
 import frame_reflection_info
 import dialog_preferences
-import CrystalPlan_version
+import OldCrystalPlan_version
 import display_thread
 import frame_optimizer
 import detector_plot
@@ -152,7 +152,7 @@ class FrameMain(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnMenuUserGuide, id=id)
 
         id = wx.NewId()
-        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'About %s...' % CrystalPlan_version.package_name)
+        parent.Append(id=id, help='', kind=wx.ITEM_NORMAL, text=u'About %s...' % OldCrystalPlan_version.package_name)
         self.Bind(wx.EVT_MENU, self.OnMenuAbout, id=id)
 
 #        parent.AppendSeparator()
@@ -343,20 +343,20 @@ class FrameMain(wx.Frame):
 
     def OnMenuAbout(self, event):
         info = wx.AboutDialogInfo()
-        info.SetName(CrystalPlan_version.package_name)
-        info.SetVersion(CrystalPlan_version.version)
-        info.SetDescription(CrystalPlan_version.description)
-        info.SetCopyright(CrystalPlan_version.copyright)
-        info.AddDeveloper(CrystalPlan_version.author + " (" + CrystalPlan_version.author_email + ")")
-        info.AddDocWriter(CrystalPlan_version.author + " (" + CrystalPlan_version.author_email + ")")
+        info.SetName(OldCrystalPlan_version.package_name)
+        info.SetVersion(OldCrystalPlan_version.version)
+        info.SetDescription(OldCrystalPlan_version.description)
+        info.SetCopyright(OldCrystalPlan_version.copyright)
+        info.AddDeveloper(OldCrystalPlan_version.author + " (" + OldCrystalPlan_version.author_email + ")")
+        info.AddDocWriter(OldCrystalPlan_version.author + " (" + OldCrystalPlan_version.author_email + ")")
         info.AddArtist("Icons taken from the Crystal Project,\nat http://www.everaldo.com/crystal/, \ndistributed under the LGPL; \nmodified and assembled by Janik Zikovsky")
         
         if not gui_utils.is_mac():
             #Some of these are not natively mac-supported, not including them makes it look better on mac
-            icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file)
+            icon_file = os.path.join(os.path.dirname(__file__), OldCrystalPlan_version.icon_file)
             info.SetIcon(wx.Icon( icon_file, wx.BITMAP_TYPE_PNG))
-            info.SetLicence(CrystalPlan_version.license)
-            info.SetWebSite(CrystalPlan_version.url)
+            info.SetLicence(OldCrystalPlan_version.license)
+            info.SetWebSite(OldCrystalPlan_version.url)
 
         wx.AboutBox(info)
 
@@ -516,7 +516,7 @@ class FrameMain(wx.Frame):
         wx.Frame.__init__(self, id=wxID_FRAMEMAIN, name=u'FrameMain',
               parent=prnt, pos=wx.Point(0, 0), size=wx.Size(800, 630),
               style=wx.DEFAULT_FRAME_STYLE,
-              title="%s %s - Main Window" % (CrystalPlan_version.package_name, CrystalPlan_version.version) )
+              title="%s %s - Main Window" % (OldCrystalPlan_version.package_name, OldCrystalPlan_version.version) )
         self._init_menus()
         
         self.SetClientSize(wx.Size(850, 630))
@@ -557,7 +557,7 @@ class FrameMain(wx.Frame):
         self.count = 0
 
         #Set the icon
-        icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file)
+        icon_file = os.path.join(os.path.dirname(__file__), OldCrystalPlan_version.icon_file)
         self.SetIcon( wx.Icon(icon_file, wx.BITMAP_TYPE_PNG) )
         
     #--------------------------------------------------------------------
@@ -614,7 +614,7 @@ class FrameMain(wx.Frame):
 
     
     def OnClose(self, event):
-        res = wx.MessageDialog(self, "Are you sure you want to quit %s?" % CrystalPlan_version.package_name, "Quit %s?" % CrystalPlan_version.package_name, wx.YES_NO | wx.YES_DEFAULT).ShowModal()
+        res = wx.MessageDialog(self, "Are you sure you want to quit %s?" % OldCrystalPlan_version.package_name, "Quit %s?" % OldCrystalPlan_version.package_name, wx.YES_NO | wx.YES_DEFAULT).ShowModal()
         if res == wx.ID_YES:
             self.Destroy()
         else:

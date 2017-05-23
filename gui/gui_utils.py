@@ -113,7 +113,7 @@ def dialog_to_save_experiment_to_CSV(parent):
 last_experiment_path = ''
 def save_experiment_file_dialog(parent):
     """Opens a dialog asking the user where to save the experiment."""
-    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
+    filters = 'OldCrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)
@@ -132,7 +132,7 @@ def save_experiment_file_dialog(parent):
 
 def load_experiment_file_dialog(parent):
     """Opens a dialog asking the user where to load the experiment."""
-    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
+    filters = 'OldCrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)

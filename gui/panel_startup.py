@@ -269,7 +269,7 @@ class PanelStartup(wx.Panel):
         self.SetClientSize(wx.Size(600, 600))
 
         self.staticTextHelp = wx.StaticText(id=wxID_DIALOGSTARTUPSTATICTEXTHELP,
-              label=u"The CrystalPlan application is used to simulate the coverage of reciprocal space of an instrument's detectors, given a list of sample orientations.",
+              label=u"The OldCrystalPlan application is used to simulate the coverage of reciprocal space of an instrument's detectors, given a list of sample orientations.",
               name=u'staticTextHelp', parent=self, pos=wx.Point(0, 40),
               style=0)
         if gui_utils.is_mac():

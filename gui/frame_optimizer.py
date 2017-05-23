@@ -22,7 +22,7 @@ import gui_utils
 #--- Model Imports ----
 import model
 from model.optimization import OptimizationParameters
-import CrystalPlan_version
+import OldCrystalPlan_version
 
 if __name__=="__main__":
     #Manipulate the PYTHONPATH to put model directly in view of it
@@ -537,7 +537,7 @@ class FrameOptimizer(wx.Frame):
 
         #Little icon
         import os
-        icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file_optimizer)
+        icon_file = os.path.join(os.path.dirname(__file__), OldCrystalPlan_version.icon_file_optimizer)
         self.SetIcon( wx.Icon(icon_file, wx.BITMAP_TYPE_PNG) )
 
         self.splitterMain = wx.SplitterWindow(id=wxID_FRAMEOPTIMIZERSPLITTERMAIN,

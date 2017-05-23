@@ -20,7 +20,7 @@ import display_thread
 #--- Model Imports ---
 import model
 from model.numpy_utils import column, vector_length
-import CrystalPlan_version
+import OldCrystalPlan_version
 
 #--- Mayavi Imports ---
 try:
@@ -934,7 +934,7 @@ class FrameQspaceView(wx.Frame):
         self._init_ctrls(parent)
         #Set the icon
         import os
-        icon_file = os.path.join(os.path.dirname(__file__), CrystalPlan_version.icon_file_3d)
+        icon_file = os.path.join(os.path.dirname(__file__), OldCrystalPlan_version.icon_file_3d)
         self.SetIcon( wx.Icon(icon_file, wx.BITMAP_TYPE_PNG) )
 
         #Create the qspace options panel

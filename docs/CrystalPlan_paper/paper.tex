@@ -72,9 +72,9 @@
  % The introductory (header) part of the paper
  %-------------------------------------------------------------------------
 
-\title{CrystalPlan: an Experiment Planning Tool for Crystallography}
+\title{OldCrystalPlan: an Experiment Planning Tool for Crystallography}
 
-\shorttitle{CrystalPlan: an Experiment Planning Tool}
+\shorttitle{OldCrystalPlan: an Experiment Planning Tool}
 
  % Authors' names and addresses. Use \cauthor for the main (contact) author.
  % Use \author for all other authors. Use \aff for authors' affiliations.
@@ -103,18 +103,18 @@ MS-6477, Oak Ridge, TN 37831-6477
 \maketitle                        % DO NOT DELETE THIS LINE 
 
 \begin{synopsis}
-Describes CrystalPlan, a software program for the automatic creation of 
+Describes OldCrystalPlan, a software program for the automatic creation of 
 crystallography experiment plans for time-of-flight diffractometers.
 \end{synopsis}
 
 \begin{abstract}
 Beam time at large user program based x-ray and neutron scattering facilities is
-in high demand and always at a premium. CrystalPlan, a highly efficient
+in high demand and always at a premium. OldCrystalPlan, a highly efficient
 experiment planning software has been developed to maximize the use of available
 beamtime per sample per experiment. 
 This program can calculate and optimize the data coverage of a crystal in
 reciprocal space in a single-crystal diffraction time-of-flight experiment.
-CrystalPlan can help a user build an experiment plan that will acquire the most
+OldCrystalPlan can help a user build an experiment plan that will acquire the most
 unique data possible, with sufficient coverage but limited redundancy, therefore
 increasing scientific productivity. 
 A user friendly GUI (Graphical User Interface) including a 3D viewer, an
@@ -163,10 +163,10 @@ hundreds or thousands of individual frames, a TOPAZ run may have as few as 10
 to cover the same volume of reciprocal space.
 
 
-The goal of CrystalPlan was to make an easy-to-use software tool to aid users in
+The goal of OldCrystalPlan was to make an easy-to-use software tool to aid users in
 planning their experiments. By quickly making an experimental plan that will be
 tailored to the needs of the scientist (enough reflections measured for a structure
-analysis), but without spending time collecting redundant data, CrystalPlan will
+analysis), but without spending time collecting redundant data, OldCrystalPlan will
 greatly increase the scientific productivity and throughput of TOPAZ and other
 similar beamlines. Users will be able to measure samples highly efficiently,
 allowing them to explore parameters such as temperature and pressure more fully.
@@ -176,7 +176,7 @@ allowing them to explore parameters such as temperature and pressure more fully.
 %---------------------------------------------------------------------------------------
 \section{Architecture}
 
-CrystalPlan is designed with these capabilities:
+OldCrystalPlan is designed with these capabilities:
 
 \begin{itemize}
   \item Load a geometry file for a specific instrument (using a generic,
@@ -192,7 +192,7 @@ CrystalPlan is designed with these capabilities:
 
 \subsection{Instrument Configuration}
 
-CrystalPlan currently supports area detectors with flat faces and arbitrary
+OldCrystalPlan currently supports area detectors with flat faces and arbitrary
 rectangular dimensions; this reflects the detector types in use at SNS (Anger
 cameras and 8-pack $^3$He tube detectors), but the software could easily be
 extended for more complicated detector shapes as needed. The detector configuration is loaded from
@@ -203,7 +203,7 @@ detectable range of neutron/x-ray wavelength.
 
 \subsection{Sample Orientation}
 
-CrystalPlan can accomodate a variety of sample
+OldCrystalPlan can accomodate a variety of sample
 orientation goniometers. A base Goniometer class (in the object-oriented
 programming sense) is subclassed for specific types of goniometers, allowing a
 unified interface. This base class acts as a \emph{universal goniometer},
@@ -213,7 +213,7 @@ Each class inheriting from the base Goniometer can convert
 the desired $\phi$, $\chi$, $\omega$ angles to the internal motor positions it requires. 
 The class hierarchy allows for goniometer limitations: for example, TOPAZ is
 currently equipped with a goniometer where $\chi$ is fixed at 45 degrees
-(at $\omega$ to the incident beam). CrystalPlan handles this by limiting the
+(at $\omega$ to the incident beam). OldCrystalPlan handles this by limiting the
 sample orientation angles accessible to the user to $\phi$ and $\omega$.
     
 The sample unit cell and orientation is typically determined by the data
@@ -223,7 +223,7 @@ Workbench \cite{Mikkelson05}) provides us with the unit cell of the sample (via
 the B matrix) and the sample mounting orientation (U matrix).
 The combined UB matrix is then saved to a
 text file along with the lattice parameters. 
-CrystalPlan can load this UB matrix file and uses it for reciprocal coverage
+OldCrystalPlan can load this UB matrix file and uses it for reciprocal coverage
 calculations and optimization.
     
   
@@ -279,7 +279,7 @@ detectors are disabled, for example.
 \subsection{Crystal Parameters and Single Reflection Coverage}
 
 Crystal lattice parameters (lengths $a$, $b$, $c$ and angles $\alpha$, $\beta$,
-$\gamma$) are typed in or loaded from the ISAW UB matrix file. CrystalPlan then
+$\gamma$) are typed in or loaded from the ISAW UB matrix file. OldCrystalPlan then
 generates a list of $hkl$ reflections with d-spacings larger than the $d_{min}$
 specified. For each sample orientation being simulated and for each reflection, a function calculates at
 what wavelength $\lambda$ and in which direction it scatters. If $\lambda$ 
@@ -318,7 +318,7 @@ redundancy by summing all measurements on all equivalent $hkl$'s.
 In volume coverage mode, a 4D array is generated where the first 3 dimensions
 correspond to {\bf Q}-space, and the $4^{th}$ dimension is a list of $n$
 entries. Each entry in the $4^{th}$ dimension points to a voxel that is an
-equivalent due to crystal symmetry. This allows CrystalPlan to quickly compute a volume coverage
+equivalent due to crystal symmetry. This allows OldCrystalPlan to quickly compute a volume coverage
 map that takes into account crystal symmetry and the resulting redundancy: at
 each voxel, all $n$ equivalent voxels are checked to see if any of them were
 measured.
@@ -327,11 +327,11 @@ measured.
 
 \subsection{Automatic Coverage Optimizer}
 
-CrystalPlan allows the user to manually enter lists of sample orientations to
+OldCrystalPlan allows the user to manually enter lists of sample orientations to
 simulate and graphically display the coverage in reciprocal space;
 however, finding an optimal plan by trial and error is in general 
 time consuming and only feasible for an experienced crytallographer.
-To make the process more efficient, CrystalPlan includes an Automatic
+To make the process more efficient, OldCrystalPlan includes an Automatic
 Coverage Optimizer, which takes as its inputs the desired number of sample
 orientations and uses a genetic algorithm to find a solution that satisfies a
 user-specified coverage criterion (for example, the user may ask for $85\%$ of 
@@ -373,7 +373,7 @@ The program was designed to be cross-platform, and to run equally well on Linux,
 Mac OS and Windows, although Linux is our primary target operating system. Another
 design goal was to use open-source software and toolkits as much as possible. 
 
-To this end, CrystalPlan was written in Python \cite{python}, a powerful, open,
+To this end, OldCrystalPlan was written in Python \cite{python}, a powerful, open,
 cross-platform scripting language. Python was chosen for its ease of cross-platform deployment, and for
 its attractive language features. The numpy and scipy libraries (two
 open-source, commonly installed Python libraries) were used for many of the
@@ -384,7 +384,7 @@ used, in case of incompatibilities).
 
 \subsection{Code Layout}
 
-The calculation code of CrystalPlan is placed in a model layer and kept
+The calculation code of OldCrystalPlan is placed in a model layer and kept
 completely separate from eventual GUI elements, using a Model/View-Controller
 architecture \cite{Gamma95}. This makes it possible to run calculations using
 Python scripts, if desired. Unit tests for each part of the calculations are used to ensure
@@ -396,7 +396,7 @@ consistent results on different platforms and  systems.
 \subsubsection{Design.}
 
 An attractive and easy-to-use GUI was considered an important part of
-CrystalPlan, since the program is meant to be used interactively as a guide to
+OldCrystalPlan, since the program is meant to be used interactively as a guide to
 the experimenter whether new or experienced. This requires intuitive GUI
 interfaces and workflows.
 The user interface was written using wxPython
@@ -485,7 +485,7 @@ An initial short event file (each neutron detection event is saved with its
 time-of-flight and position) was processed using ISAW to determine the UB
 matrix and cell parameters of the crystal.
 
-The resulting UB matrix was loaded into CrystalPlan, where the Automatic
+The resulting UB matrix was loaded into OldCrystalPlan, where the Automatic
 Coverage Optimizer was used to generate an experiment plan with 8 sample
 orientations (Figure \ref{fig:natrolite_gui}a) that covered 97\% of the reflections,
 taking into account the crystal Laue symmetry (orthorhombic or mmm) (Figure
@@ -493,7 +493,7 @@ taking into account the crystal Laue symmetry (orthorhombic or mmm) (Figure
 unattended overnight.
 
 Reflections were integrated using ISAW, and the resulting file was
-loaded into CrystalPlan for comparison. The predicted and actual measurement
+loaded into OldCrystalPlan for comparison. The predicted and actual measurement
 positions on each detector face were compared for the 554 integrated reflections
 found. Good agreement was found; the root-mean-square difference between the
 predicted and actual measurement wavelength was only 0.016 \ang. The offsets in the reflection
@@ -503,7 +503,7 @@ was a slight misalignment of the goniometer.
 %NOTE: Check on this misalignment of goniometer business - is that really the
 % cause?
 
-CrystalPlan was also successfully used in a similar way during experiments run
+OldCrystalPlan was also successfully used in a similar way during experiments run
 on the TOPAZ instrument by Yuri Janssen from State University of New York, Stony
 Brook, and Henrik Clausen from University of Aarhus, Denmark. 
 
@@ -513,7 +513,7 @@ Brook, and Henrik Clausen from University of Aarhus, Denmark.
 
 \section{Conclusions and Future Development}
 
-We have described CrystalPlan, a software program designed to quickly produce
+We have described OldCrystalPlan, a software program designed to quickly produce
 efficient experiment plans for wide bandwidth time-of-flight Laue
 diffractometers. This program will help increase scientific productivity at SNS
 beamlines such as TOPAZ. With some relatively minor modifications, the program
@@ -522,11 +522,11 @@ could be handled by adding support sweeps consisting of many motor positions;
 Laue diffractometers on a constant intensity beam would requiring
 detecting and removing reflections with chromatic overlap.
 
-One planned future development for CrystalPlan include extending the software
+One planned future development for OldCrystalPlan include extending the software
 to help predict coverage in inelastic neutron scattering experiments. Another
 desired feature is the introduction of feedback loops to help determine the
 right time to end data acquisition at a particular sample orientation.
-CrystalPlan would interface with data analysis software such as ISAW and use
+OldCrystalPlan would interface with data analysis software such as ISAW and use
 recently developed capabilities for real-time data analysis to monitor
 the  signal to noise ratio on particular reflections. When the signal intensity
 becomes sufficient, the sample will automatically be moved to the next sample
