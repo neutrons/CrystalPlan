@@ -1038,7 +1038,7 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
 
 
     #Chi is 0
-    chi = Float(0*np.pi, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
+    chi = Float(0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
@@ -1055,7 +1055,7 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
         self.name = "SNAP Goniometer"
         self.description = "SNAP goniometer with one degree of freedom (Phi), with chi fixed at 0 degrees."
 
-        self.chi = +0*np.pi
+        self.chi = +0
 
         #Make the angle info object
         self.gonio_angles = [
@@ -1106,7 +1106,7 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
         """Given a list of angles (which may have more or less angles depending on goniometer type),
         return the equivalent (phi, chi, omega) in radians."""
         phi = angles[0]
-        chi = self.chi
+        chi = np.deg2rad(self.chi)
         omega = 0
         return (phi, chi, omega)
 
@@ -1178,9 +1178,9 @@ class MandiGoniometer(LimitedGoniometer):
     """Goniometer for MANDI instrument. Totally free in phi rotation, no freedom otherwise"""
 
     #Chi is 130
-    chi = Float(+130.0*np.pi/180.0, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
+    chi = Float(+130.0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
     #Omega is 90
-    omega = Float(+90.0*np.pi/180.0, label="Fixed Omega angle (rad)", desc="the fixed Omega angle that the goniometer has, in radians.")
+    omega = Float(+90.0, label="Fixed Omega angle (deg)", desc="the fixed Omega angle that the goniometer has, in degree.")
 
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
@@ -1198,9 +1198,9 @@ class MandiGoniometer(LimitedGoniometer):
         self.description = "Mandi goniometer with one degree of freedom (phi), with chi fixed at 130 degrees and omega at 90 degrees."
 
         #Chi is +130 degrees 
-        self.chi = +130.0*np.pi/180.0
+        self.chi = +130.0
         #Omega is 90 degrees
-        self.omega = +90.0*np.pi/180.0
+        self.omega = +90.0
 
         #Make the angle info object
         self.gonio_angles = [
@@ -1232,8 +1232,8 @@ class MandiGoniometer(LimitedGoniometer):
         """Given a list of angles (which may have more or less angles depending on goniometer type),
         return the equivalent (phi, chi, omega) in radians."""
         (phi) = angles[0]
-        chi = self.chi
-        omega = self.omega
+        chi = np.deg2rad(self.chi)
+        omega = np.deg2rad(self.omega)
         return (phi, chi, omega)
 
     #-------------------------------------------------------------------------------
@@ -1306,7 +1306,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
     """Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."""
 
     #Chi is +130 degrees 
-    chi = Float(+130.0*np.pi/180.0, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
+    chi = Float(+130.0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
@@ -1324,7 +1324,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
         self.description = "Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +135 degrees."
 
         #Chi is +130 degrees 
-        self.chi = +130.0*np.pi/180.0
+        self.chi = +130.0
 
         #Make the angle info object
         self.gonio_angles = [
@@ -1380,7 +1380,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
         """Given a list of angles (which may have more or less angles depending on goniometer type),
         return the equivalent (phi, chi, omega) in radians."""
         (phi, omega) = angles[0:2]
-        chi = self.chi
+        chi = np.deg2rad(self.chi)
         return (phi, chi, omega)
 
     #-------------------------------------------------------------------------------
@@ -1395,7 +1395,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
         """
         #For other instruments, this method may be different.
         (phi, omega) = angles[0:2]
-        chi = self.chi
+        chi = np.deg2rad(self.chi)
 
         #In Q space, detector coverage rotates OPPOSITE to what the real space rotation is.
         #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
@@ -1415,7 +1415,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
                 # of angles of this goniometer.
         """
         (phi, omega) = angles[0:2]
-        chi = self.chi
+        chi = np.deg2rad(self.chi)
         return numpy_utils.rotation_matrix(phi, chi, omega)
 
 
@@ -1455,7 +1455,7 @@ class ImagineGoniometer(LimitedGoniometer):
     """Goniometer for IMAGINE instrument. Totally free in phi rotation, no freedom otherwise"""
 
     #Chi is 0 
-    chi = Float(0, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
+    chi = Float(0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
@@ -1504,7 +1504,7 @@ class ImagineGoniometer(LimitedGoniometer):
         """Given a list of angles (which may have more or less angles depending on goniometer type),
         return the equivalent (phi, chi, omega) in radians."""
         (phi) = angles[0]
-        chi = self.chi
+        chi = np.deg2rad(self.chi)
         omega = 0
         return (phi, chi, omega)
 
@@ -1579,7 +1579,7 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
     """Goniometer for IMAGINE instrument. MiniKappa"""
 
     #Alpha is 24 degrees
-    alpha = Float(0.4188790205, label="Fixed Alpha angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
+    alpha = Float(24.0, label="Fixed Alpha angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
@@ -1597,7 +1597,7 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
         self.description = "IMAGINE mini-kappa goniometer with three degrees of freedom (phi,kappa,omega), with alpha fixed at 24 degrees."
 
         #Alpha is 24 degrees
-        self.alpha = 0.4188790205
+        self.alpha = 24.0
 
         #Make the angle info object
         #Not sure if these limits match IMAGINE's mini-kappa
@@ -1726,7 +1726,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
     """Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +45 degrees."""
 
     #Chi is +135 degrees as of October 2010.
-    chi = Float(+0.75*np.pi, label="Fixed Chi angle (rad)", desc="the fixed Chi angle that the goniometer has, in radians.")
+    chi = Float(+135.0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
     view = View(Item('name'), Item('description'),
                 Item('wavelength_control'),
@@ -1744,7 +1744,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         self.description = "Ambient goniometer with two degrees of freedom (phi and omega), with chi fixed at +135 degrees."
 
         #Chi is +135 degrees as of October 2010.
-        self.chi = +0.75*np.pi
+        self.chi = +135.0
 
         #Make the angle info object
         self.gonio_angles = [
@@ -1800,7 +1800,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         """Given a list of angles (which may have more or less angles depending on goniometer type),
         return the equivalent (phi, chi, omega) in radians."""
         (phi, omega) = angles[0:2]
-        chi = self.chi
+        chi = np.deg2rad(self.chi)
         return (phi, chi, omega)
 
     #-------------------------------------------------------------------------------
@@ -1815,7 +1815,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         """
         #For other instruments, this method may be different.
         (phi, omega) = angles[0:2]
-        chi = self.chi
+        chi = np.deg2rad(self.chi)
 
         #In Q space, detector coverage rotates OPPOSITE to what the real space rotation is.
         #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
@@ -1835,7 +1835,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
                 # of angles of this goniometer.
         """
         (phi, omega) = angles[0:2]
-        chi = self.chi
+        chi = np.deg2rad(self.chi)
         return numpy_utils.rotation_matrix(phi, chi, omega)
 
 
@@ -2632,9 +2632,6 @@ class HB3AGoniometer(LimitedGoniometer):
         self.name = "HB3A Goniometer"
         self.description = "Goniometer for HFIR HB3A. Four degrees of freedom: phi, chi, omega, and detector."
 
-        #Chi is +135 degrees as of October 2010.
-        self.chi = +0.75*np.pi
-
         #Make the angle info object
         self.gonio_angles = [
             AngleInfo('Phi', friendly_range=[-180, 180]),
@@ -2710,7 +2707,7 @@ class CorelliGoniometer(LimitedGoniometer):
         self.description = "Goniometer for Corelli. Two degrees of freedom. Phi is from -175 to 150, Chi is from 1 to 35."
 
         #Just set omega to 0..
-        self.omega = +0.0*np.pi
+        self.omega = +0.0
 
         #Make the angle info object
         self.gonio_angles = [
@@ -2766,7 +2763,7 @@ class CorelliGoniometer(LimitedGoniometer):
         """Given a list of angles (which may have more or less angles depending on goniometer type),
         return the equivalent (phi, chi, omega) in radians."""
         (phi, chi) = angles[0:2]
-        omega = self.omega
+        omega = np.deg2rad(self.omega)
         return (phi, chi, omega)
 
     #-------------------------------------------------------------------------------
@@ -2780,7 +2777,7 @@ class CorelliGoniometer(LimitedGoniometer):
         """
         #For other instruments, this method may be different.
         (phi, chi) = angles[0:2]
-        omega = self.omega
+        omega = np.deg2rad(self.omega)
 
         #In Q space, detector coverage rotates OPPOSITE to what the real space rotation is.
         #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
@@ -2800,7 +2797,7 @@ class CorelliGoniometer(LimitedGoniometer):
                 # of angles of this goniometer.
         """
         (phi, chi) = angles[0:2]
-        omega = self.omega
+        omega = np.deg2rad(self.omega)
         return numpy_utils.rotation_matrix(phi, chi, omega)
 
 
