@@ -309,7 +309,7 @@ class ParamReflectionMasking(ParamSlice):
         #Call the parent constructor. For the slice
         ParamSlice.__init__(self, use_slice, slice_min, slice_max)
         #Integer that is entry in the list of choices.
-        self.masking_type = 0
+        self.masking_type = 1
         #I/sigI threshold for measured peaks.
         self.threshold = 2.0
         #Are we just showing the primary ones?

@@ -386,6 +386,7 @@ class PanelReflectionsViewOptions(wx.Panel):
 
         #Change the UI settings to match the current settings
         self.controller.show_settings()
+        self.controller.change_masking_settings()
 
         #Show the initial data
         self.controller.update_data(None)
