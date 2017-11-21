@@ -731,7 +731,7 @@ class QspaceViewController(HasTraits):
 
         #The max coverage is necessary to avoid going too high in the isosurfaces
         max_coverage = np.max(model.experiment.exp.get_qspace_displayed())
-        if max_coverage > 4: max_coverage = 4
+        if max_coverage > 5: max_coverage = 5
 
         #Update the contours
         iso = self.iso
@@ -739,8 +739,8 @@ class QspaceViewController(HasTraits):
             iso.contour.contours = list(np.arange(1, max_coverage+1))
             iso.actor.property.opacity = 0.6
             # When set to 1, This helps them to show up right in partially transparent mode.
-            iso.actor.property.backface_culling = 1
-            iso.actor.property.frontface_culling = 1
+            iso.actor.property.backface_culling = 0
+            iso.actor.property.frontface_culling = 0
         else:
             iso.contour.contours = list(np.arange(1, max_coverage+1))
             iso.actor.property.opacity = 1.0
