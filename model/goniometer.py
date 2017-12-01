@@ -99,13 +99,12 @@ class AngleInfo(HasTraits):
     das_units = String(label='DAS units', desc='the units required by the DAS group (used in the output CSV file).')
     das_conversion = Float(label='Internal to DAS unit conversion factor', desc='that multiplying internal units by this value gives you the DAS units')
     friendly_range = List(Float, label='Range of values in GUI (friendly units)', desc='two numbers giving the minimum and maximum values to show in GUI, for the sliders for example.')
-    random_range = List(Float, label='Randomization range of values (internal units)', desc='two numbers giving the minimum and maximum values to use when generating a random value, used in the coverage optimizer for example.')
 
     view=View(
         Item('name'),Item('type'),
             Group( Item('units'),Item('friendly_units'),
                     Item('conversion'),Item('das_units'),  Item('das_conversion'), label='Units'),
-            Group( Item('friendly_range'),Item('random_range'), label="Ranges"),
+            Group( Item('friendly_range'), label="Ranges"),
         buttons=[OKButton, CancelButton]
         )
 
@@ -123,8 +122,7 @@ class AngleInfo(HasTraits):
             conversion: Conversion factor from internal units to friendly units (multiply the internal by THIS to get friendly)
             friendly_range: Range to use, in friendly units; for sliders and such.
             random_range: Randomization range: when generating an angle at random (in a genetic algorithm, for example,
-                 use this range to initialize population.  In internal units.
-                 Optional. Will be the same as friendly_range, but converted to "units".
+                 use this range to initialize population.  In internal units. Will be the same as friendly_range, but converted to "units".
             das_conversion: Units required by the DAS group to be used in the output CSV file
             das_units: Conversion factor from internal units to DAS units (multiply the internal by THIS to get DAS units)
         """
@@ -135,10 +133,7 @@ class AngleInfo(HasTraits):
         if conversion != 0:
             self.conversion = conversion
         self.friendly_range = friendly_range
-        if random_range is None:
-            self.random_range = list(np.array(friendly_range) * self.conversion)
-        else:
-            self.random_range = random_range
+        self.random_range = list(np.array(friendly_range) * self.conversion)
         self.das_conversion = das_conversion
         self.das_units = das_units
 
@@ -171,6 +166,7 @@ class AngleInfo(HasTraits):
 
     def get_random(self):
         """Return a random angle within the specified range of this angle."""
+        self.random_range = list(np.array(self.friendly_range) * self.conversion)
         return np.random.uniform(self.random_range[0], self.random_range[1], 1)[0]
 
     def __str__(self):
@@ -185,6 +181,7 @@ class AngleInfo(HasTraits):
         Parameters:
             angle: angle in INTERNAL units."""
 
+        self.random_range = list(np.array(self.friendly_range) * self.conversion)
         if (angle < self.random_range[0]) or (angle > self.random_range[1]):
             return False
         else:
