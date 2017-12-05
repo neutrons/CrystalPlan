@@ -1063,7 +1063,7 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
     def __eq__(self, other):
         """Return True if the contents of self are equal to other."""
         return LimitedGoniometer.__eq__(self,other) and \
-            (self.chi == other.chi)
+            (np.deg2rad(self.chi) == other.chi)
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -1074,7 +1074,7 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
             for j in xrange(2):
                 args.append(self.gonio_angles[i].random_range[j])
         # Last argument is the fixed chi value.
-        args.append( self.chi )
+        args.append( np.deg2rad(self.chi) )
         args = tuple(args)
 
         s = """
@@ -1159,7 +1159,7 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
         else:
             (phi, chi, omega) = best_angles
             
-            if not np.abs(chi - self.chi) < 0.5/57:
+            if not np.abs(chi - np.deg2rad(self.chi)) < 0.5/57:
                 # Have some tolerance (1 deg) in chi to help find anything. 
                 return None
             else:
@@ -1196,6 +1196,8 @@ class MandiGoniometer(LimitedGoniometer):
 
         #Chi is +130 degrees 
         self.chi = +130.0
+        chi = np.deg2rad(self.chi)
+        a= np.deg2rad(self.chi)
         #Omega is 90 degrees
         self.omega = +90.0
 
@@ -1208,8 +1210,8 @@ class MandiGoniometer(LimitedGoniometer):
     def __eq__(self, other):
         """Return True if the contents of self are equal to other."""
         return LimitedGoniometer.__eq__(self,other) and \
-            (self.chi == other.chi) and \
-            (self.omega == other.omega)
+            (np.deg2rad(self.chi) == other.chi) and \
+            (np.deg2rad(self.omega) == other.omega)
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -1287,7 +1289,7 @@ class MandiGoniometer(LimitedGoniometer):
             (phi, chi, omega) = best_angles
             #Chi needs to be 130 degrees! So we take it out
 
-            if not np.abs(chi - self.chi) < 0.1/57 and  not np.abs(omega - self.omega) < 0.1/57:
+            if not np.abs(chi - np.deg2rad(self.chi)) < 0.1/57 and  not np.abs(omega - np.deg2rad(self.omega)) < 0.1/57:
                 #Chi is not within +-0.1 degree of the fixed chi value degrees!
                 #Omega is not within +-0.1 degree of the fixed chi value degrees!
                 #print "Warning! Found angles", np.rad2deg(best_angles), " where chi is more than 1 degree off of fixed value."
@@ -1333,7 +1335,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
     def __eq__(self, other):
         """Return True if the contents of self are equal to other."""
         return LimitedGoniometer.__eq__(self,other) and \
-            (self.chi == other.chi)
+            (np.deg2rad(self.chi) == other.chi)
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -1343,7 +1345,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
             for j in xrange(2):
                 args.append(self.gonio_angles[i].random_range[j])
         # Last argument is the fixed chi value.
-        args.append( self.chi )
+        args.append( np.deg2rad(self.chi) )
         args = tuple(args)
 
         s = """
@@ -1436,7 +1438,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
             (phi, chi, omega) = best_angles
             #Chi needs to be 45 degrees! So we take it out
 
-            if not np.abs(chi - self.chi) < 0.1/57:
+            if not np.abs(chi - np.deg2rad(self.chi)) < 0.1/57:
                 #Chi is not within +-0.1 degree of the fixed chi value degrees!
                 #print "Warning! Found angles", np.rad2deg(best_angles), " where chi is more than 1 degree off of fixed value."
                 return None
@@ -1481,7 +1483,7 @@ class ImagineGoniometer(LimitedGoniometer):
     def __eq__(self, other):
         """Return True if the contents of self are equal to other."""
         return LimitedGoniometer.__eq__(self,other) and \
-            (self.chi == other.chi)
+            (np.deg2rad(self.chi) == other.chi)
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -1559,7 +1561,7 @@ class ImagineGoniometer(LimitedGoniometer):
             (phi, chi, omega) = best_angles
             #Chi needs to be 45 degrees! So we take it out
 
-            if not np.abs(chi - self.chi) < 0.1/57:
+            if not np.abs(chi - np.deg2rad(self.chi)) < 0.1/57:
                 #Chi is not within +-0.1 degree of the fixed chi value degrees!
                 #print "Warning! Found angles", np.rad2deg(best_angles), " where chi is more than 1 degree off of fixed value."
                 return None
@@ -1753,7 +1755,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
     def __eq__(self, other):
         """Return True if the contents of self are equal to other."""
         return LimitedGoniometer.__eq__(self,other) and \
-            (self.chi == other.chi)
+            (np.deg2rad(self.chi) == other.chi)
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -1763,7 +1765,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
             for j in xrange(2):
                 args.append(self.gonio_angles[i].random_range[j])
         # Last argument is the fixed chi value.
-        args.append( self.chi )
+        args.append( np.deg2rad(self.chi) )
         args = tuple(args)
 
         s = """
@@ -1856,7 +1858,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
             (phi, chi, omega) = best_angles
             #Chi needs to be 45 degrees! So we take it out
 
-            if not np.abs(chi - self.chi) < 0.1/57:
+            if not np.abs(chi - np.deg2rad(self.chi)) < 0.1/57:
                 #Chi is not within +-0.1 degree of the fixed chi value degrees!
                 #print "Warning! Found angles", np.rad2deg(best_angles), " where chi is more than 1 degree off of fixed value."
                 return None
@@ -2716,7 +2718,7 @@ class CorelliGoniometer(LimitedGoniometer):
     def __eq__(self, other):
         """Return True if the contents of self are equal to other."""
         return LimitedGoniometer.__eq__(self,other) and \
-            (self.omega == other.omega)
+            (np.deg2rad(self.omega) == other.omega)
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
@@ -2726,7 +2728,7 @@ class CorelliGoniometer(LimitedGoniometer):
             for j in xrange(2):
                 args.append(self.gonio_angles[i].random_range[j])
         # Last argument is the fixed chi value.
-        args.append( self.omega )
+        args.append( np.deg2rad(self.omega) )
         args = tuple(args)
 
         s = """
@@ -2818,7 +2820,7 @@ class CorelliGoniometer(LimitedGoniometer):
             (phi, chi, omega) = best_angles
             #Chi needs to be 45 degrees! So we take it out
 
-            if not np.abs(omega - self.omega) < 0.1/57:
+            if not np.abs(omega - np.deg2rad(self.omega)) < 0.1/57:
                 #Chi is not within +-0.1 degree of the fixed chi value degrees!
                 #print "Warning! Found angles", np.rad2deg(best_angles), " where chi is more than 1 degree off of fixed value."
                 return None
