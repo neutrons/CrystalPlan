@@ -1607,12 +1607,6 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
             ]
 
     #-------------------------------------------------------------------------
-    def __eq__(self, other):
-        """Return True if the contents of self are equal to other."""
-        return LimitedGoniometer.__eq__(self,other) and \
-            (self.alpha == other.alpha)
-
-    #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
         #C code for the fitness of phi,kappa, omega.
         args = []
@@ -1673,7 +1667,7 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
         #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
 
         #So wee need to invert the sample orientation matrix to find the one that will apply to the Q vector.
-        return numpy_utils.kappa_opposite_rotation_matrix(phi, self.alpha, kappa, omega)
+        return numpy_utils.kappa_opposite_rotation_matrix(phi, np.deg2rad(self.alpha), kappa, omega)
 
 
     #-------------------------------------------------------------------------------
@@ -1687,7 +1681,7 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
                 # of angles of this goniometer.
         """
         (phi, kappa, omega) = self.get_phi_kappa_omega(angles)
-        return numpy_utils.kappa_rotation_matrix(phi, self.alpha, kappa, omega)
+        return numpy_utils.kappa_rotation_matrix(phi, np.deg2rad(self.alpha), kappa, omega)
 
 
     #-------------------------------------------------------------------------

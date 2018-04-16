@@ -57,6 +57,7 @@ def rotation_matrix(phi=0, chi=0, omega=0):
 
     #rotated =  M_omega * (M_chi * (M_phi * vector));
     M = np.dot(M_omega, np.dot(M_chi, M_phi))
+    print M
 
     return M;
 
@@ -82,10 +83,12 @@ def kappa_rotation_matrix(phi=0, alpha=0, kappa=0, omega=0):
     s = sin(kappa)
     ca = cos(alpha)
     sa = sin(alpha)
-    s2a = sa * sa
-    c2a = ca * ca
+
     # See The Geometry of X-Ray Diffraction p. 180 for matrix
-    M_kappa = np.array([[c, s*sa, s*ca], [-s*sa, c*s2a+c2a, -ca*sa*(1-c)], [-s*ca, -ca*sa*(1-c), c*c2a+s2a]])
+    M_alphaT = np.array([[1, 0, 0], [0, ca, sa], [0, -sa, ca]])
+    M_kappa = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+    M_alpha = np.array([[1, 0, 0], [0, ca, -sa], [0, sa, ca]])
+    M_kappa = np.dot(M_alphaT, np.dot(M_kappa, M_alpha))
 
     c = cos(omega)
     s = sin(omega)
@@ -93,6 +96,7 @@ def kappa_rotation_matrix(phi=0, alpha=0, kappa=0, omega=0):
 
     #rotated =  M_omega * (M_kappa * (M_phi * vector));
     M = np.dot(M_omega, np.dot(M_kappa, M_phi))
+    print M
 
     return M;
 
@@ -190,12 +194,14 @@ def kappa_opposite_rotation_matrix(phi=0, alpha=0, kappa=0, omega=0):
     # kappa for mini-kappa goniometer
     c = cos(-kappa)
     s = sin(-kappa)
-    ca = cos(alpha)
-    sa = sin(alpha)
-    s2a = sa * sa
-    c2a = ca * ca
+    ca = cos(-alpha)
+    sa = sin(-alpha)
+
     # See The Geometry of X-Ray Diffraction p. 180 for matrix
-    M_kappa = np.array([[c, s*sa, s*ca], [-s*sa, c*s2a+c2a, -ca*sa*(1-c)], [-s*ca, -ca*sa*(1-c), c*c2a+s2a]])
+    M_alphaT = np.array([[1, 0, 0], [0, ca, sa], [0, -sa, ca]])
+    M_kappa = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+    M_alpha = np.array([[1, 0, 0], [0, ca, -sa], [0, sa, ca]])
+    M_kappa = np.dot(M_alphaT, np.dot(M_kappa, M_alpha))
 
     c = cos(-omega)
     s = sin(-omega)
