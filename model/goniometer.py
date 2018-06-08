@@ -213,7 +213,7 @@ class Goniometer(HasTraits):
         return self.get_angles_description()
 
     wavelength_bandwidth = Property(Float, desc="the bandwidth of measurement wavelength, in angstroms. Changing this value changes the allowable range for WL_center.")
-    _wavelength_bandwidth = 3.4
+    _wavelength_bandwidth = 0.6
     def _get_wavelength_bandwidth(self):
         return self._wavelength_bandwidth
     def _set_wavelength_bandwidth(self, value):
@@ -237,7 +237,7 @@ class Goniometer(HasTraits):
         self._set_wavelength_bandwidth(self._wavelength_bandwidth)
 
     wavelength_maximum = Property(Float, desc="the maximum wavelength that can be reached, in angstroms. Changing this value changes the allowable range for WL_center.")
-    _wavelength_maximum = 6.0
+    _wavelength_maximum = 3.7
     def _get_wavelength_maximum(self):
         return self._wavelength_maximum
     def _set_wavelength_maximum(self, value):
@@ -285,7 +285,8 @@ class Goniometer(HasTraits):
             ]
         #Bandwidth of detection, in angstroms
         self.wavelength_minimum = 0.1
-        self.wavelength_bandwidth = 3.2
+        self.wavelength_maximum = 3.7
+        self.wavelength_bandwidth = 0.6
 
     #========================================================================================================
     def __eq__(self, other):

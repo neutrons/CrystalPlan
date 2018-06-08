@@ -57,7 +57,6 @@ def rotation_matrix(phi=0, chi=0, omega=0):
 
     #rotated =  M_omega * (M_chi * (M_phi * vector));
     M = np.dot(M_omega, np.dot(M_chi, M_phi))
-    print M
 
     return M;
 
@@ -96,7 +95,6 @@ def kappa_rotation_matrix(phi=0, alpha=0, kappa=0, omega=0):
 
     #rotated =  M_omega * (M_kappa * (M_phi * vector));
     M = np.dot(M_omega, np.dot(M_kappa, M_phi))
-    print M
 
     return M;
 
