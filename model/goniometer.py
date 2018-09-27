@@ -1740,10 +1740,10 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         #Chi is +135 degrees as of October 2010.
         self.chi = +135.0
 
-        #Make the angle info object
+        #Make the angle info object  (after EPICS upgrade names changed)
         self.gonio_angles = [
-            AngleInfo('Phi'),
-            AngleInfo('Omega'),
+            AngleInfo('BL12:Mot:goniokm:phi'),
+            AngleInfo('BL12:Mot:goniokm:omega'),
             ]
 
     #-------------------------------------------------------------------------
@@ -1870,10 +1870,9 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         -----------
             fileobj: an already open, writable file object.
         """
-        fileobj.write(csv_line( ["#Title:", title] ) )
-        fileobj.write(csv_line( ["#Comment:", comment] ) )
         #Line of header info
-        fileobj.write(csv_line( [x.name for x in self.angles] + ['CountFor', 'CountValue',  'Comment'] ) )
+        
+        fileobj.write(csv_line( ['Notes'] + [x.name for x in self.angles] + ['Wait For/n', 'Value'] ) )
 
 
     #===============================================================================================
@@ -1889,13 +1888,18 @@ class TopazAmbientGoniometer(LimitedGoniometer):
         (allowed, reason) = self.are_angles_allowed(angle_values, return_reason=True)
         #Convert from internal to DAS units.
         das_angles = [self.angles[i].internal_to_das(angle_values[i]) for i in xrange(len(self.angles))]
+        stopping_criterion = count_for
+        if stopping_criterion == "runtime":
+            stopping_criterion = "seconds"
+        elif stopping_criterion == "pcharge":
+            stopping_criterion = "BL12:Det:PCharge:C"
         if not allowed:
             #Can't reach this position
             fileobj.write("#"" ----- ERROR! This sample orientation could not be achieved with the goniometer, because of '%s'. THE FOLLOWING LINE HAS BEEN COMMENTED OUT ------ ""\n" % reason )
-            fileobj.write('#' + csv_line( das_angles + [count_for, count_value, comment] ) )
+            fileobj.write('#' + csv_line( [comment] + das_angles + [stopping_criterion, count_value] ) )
         else:
             #They are okay
-            fileobj.write(csv_line( das_angles + [count_for, count_value, comment] ) )
+            fileobj.write(csv_line( [comment] + das_angles + [stopping_criterion, count_value] ) )
 
 
 
