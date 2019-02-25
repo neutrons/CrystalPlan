@@ -445,6 +445,8 @@ class QspaceViewController(HasTraits):
 #        self.scene.mlab.plot3d([offset, offset+a[0]], [offset, offset+a[1]], [offset, offset+a[2]], color=(1,0,0))
 #        self.scene.mlab.plot3d([offset, offset+b[0]], [offset, offset+b[1]], [offset, offset+b[2]], color=(0,1,0))
 #        self.scene.mlab.plot3d([offset, offset+c[0]], [offset, offset+c[1]], [offset, offset+c[2]], color=(0,0,1))
+        # orthographic
+        mlab.gcf().scene.parallel_projection = True
 
         #Re-enable drawing
         self.scene.disable_render = False

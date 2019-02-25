@@ -23,7 +23,7 @@ package_data = {'CrystalPlan':['instruments/*.xls', 'instruments/*.csv', 'instru
 scripts = ['crystalplan.py']
 
 #Package requirements
-install_requires = ['EnthoughtBase', 'Traits', 'Mayavi', 'numpy', 'scipy']
+install_requires = ['Traits', 'Mayavi', 'numpy', 'scipy']
 
 def pythonVersionCheck():
     # Minimum version of Python
