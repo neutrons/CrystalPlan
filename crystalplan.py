@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # whether or not to use vglrun
 import os
+VGLRUN=""
 if os.environ.get('NXSESSIONID') is not None:
   os.system('command -v vglrun >/dev/null 2>&1 || { echo >&2 "CrystalPlan requires VirtualGL but it is not installed.  Aborting."; exit 1; }')
   VGLRUN="vglrun"
