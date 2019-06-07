@@ -7,4 +7,4 @@ python setup.py install --home=~/CrystalPlan
 python setup.py bdist  #generate RPM
 
 ask linux-support to install on all analysis and instrument computers:
-~/CrystalPlan/dist/CrystalPlan-1.2-12.noarch.rpm           
+~/CrystalPlan/dist/CrystalPlan-1.2-RELEASENO.noarch.rpm           
