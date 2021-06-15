@@ -1025,8 +1025,307 @@ class TestLimitedGoniometer(LimitedGoniometer):
             AngleInfo('Omega', friendly_range=[172, 229], random_range=[3, 4]),
             ]
 
+#===============================================================================================
+#===============================================================================================
+#===============================================================================================
+# class TOPAZCryoGoniometer(LimitedGoniometer):
+#     """TOPAZ cryogoniometer that only has omega rotational freedom with chi fixed at 0.0"""
+
+#     #Chi is 0 
+#     chi = Float(0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
+
+#     view = View(Item('name'), 
+#                 Item('description'),
+#                 Item('wavelength_control'),
+#                 Item('wavelength_bandwidth', visible_when="wavelength_control"),        
+#                 Item('wavelength_minimum', visible_when="wavelength_control"),        
+#                 Item('wavelength_maximum', visible_when="wavelength_control"),
+#                 Item('chi'), Item('angles_desc', style='readonly'))
+
+#     #-------------------------------------------------------------------------
+#     def __init__(self, wavelength_control=False):
+#         """Constructor"""
+#         #Init the base class
+#         LimitedGoniometer.__init__(self, wavelength_control)
+
+#         #Some info about the goniometer
+#         self.name = "TOPAZ CryoGoniometer"
+#         self.description = "TOPAZ Cryogoniometer with one degree of freedom (omega), with chi fixed at 0 degrees."
+
+#         self.phi = 0
+#         self.chi = 0
+
+#         #Make the angle info object
+#         self.gonio_angles = [
+#             AngleInfo('Omega', friendly_range=[0, 360], random_range=[0.0, np.deg2rad(360)])
+#             ]
+
+#     #-------------------------------------------------------------------------
+#     def __eq__(self, other):
+#         """Return True if the contents of self are equal to other."""
+#         return LimitedGoniometer.__eq__(self,other) and \
+#             (np.deg2rad(self.chi) == other.chi)
+
+#     #-------------------------------------------------------------------------
+#     def get_fitness_function_c_code(self):
+#         """C code for the fitness of phi, chi, omega.
+#         Fitness is always good since the goniometer has no limits"""
+#         s = """FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+#         {
+#             FLOAT fitness = absolute(omega);
+#             return fitness;
+#         }
+#         """ 
+#         return s
 
 
+#     #-------------------------------------------------------------------------------
+#     def get_phi_chi_omega(self, angles):
+#         """Given a list of angles (which may have more or less angles depending on goniometer type),
+#         return the equivalent (phi, chi, omega) in radians."""
+#         phi = 0
+#         chi = np.deg2rad(self.chi)
+#         omega = angles[0]
+#         return (phi, chi, omega)
+
+#     #-------------------------------------------------------------------------------
+#     def make_q_rot_matrix(self, angles):
+#         """Generate the necessary rotation matrix for use in the getq method.
+#         The q rotation matrix corresponds to the opposite (negative) angles that
+#         are the sample rotation angles.
+
+#         Parameters:
+#             angles: should be a list of angle values, in unfriendly units, that matches the
+#                 # of angles of this goniometer.
+#         """
+#         #For other instruments, this method may be different.
+#         (phi, chi, omega) = self.get_phi_chi_omega(angles)
+
+#         #In Q space, detector coverage rotates OPPOSITE to what the real space rotation is.
+#         #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
+
+#         #So wee need to invert the sample orientation matrix to find the one that will apply to the Q vector.
+#         return numpy_utils.opposite_rotation_matrix(phi, chi, omega)
+
+
+#     #-------------------------------------------------------------------------------
+#     def make_sample_rot_matrix(self, angles):
+#         """Generate the sample rotation matrix, from the given sample orientation angles.
+#         Unlike make_q_rot_matrix(), the direct angles are used here.
+#         This matrix will be used to calculate the scattering angle of specific reflections.
+
+#         Parameters:
+#             angles: should be a list of angle values, in unfriendly units, that matches the
+#                 # of angles of this goniometer.
+#         """
+#         (phi, chi, omega) = self.get_phi_chi_omega(angles)
+#         return numpy_utils.rotation_matrix(phi, chi, omega)
+
+
+#     #-------------------------------------------------------------------------
+#     def calculate_angles_to_rotate_vector(self, *args, **kwargs):
+#         """Calculate a set of sample orientation angles that rotate a single vector.
+#         TRY to return a sample orientation that is achievable by the goniometer.
+
+#         Parameters:
+#             see  LimitedGoniometer.calculate_angles_to_rotate_vector()
+
+#         Return:
+#             best_angles: list of the 1 angle found. None if invalid inputs were given
+#         """
+#         #The parent class does the work
+#         best_angles = LimitedGoniometer.calculate_angles_to_rotate_vector(self, *args, **kwargs)
+#         print(best_angles)
+#         if best_angles is None:
+#             return None
+#         else:
+#             (phi, chi, omega) = best_angles
+#             #Chi needs to be 45 degrees! So we take it out
+
+#             if not np.abs(chi - np.deg2rad(self.chi)) < 0.1/57:
+
+#                 #Chi is not within +-0.1 degree of the fixed chi value degrees!
+#                 #print "Warning! Found angles", np.rad2deg(best_angles), " where chi is more than 1 degree off of fixed value."
+#                 return None
+#             else:
+#                 #Okay, we found a decent chi
+#                 return [omega]
+
+#===============================================================================================
+class TOPAZCryoGoniometer(LimitedGoniometer):
+    """TOPAZ cryogoniometer that only has omega rotational freedom with chi fixed at 0.0"""
+
+
+    #Chi is 0
+    chi = Float(0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
+
+    view = View(Item('name'), Item('description'),
+                Item('wavelength_control'),
+                Item('wavelength_bandwidth', visible_when="wavelength_control"),       
+                Item('wavelength_minimum', visible_when="wavelength_control"),       
+                Item('wavelength_maximum', visible_when="wavelength_control"),
+                Item('chi'), Item('angles_desc', style='readonly'))
+
+    #-------------------------------------------------------------------------
+    def __init__(self, wavelength_control=False):
+        """Constructor"""
+        #Init the base class
+        LimitedGoniometer.__init__(self, wavelength_control)
+
+        #Some info about the goniometer
+        self.name = "TOPAZ CryoGoniometer"
+        self.description = "TOPAZ Cryogoniometer with one degree of freedom (omega), with chi fixed at 0 degrees."
+
+        self.chi = +0
+
+        #Make the angle info object
+        self.gonio_angles = [
+            AngleInfo('Omega'),
+            ]
+
+    #-------------------------------------------------------------------------
+    def __eq__(self, other):
+        """Return True if the contents of self are equal to other."""
+        return LimitedGoniometer.__eq__(self,other) and \
+            (np.deg2rad(self.chi) == other.chi)
+
+    #-------------------------------------------------------------------------
+    def get_fitness_function_c_code(self):
+        #C code for the fitness of phi,chi, omega.
+        args = []
+        for i in xrange(1):
+            # Each angle
+            for j in xrange(2):
+                args.append(self.gonio_angles[i].random_range[j])
+        # Last argument is the fixed chi value.
+        args.append( np.deg2rad(self.chi) )
+        args = tuple(args)
+
+        s = """
+        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+        {
+            FLOAT phi_min = %f;
+            FLOAT phi_max = %f;
+
+            FLOAT chi_mid = %f;
+            FLOAT phi_mid = (phi_min + phi_max) / 2;
+
+            FLOAT fitness = absolute(chi - chi_mid)*10.0 + absolute(phi - phi_mid)/10.0;
+
+            // Big penalties for being out of the range
+            if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
+            if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
+
+            return fitness;
+        }
+        """ % (args)
+        return s
+    
+        # s = """
+        # FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+        # {
+        #     FLOAT phi_min = %f;
+        #     FLOAT phi_max = %f;
+
+        #     FLOAT chi_mid = %f;
+        #     FLOAT phi_mid = (phi_min + phi_max) / 2;
+
+        #     FLOAT fitness = absolute(phi - phi_mid);
+
+        #     // Big penalties for being out of the range
+        #     if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
+        #     if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
+
+        #     return fitness;
+        # }
+        # """ % (args)
+
+        # s = """
+        # FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
+        # {
+        #     FLOAT omega_min = %f;
+        #     FLOAT omega_max = %f;
+
+        #     FLOAT chi_mid = %f;
+        #     FLOAT omega_mid = (omega_min + omega_max) / 2;
+
+        #     FLOAT fitness = absolute(omega - omega_mid);
+
+        #     // Big penalties for being out of the range
+        #     if (omega < omega_min) fitness += (omega_min - omega) * 1.0;
+        #     if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
+
+        #     return fitness;
+        # }
+        # """ % (args)
+
+    #-------------------------------------------------------------------------------
+    def get_phi_chi_omega(self, angles):
+        """Given a list of angles (which may have more or less angles depending on goniometer type),
+        return the equivalent (phi, chi, omega) in radians."""
+        phi = angles[0]
+        chi = np.deg2rad(self.chi)
+        omega = 0
+        return (phi, chi, omega)
+
+    #-------------------------------------------------------------------------------
+    def make_q_rot_matrix(self, angles):
+        """Generate the necessary rotation matrix for use in the getq method.
+        The q rotation matrix corresponds to the opposite (negative) angles that
+        are the sample rotation angles.
+
+        Parameters:
+            angles: should be a list of angle values, in unfriendly units, that matches the
+                # of angles of this goniometer.
+        """
+        #For other instruments, this method may be different.
+        (phi, chi, omega) = self.get_phi_chi_omega(angles)
+
+        #In Q space, detector coverage rotates OPPOSITE to what the real space rotation is.
+        #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
+        #So wee need to invert the sample orientation matrix to find the one that will apply to the Q vector.
+        return numpy_utils.opposite_rotation_matrix(phi, chi, omega)
+
+
+    #-------------------------------------------------------------------------------
+    def make_sample_rot_matrix(self, angles):
+        """Generate the sample rotation matrix, from the given sample orientation angles.
+        Unlike make_q_rot_matrix(), the direct angles are used here.
+        This matrix will be used to calculate the scattering angle of specific reflections.
+
+        Parameters:
+            angles: should be a list of angle values, in unfriendly units, that matches the
+                # of angles of this goniometer.
+        """
+        (phi, chi, omega) = self.get_phi_chi_omega(angles)
+        return numpy_utils.rotation_matrix(phi, chi, omega)
+
+
+    #-------------------------------------------------------------------------
+    def calculate_angles_to_rotate_vector(self, *args, **kwargs):
+        """Calculate a set of sample orientation angles that rotate a single vector.
+        TRY to return a sample orientation that is achievable by the goniometer.
+
+        Parameters:
+            see  LimitedGoniometer.calculate_angles_to_rotate_vector()
+
+        Return:
+            best_angles: list of the 2 angles found. None if invalid inputs were given
+        """
+        #The parent class does the work
+        best_angles = LimitedGoniometer.calculate_angles_to_rotate_vector(self, *args, **kwargs)
+
+        if best_angles is None:
+            return None
+        else:
+            (phi, chi, omega) = best_angles
+            
+            if not np.abs(chi - np.deg2rad(self.chi)) < 0.5/57:
+                # Have some tolerance (1 deg) in chi to help find anything. 
+                return None
+            else:
+                #Okay, we found a decent chi
+                return [omega]
 
 #===============================================================================================
 #===============================================================================================
@@ -1038,9 +1337,12 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
     #Chi is 0
     chi = Float(0, label="Fixed Chi angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
-    view = View(Item('name'), Item('description'),
+    view = View(Item('name'), 
+                Item('description'),
                 Item('wavelength_control'),
-                Item('wavelength_bandwidth', visible_when="wavelength_control"),        Item('wavelength_minimum', visible_when="wavelength_control"),        Item('wavelength_maximum', visible_when="wavelength_control"),
+                Item('wavelength_bandwidth', visible_when="wavelength_control"),        
+                Item('wavelength_minimum', visible_when="wavelength_control"),        
+                Item('wavelength_maximum', visible_when="wavelength_control"),
                 Item('chi'), Item('angles_desc', style='readonly'))
 
     #-------------------------------------------------------------------------
@@ -1581,10 +1883,14 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
     #Alpha is 24 degrees
     alpha = Float(24.0, label="Fixed Alpha angle (deg)", desc="the fixed Chi angle that the goniometer has, in degrees.")
 
-    view = View(Item('name'), Item('description'),
+    view = View(Item('name'), 
+                Item('description'),
                 Item('wavelength_control'),
-                Item('wavelength_bandwidth', visible_when="wavelength_control"),        Item('wavelength_minimum', visible_when="wavelength_control"),        Item('wavelength_maximum', visible_when="wavelength_control"),
-                Item('alpha'), Item('angles_desc', style='readonly'))
+                Item('wavelength_bandwidth', visible_when="wavelength_control"),        
+                Item('wavelength_minimum', visible_when="wavelength_control"),        
+                Item('wavelength_maximum', visible_when="wavelength_control"),
+                Item('alpha'), 
+                Item('angles_desc', style='readonly'))
 
     #-------------------------------------------------------------------------
     def __init__(self, wavelength_control=False):
@@ -1609,30 +1915,45 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
 
     #-------------------------------------------------------------------------
     def get_fitness_function_c_code(self):
-        #C code for the fitness of phi,kappa, omega.
+        #C code for the fitness of phi, kappa, omega.
         args = []
-        for i in xrange(2):
+        for i in xrange(3):
             for j in xrange(2):
                 args.append(self.gonio_angles[i].random_range[j])
+        args.append( np.deg2rad(self.alpha) )
         args = tuple(args)
-
+        
         s = """
-        FLOAT fitness_function(FLOAT phi, FLOAT chi, FLOAT omega)
-        {
+        FLOAT fitness_function(FLOAT phi, FLOAT kappa, FLOAT omega)
+        {                        
             FLOAT phi_min = %f;
             FLOAT phi_max = %f;
+            FLOAT kappa_min = %f;
+            FLOAT kappa_max = %f;
             FLOAT omega_min = %f;
             FLOAT omega_max = %f;
+            
+            FLOAT alpha = %f;
+            
+            FLOAT chi_min = 0;
+            FLOAT chi_max = 2*alpha;
+            FLOAT delta_min = pi/2;
+            FLOAT delta_max = 3*pi/2;
+            
+            FLOAT chi = 2*asin(sin(alpha)*sin(kappa/2));
+            FLOAT delta = pi+atan(cos(alpha)*tan(kappa/2));
 
             FLOAT phi_mid = (phi_min + phi_max) / 2;
-            FLOAT chi_mid = %f;
+            FLOAT chi_mid = (chi_min + chi_max) / 2;
             FLOAT omega_mid = (omega_min + omega_max) / 2;
 
-            FLOAT fitness = absolute(chi - chi_mid)*10.0 + absolute(omega - omega_mid)/10.0 + absolute(phi - phi_mid)/10.0;
+            FLOAT fitness =  absolute(chi - chi_mid)*10 + absolute(omega - omega_mid)/10 + absolute(phi - phi_mid)/10;
 
             // Big penalties for being out of the range
             if (phi < phi_min) fitness += (phi_min - phi) * 1.0;
             if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
+            if (chi < chi_min) fitness += (chi_min - chi) * 1.0;
+            if (chi > chi_max) fitness += (chi - chi_max) * 1.0;
             if (omega < omega_min) fitness += (omega_min - omega) * 1.0;
             if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
 
@@ -2941,6 +3262,7 @@ def initialize_goniometers():
     goniometers.append( TestLimitedGoniometer() )
     goniometers.append( TopazInHouseGoniometer() )
     goniometers.append( TopazAmbientGoniometer() )
+    goniometers.append( TOPAZCryoGoniometer() )
     goniometers.append( SNAPLimitedGoniometer() )
     goniometers.append( MandiGoniometer() )
     goniometers.append( MandiVaryOmegaGoniometer() )
