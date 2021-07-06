@@ -1833,7 +1833,7 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
             angles: should be a list of angle values, in unfriendly units, that matches the
                 # of angles of this goniometer.
         """
-        (phi, chi, omega) = self.get_phi_kappa_omega(angles)
+        (phi, chi, omega) = self.get_phi_chi_omega(angles)
         return numpy_utils.rotation_matrix(phi, chi, omega)
     
 
