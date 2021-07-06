@@ -1815,7 +1815,7 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
                 # of angles of this goniometer.
         """
         #For other instruments, this method may be different.
-        (phi, kappa, omega) = self.get_phi_kappa_omega(angles)
+        (phi, kappa, omega) = self.get_phi_chi_omega(angles)
 
         #In Q space, detector coverage rotates OPPOSITE to what the real space rotation is.
         #Because that is where the detectors and incident beam go, AS SEEN BY THE SAMPLE.
