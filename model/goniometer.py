@@ -1748,9 +1748,9 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
         #Make the angle info object
         #Not sure if these limits match IMAGINE's mini-kappa
         self.gonio_angles = [
-            AngleInfo('Phi', friendly_range=[315-240, 315--10], random_range=[-0.4188790205, 4.1887902048 ]),
-            AngleInfo('Chi', friendly_range=[0, 48], random_range=[0, 4.4505895926 ]),
-            AngleInfo('Omega', friendly_range=[225, 255+354], random_range=[0, 6.1784655521 ]),
+            AngleInfo('Phi', friendly_range=[315-240, 315--10], random_range=[np.deg2rad(315-240), np.deg2rad(315--10)]),
+            AngleInfo('Chi', friendly_range=[0, 48], random_range=[0, np.deg2rad(48)]),
+            AngleInfo('Omega', friendly_range=[225, 255+354], random_range=[np.deg2rad(225), np.deg2rad(255+354)]),
             ]
 
     #-------------------------------------------------------------------------
