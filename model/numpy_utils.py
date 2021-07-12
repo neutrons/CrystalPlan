@@ -26,12 +26,25 @@ def within(a, b, tolerance=1e-5):
     else:
         return abs((a/b)-1) < tolerance
 
-
 #==================================================================================
 #======================== ROTATIONS ===============================================
 #==================================================================================
 
 #===============================================================================================
+
+def rotation_angle_axis(x=0, y=0, z=1, theta=0):
+    
+    ux, uy, uz = [x,y,z]/np.linalg.norm([x,y,z])
+
+    c = cos(theta)
+    s = sin(theta)
+    
+    M = np.array([[c+ux**2*(1-c), ux*uy*(1-c)-uz*s, uz*ux*(1-c)+uy*s], 
+                  [ux*uy*(1-c)+uz*s, c+uy**2*(1-c), uy*uz*(1-c)-ux*s], 
+                  [uz*ux*(1-c)-uy*s, uz*uy*(1-c)+ux*s, c+uz**2*(1-c)]])
+    
+    return M
+
 def rotation_matrix(phi=0, chi=0, omega=0):
     """Generate a rotation matrix M for 3 rotation angles:
        Uses convention of IPNS and ISAW for angles.
@@ -73,21 +86,18 @@ def kappa_rotation_matrix(phi=0, alpha=0, kappa=0, omega=0):
        Use rotated_vector = matrix * initial_vector"""
 
     #s and c are temp. variables for sin(x) and cos(x)
-    c = cos(phi)
-    s = sin(phi)
+    c = cos(-phi)
+    s = sin(-phi)
     M_phi = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
 
     # kappa for mini-kappa goniometer
     c = cos(kappa)
     s = sin(kappa)
-    ca = cos(alpha)
-    sa = sin(alpha)
-
+    
     # See The Geometry of X-Ray Diffraction p. 180 for matrix
-    M_alphaT = np.array([[1, 0, 0], [0, ca, sa], [0, -sa, ca]])
     M_kappa = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
-    M_alpha = np.array([[1, 0, 0], [0, ca, -sa], [0, sa, ca]])
-    M_kappa = np.dot(M_alphaT, np.dot(M_kappa, M_alpha))
+    M_alpha = rotation_angle_axis(x=1, y=0, z=1, theta=alpha)
+    M_kappa = np.dot(M_alpha.T, np.dot(M_kappa, M_alpha))
 
     c = cos(omega)
     s = sin(omega)
@@ -185,21 +195,18 @@ def kappa_opposite_rotation_matrix(phi=0, alpha=0, kappa=0, omega=0):
        Use rotated_vector = matrix * initial_vector"""
 
     #s and c are temp. variables for sin(x) and cos(x)
-    c = cos(-phi)
-    s = sin(-phi)
+    c = cos(phi)
+    s = sin(phi)
     M_phi = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
 
     # kappa for mini-kappa goniometer
     c = cos(-kappa)
     s = sin(-kappa)
-    ca = cos(-alpha)
-    sa = sin(-alpha)
 
     # See The Geometry of X-Ray Diffraction p. 180 for matrix
-    M_alphaT = np.array([[1, 0, 0], [0, ca, sa], [0, -sa, ca]])
     M_kappa = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
-    M_alpha = np.array([[1, 0, 0], [0, ca, -sa], [0, sa, ca]])
-    M_kappa = np.dot(M_alphaT, np.dot(M_kappa, M_alpha))
+    M_alpha = rotation_angle_axis(x=1, y=0, z=1, theta=alpha)
+    M_kappa = np.dot(M_alpha.T, np.dot(M_kappa, M_alpha))
 
     c = cos(-omega)
     s = sin(-omega)
@@ -210,6 +217,74 @@ def kappa_opposite_rotation_matrix(phi=0, alpha=0, kappa=0, omega=0):
 
     return M;
 
+def taitbryan(phix, phiy, phiz):
+    
+    T = np.array([[0,0,-1],[0,1,0],[1,0,0]])
+    
+    c = np.cos(phix)
+    s = np.sin(phix)
+    M_phix = np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
+
+    c = np.cos(phiy)
+    s = np.sin(phiy)
+    M_phiy = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+    
+    c = np.cos(phiz)
+    s = np.sin(phiz)
+    M_phiz = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+
+    M = np.dot(M_phiz, np.dot(M_phiy, M_phix))
+
+    return np.dot(T, np.dot(M, T.T))
+
+def euler_from_rotation_matrix(R, convention='YZY'):
+    
+    first = 'XYZ'.find(convention[0])
+    second = 'XYZ'.find(convention[1])
+    last = 'XYZ'.find(convention[2])
+    
+    TB = 1 if first+second+last == 3  else 0
+    
+    par01 = 1 if (last-second) % 3 == 1 else -1
+    par12 = 1 if (second-first) % 3 == 1 else -1
+                
+    s2 = (1-TB-TB*par12)*R[(last+TB*par12)%3,(last-par12)%3]
+    c2 = (TB-(1-TB)*par12)*R[(last+TB*par12)%3,(last+par12)%3]
+    p2 = np.arctan2(s2,c2)
+    
+    R2 = np.array([[np.cos(p2), -np.sin(p2), 0], 
+                   [np.sin(p2), np.cos(p2), 0],
+                   [0, 0, 1]])
+    
+    Rp = np.dot(R, R2.T)
+    
+    s0 = par01*Rp[(first-par01)%3,(first+par01)%3]
+    c0 = Rp[second,second]
+    p0 = np.arctan2(s0,c0)
+    
+    s1 = par01*Rp[first,3-first-second]
+    c1 = Rp[first,first]
+    p1 = np.arctan2(s1,c1)
+    
+    return p0, p1, p2
+
+def kappa_from_euler(phi, chi, omega, alpha=24*np.pi/180):
+    
+    theta = np.pi/4
+        
+    kappa = 2*np.arcsin(np.sin(chi/2)/np.sin(alpha))
+    delta = np.pi+np.arctan(np.cos(alpha)*np.tan(kappa/2))
+
+    return -phi+delta+theta, alpha, kappa, omega-delta+theta
+
+def euler_from_kappa(phi, kappa, omega, alpha=24*np.pi/180):
+    
+    theta = np.pi/4
+            
+    chi = 2*np.arcsin(np.sin(alpha)*np.sin(kappa/2))
+    delta = np.pi+np.arctan(np.cos(alpha)*np.tan(kappa/2))
+
+    return -phi+delta+theta, chi, omega+delta-theta
 
 #===============================================================================================
 def z_rotation_matrix(polar=0):
@@ -444,10 +519,6 @@ def get_translated_vectors(vectors, translation_vector):
 
 
 
-
-
-
-
 #================================================================================
 #============================ UNIT TESTING ======================================
 #================================================================================
@@ -604,5 +675,5 @@ class TestNumpyUtils(unittest.TestCase):
 #                    assert np.allclose(M1, M2), "Equivalent goniometer angles 2."
 
 #---------------------------------------------------------------------
-if __name__ == "__main__":
-    unittest.main()
+# if __name__ == "__main__":
+#     unittest.main()
