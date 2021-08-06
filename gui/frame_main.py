@@ -530,12 +530,12 @@ class FrameMain(wx.Frame):
     #--------------------------------------------------------------------
     def _init_ctrls(self, prnt):
         wx.Frame.__init__(self, id=wxID_FRAMEMAIN, name=u'FrameMain',
-              parent=prnt, pos=wx.Point(0, 0), size=wx.Size(800, 630),
+              parent=prnt, pos=wx.Point(0, 0), size=wx.Size(800, 830),
               style=wx.DEFAULT_FRAME_STYLE,
               title="%s %s - Main Window" % (CrystalPlan_version.package_name, CrystalPlan_version.version) )
         self._init_menus()
         
-        self.SetClientSize(wx.Size(850, 630))
+        self.SetClientSize(wx.Size(850, 830))
         self.SetMenuBar(self.menuBar1)
         self.SetMinSize(wx.Size(100, 100))
         self.SetAutoLayout(True)
