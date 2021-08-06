@@ -1748,9 +1748,9 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
         #Make the angle info object
         #Not sure if these limits match IMAGINE's mini-kappa
         self.gonio_angles = [
-            AngleInfo('Phi', friendly_range=[315-240, 315--10], random_range=[np.deg2rad(315-240), np.deg2rad(315--10)]),
+            AngleInfo('Phi', friendly_range=[75, 235], random_range=[np.deg2rad(75), np.deg2rad(235)]),
             AngleInfo('Chi', friendly_range=[0, 48], random_range=[0, np.deg2rad(48)]),
-            AngleInfo('Omega', friendly_range=[225, 255+354], random_range=[np.deg2rad(225), np.deg2rad(255+354)]),
+            AngleInfo('Omega', friendly_range=[225, 489], random_range=[np.deg2rad(225), np.deg2rad(489)]),
             ]
 
     #-------------------------------------------------------------------------
@@ -1863,6 +1863,48 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
             else:
                     return None
 
+    #===============================================================================================
+    def csv_make_header(self, fileobj, title, comment=""):
+        """Make the header text of the motor positions CSV file. This is general for universal
+        goniometers, but can be subclassed by specific ones.
+
+        Parameters:
+        -----------
+            fileobj: an already open, writable file object.
+        """
+        #Line of header info
+        fileobj.write(csv_line( ['Comment', 'phi', 'kappa', 'omega', 'Wait For', 'Value'] ) )
+
+
+    #===============================================================================================
+    def csv_add_position(self, fileobj, angle_values, count_for, count_value, comment):
+        """Add a line to an existing CSV file containing the motor positions, etc. for
+        that part of the experiment.
+
+        Parameters:
+            angles: list of angles in the sample orientation.
+            count_for, count_value: stopping criterion
+        """
+        #Calculate if its allowed
+        (allowed, reason) = self.are_angles_allowed(angle_values, return_reason=True)
+        #Convert from internal to DAS units.
+        
+        phi, chi, omega = angle_values
+        alpha = np.deg2rad(self.alpha)
+        phi, alpha, kappa, omega = numpy_utils.kappa_from_euler(phi, chi, omega, alpha=alpha)
+        angles = [phi, kappa, omega]
+        
+        das_angles = [self.angles[i].internal_to_das(angles[i]) for i in xrange(len(self.angles))]
+        stopping_criterion = count_for
+        if stopping_criterion == "runtime":
+            stopping_criterion = "seconds"
+        if not allowed:
+            #Can't reach this position
+            fileobj.write("#"" ----- ERROR! This sample orientation could not be achieved with the goniometer, because of '%s'. THE FOLLOWING LINE HAS BEEN COMMENTED OUT ------ ""\n" % reason )
+            fileobj.write('#' + csv_line( comment, das_angles + [stopping_criterion, count_value] ) )
+        else:
+            #They are okay
+            fileobj.write(csv_line( [comment] + das_angles + [stopping_criterion, count_value] ) )
 
 #===============================================================================================
 #===============================================================================================
