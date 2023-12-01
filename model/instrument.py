@@ -19,7 +19,7 @@ import numpy as np
 from numpy import array, sin, cos, pi
 #import scipy.optimize
 import scipy
-from scipy import weave
+import weave
 import time
 import csv
 

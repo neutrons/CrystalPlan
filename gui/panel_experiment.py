@@ -16,6 +16,8 @@ import frame_optimizer
 
 #--- Model Imports ---
 import model
+import model.numpy_utils
+import numpy as np
 
 #--- Traits Imports ---
 from traits.api import HasTraits,Int,Float,Str,String,Property,Bool, List, Tuple, Array, Enum
@@ -101,8 +103,16 @@ class ExperimentGridController():
         grid.SetColSize(self.criterion_col+1, 100)
         grid.SetColLabelValue(self.criterion_col+2, "Comment")
         grid.SetColSize(self.criterion_col+2, 120)
+                
+        if model.instrument.inst.goniometer.name == 'IMAGINE mini-kappa goniometer':
+            ImagineKappa = True
+            angle_names = ['phi deg', 'kappa deg', 'omega deg']
+        else:
+            ImagineKappa = False   
+            
         for (i, anginfo) in enumerate(model.instrument.inst.angles):
-            grid.SetColLabelValue(i+1, anginfo.name + "\n(" + anginfo.friendly_units + ")")
+            x = anginfo.friendly_units if not ImagineKappa else angle_names[i]
+            grid.SetColLabelValue(i+1, anginfo.name + "\n(" + x + ")")
             grid.SetColSize(i+1, 100)
 
     #------------------------------------
@@ -123,7 +133,6 @@ class ExperimentGridController():
             for row in xrange(old_num_rows, num_rows):
                 grid.SetCellEditor(row, self.criterion_col, wx.grid.GridCellChoiceEditor(choices))
 
-
         #Font for angles
         angle_font = wx.Font(10, 76, wx.NORMAL, wx.NORMAL, False, u'Monospace')
         for (i, poscov) in enumerate(model.instrument.inst.positions):
@@ -132,9 +141,22 @@ class ExperimentGridController():
             grid.SetCellAlignment(row, 0, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE )
             grid.SetReadOnly(row, 0, True) #Do set it read-only
             #The angles
+
+            if model.instrument.inst.goniometer.name == 'IMAGINE mini-kappa goniometer':
+                ImagineKappa = True
+            else:
+                ImagineKappa = False   
+                
+            if ImagineKappa:
+                phi, chi, omega = poscov.angles
+                alpha = np.deg2rad(model.instrument.inst.goniometer.alpha)
+                phi, alpha, kappa, omega = model.numpy_utils.kappa_from_euler(phi, chi, omega, alpha=alpha)
+                conv_angles = [phi, kappa, omega]
+            
             for (j, angleinfo) in enumerate(model.instrument.inst.angles):
-                x = poscov.angles[j]
+                x = poscov.angles[j] if not ImagineKappa else conv_angles[j]
                 col = j+1
+                                
                 grid.SetCellValue(row, col, u"%8.2f" % angleinfo.internal_to_friendly(x))
                 grid.SetReadOnly(row, col, True) #Do set it read-only
                 grid.SetCellAlignment(row, col, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE )
@@ -579,7 +601,8 @@ class PanelExperiment(wx.Panel):
         
     def Refresh(self):
         #Delete all rows and refresh
-        self.gridExp.DeleteRows(0, self.gridExp.GetNumberRows())
+        if self.gridExp.GetNumberRows() > 0:
+            self.gridExp.DeleteRows(0, self.gridExp.GetNumberRows())
         self.controller.grid_setup()
         self.controller.update_grid()
 

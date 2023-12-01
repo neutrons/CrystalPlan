@@ -1,14 +1,17 @@
-#!/usr/bin/env python
+#/usr/bin/env/python
 # whether or not to use vglrun
 import os
-VGLRUN=""
-if os.environ.get('NXSESSIONID') is not None:
-  os.system('command -v vglrun >/dev/null 2>&1 || { echo >&2 "CrystalPlan requires VirtualGL but it is not installed.  Aborting."; exit 1; }')
-  VGLRUN="vglrun"
-elif os.environ.get('TLSESSIONDATA') is not None:
-  os.system('command -v vglrun >/dev/null 2>&1 || { echo >&2 "CrystalPlan requires VirtualGL but it is not installed.  Aborting."; exit 1; }')
-  VGLRUN="vglrun"
+os.environ['ETS_TOOLKIT'] = 'wx'
 
+#VGLRUN=""
+#if os.environ.get('NXSESSIONID') is not None:
+#  os.system('command -v vglrun >/dev/null 2>&1 || { echo >&2 "CrystalPlan requires VirtualGL but it is #not installed.  Aborting."; exit 1; }')
+#  VGLRUN="vglrun"
+#elif os.environ.get('TLSESSIONDATA') is not None:
+#  os.system('command -v vglrun >/dev/null 2>&1 || { echo >&2 "CrystalPlan requires VirtualGL but it is #not installed.  Aborting."; exit 1; }')
+#  VGLRUN="vglrun"
+
+VGLRUN="vglrun"
 """The CrystalPlan application.
 
 CrystalPlan is an experiment planning tool for crystallography.
@@ -23,7 +26,11 @@ Version: $Id$
 # Version: $Id$
 
 #Simply import and launch the GUI
-os.system(VGLRUN +" /usr/bin/python <<END\n"\
-"import CrystalPlan.gui.main\n"\
-"CrystalPlan.gui.main.handle_arguments_and_launch(InstalledVersion=True)\n"\
-"END")
+#os.system(VGLRUN +" python <<END\n"\
+#"import CrystalPlan.gui.main\n"\
+#"CrystalPlan.gui.main.handle_arguments_and_launch(InstalledVersion=True)\n"\
+#"END")
+
+import CrystalPlan.gui.main
+if __name__ == '__main__':
+    CrystalPlan.gui.main.handle_arguments_and_launch(InstalledVersion=True)

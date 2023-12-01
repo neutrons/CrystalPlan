@@ -231,7 +231,7 @@ class FrameMain(wx.Frame):
 
     def load_HFIR_ubmatrix_file_dialog(self, parent):
         """Opens a dialog asking the user where to load the ubmatrix file."""
-        filters = 'HFIR UB matrix file (*.dat)|*.dat|All files (*)|*|'
+        filters = 'HFIR UB matrix file (*.dat)|*.dat|All files (*)|*'
         (path, filename) = os.path.split(self.last_ubmatrix_path)
         dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load a HFIR UB Matrix file', wildcard=filters, style=wx.OPEN )
         if dialog.ShowModal() == wx.ID_OK:
@@ -247,7 +247,7 @@ class FrameMain(wx.Frame):
         if self.last_lattice_path == "":
             path = os.path.split(self.last_ubmatrix_path)[0]
             load_filename = ''
-        filters = 'HFIR lattice parameters file (*.dat)|*.dat|All files (*)|*|'
+        filters = 'HFIR lattice parameters file (*.dat)|*.dat|All files (*)|*'
         dialog = wx.FileDialog ( parent, defaultFile=load_filename, defaultDir=path, message='Load a HFIR lattice parameters file', wildcard=filters, style=wx.OPEN )
         if dialog.ShowModal() == wx.ID_OK:
             lattice_filename = dialog.GetPath()
@@ -274,7 +274,7 @@ class FrameMain(wx.Frame):
 
     def load_ubmatrix_file_dialog(self, parent):
         """Opens a dialog asking the user where to load the ubmatrix file."""
-        filters = 'ISAW UB matrix file (*.mat)|*.mat|All files (*)|*|'
+        filters = 'ISAW UB matrix file (*.mat)|*.mat|All files (*)|*'
         (path, filename) = os.path.split(self.last_ubmatrix_path)
         dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an ISAW (goniometer-corrected) .mat file', wildcard=filters, style=wx.OPEN )
         if dialog.ShowModal() == wx.ID_OK:
@@ -298,7 +298,7 @@ class FrameMain(wx.Frame):
 
     def load_ldm_file_dialog(self, parent):
         """Opens a dialog asking the user where to load the .ldm file."""
-        filters = 'Lauegen .ldm file (*.ldm)|*.ldm|All files (*)|*|'
+        filters = 'Lauegen .ldm file (*.ldm)|*.ldm|All files (*)|*'
         (path, filename) = os.path.split(self.last_ldm_path)
         dialog = wx.FileDialog ( parent, defaultFile=filename, defaultDir=path, message='Load an Lauegen .ldm file', wildcard=filters, style=wx.OPEN )
         if dialog.ShowModal() == wx.ID_OK:
@@ -530,12 +530,12 @@ class FrameMain(wx.Frame):
     #--------------------------------------------------------------------
     def _init_ctrls(self, prnt):
         wx.Frame.__init__(self, id=wxID_FRAMEMAIN, name=u'FrameMain',
-              parent=prnt, pos=wx.Point(0, 0), size=wx.Size(800, 630),
+              parent=prnt, pos=wx.Point(0, 0), size=wx.Size(800, 830),
               style=wx.DEFAULT_FRAME_STYLE,
               title="%s %s - Main Window" % (CrystalPlan_version.package_name, CrystalPlan_version.version) )
         self._init_menus()
         
-        self.SetClientSize(wx.Size(850, 630))
+        self.SetClientSize(wx.Size(850, 830))
         self.SetMenuBar(self.menuBar1)
         self.SetMinSize(wx.Size(100, 100))
         self.SetAutoLayout(True)

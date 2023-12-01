@@ -201,7 +201,7 @@ class DetectorListController:
         """Open a dialog to load detectors from a CSV/detcal file."""
         filename = model.config.cfg.default_detector_filename
         (path, ignored) = os.path.split( os.path.abspath(filename) )
-        filters = 'CSV or detcal files|*.csv;*.detcal;*.DetCal|CSV files (*.csv)|*.csv|detcal files (*.detcal)|*.detcal;*.DetCal|All files (*)|*|'
+        filters = 'CSV or detcal files|*.csv;*.detcal;*.DetCal|CSV files (*.csv)|*.csv|detcal files (*.detcal)|*.detcal;*.DetCal|All files (*)|*'
         if gui_utils.is_mac():
             filters = '' #This is needed on Mac, for some reason the filters crashes otherwise.
         print 'opening dialog for path', path, filename
@@ -449,8 +449,8 @@ class PanelDetectors(wx.Panel):
 
         self.chklistDetectors = wx.CheckListBox(choices=[],
               id=wxID_PANELDETECTORSCHKLISTDETECTORS, name=u'chklistDetectors',
-              parent=self, pos=wx.Point(0, 99), size=wx.Size(512, 412),
-              style=wx.NO_3D)
+              parent=self, pos=wx.Point(0, 99), size=wx.Size(512, 412))#,
+              #style=wx.NO_3D)
         self.chklistDetectors.SetMinSize(wx.Size(20, 40))
         self.chklistDetectors.SetFont(wx.Font(10, 76, wx.NORMAL, wx.NORMAL,
               False, u'Monospace'))

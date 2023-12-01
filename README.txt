@@ -1,10 +1,15 @@
 Experiment planning tool for elastic neutron diffraction single-crystal experiments.
 
-To create RPM:
-change release number in setup.cfg
-export PYTHONPATH=$PYTHONPATH:~/CrystalPlan/lib/python/
-python setup.py install --home=~/CrystalPlan
-python setup.py bdist  #generate RPM
+Create conda environment
+`conda env create -f environment.yml`
 
-ask linux-support to install on all analysis and instrument computers:
-~/CrystalPlan/dist/CrystalPlan-1.2-RELEASENO.noarch.rpm           
+Activate CrystalPlan envrionment
+`conda activate CrystalPlan`
+
+Install package
+`python setup.py install`
+
+Run the GUI
+`python crystalplan.py`
+
+Tested on RHEL9

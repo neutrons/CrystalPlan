@@ -15,7 +15,6 @@ import mayavi.mlab as mlab_module
 #--- Model Imports ---
 from model.numpy_utils import *
 
-
 #------------------------------------------------------------
 def lines(points,  plotobj=None, color=(0,0,0), head_size=0, mlab=mlab_module, **kwargs):
     #Turn into arrays

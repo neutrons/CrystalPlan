@@ -69,7 +69,7 @@ class QspaceOptionsController:
         
     def cleanup(self):
         """Clean-up routine for closing the view."""
-        model.messages.unsubscribe(self.update_data)
+        model.messages.unsubscribe(self.update_data, model.messages.MSG_EXPERIMENT_QSPACE_CHANGED)
         
     def update_data(self, argument):
         """Called when a message is received saying that the q-space calculation has changed. 
