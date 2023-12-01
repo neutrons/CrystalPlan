@@ -10,7 +10,7 @@ import warnings
 import numpy as np
 import time
 import threading
-import scipy.weave as weave
+import weave
 import scipy.ndimage
 from cPickle import loads, dumps
 import os

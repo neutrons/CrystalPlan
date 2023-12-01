@@ -10,6 +10,7 @@ import wx
 try:
     from wx.lib.pubsub import Publisher as pub
 except:
+    from wx.lib.pubsub import setuparg1
     from wx.lib.pubsub import pub
 from threading import Thread
 import time
@@ -54,7 +55,7 @@ class FunctionCall:
 #----------------------------------------------------------------------
 def send_message(message_id, data=None):
     """Thread-safe replacement for pubsub sendMessage."""
-    wx.CallAfter(pub.sendMessage, topic=message_id, data=data)
+    wx.CallAfter(pub.sendMessage, message_id, data=data)
 
 #----------------------------------------------------------------------
 def send_message_optional(object, message_id, data=None, delay=0.33):
@@ -67,7 +68,7 @@ def send_message_optional(object, message_id, data=None, delay=0.33):
         delay: in seconds, the closest in time two messages will be sent to the same object.
     """
     if not hasattr(object, '_last_message_send_time') or (time.time()-object._last_message_send_time > delay):
-        wx.CallAfter(pub.sendMessage, topic=message_id, data=data)
+        wx.CallAfter(pub.sendMessage, message_id, data=data)
         object._last_message_send_time = time.time()
 
 
@@ -78,9 +79,9 @@ def subscribe(function, topic):
 
 
 #----------------------------------------------------------------------
-def unsubscribe(function, *args, **kwargs):
+def unsubscribe(function, topic):
     """Alias for wx.lib.pubsub.Publisher.unsubscribe()"""
-    pub.unsubscribe(function, *args, **kwargs)
+    pub.unsubscribe(function, topic)
 
 
 

@@ -66,7 +66,7 @@ class ReflectionsViewOptionsController:
 
     def cleanup(self):
         """Clean-up routine for closing the view."""
-        model.messages.unsubscribe(self.update_data)
+        model.messages.unsubscribe(self.update_data, model.messages.MSG_EXPERIMENT_QSPACE_CHANGED)
 
 
     #-------------------------------------------------------------------------------

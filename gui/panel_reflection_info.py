@@ -47,7 +47,7 @@ class PanelReflectionInfo(wx.Panel):
               flag=wx.ALIGN_CENTER_VERTICAL)
         parent.AddWindow(self.textCtrlDspacing, 0, border=0, flag=wx.EXPAND)
 
-        parent.AddWindow(self.staticDivergenceLabel, 0, border=0, flag= wx.ALIGN_CENTER_VERTICAL)
+        parent.AddWindow(self.staticDivergenceLabel, 0, border=0, flag= wx.EXPAND)
         #--- The divergence ---
         self.boxSizerDivergence = wx.BoxSizer(orient=wx.HORIZONTAL)
         parent.AddSizer(self.boxSizerDivergence, flag=wx.EXPAND)
@@ -77,7 +77,7 @@ class PanelReflectionInfo(wx.Panel):
 
         self.boxSizerScrollWindowReal = wx.BoxSizer(orient=wx.VERTICAL)
 
-        self.flexGridSizerTop = wx.FlexGridSizer(cols=2, hgap=2, rows=3, vgap=3)
+        self.flexGridSizerTop = wx.FlexGridSizer(rows=3, vgap=3) #cols=2, hgap=2, 
         self.flexGridSizerTop.SetMinSize(wx.Size(100, 87))
 
         self.gridSizerHKL = wx.GridSizer(cols=3, hgap=2, rows=1, vgap=0)
@@ -258,7 +258,7 @@ class PanelReflectionInfo(wx.Panel):
     #----------------------------------------------------------------------------------------------
     def __del__(self):
         #Clean up messages
-        model.messages.unsubscribe(self.update_data)
+        model.messages.unsubscribe(self.update_data, model.messages.MSG_EXPERIMENT_REFLECTIONS_CHANGED)
 
     #----------------------------------------------------------------------------------------------
     def update_data(self, *args):

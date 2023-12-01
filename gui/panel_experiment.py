@@ -601,7 +601,8 @@ class PanelExperiment(wx.Panel):
         
     def Refresh(self):
         #Delete all rows and refresh
-        self.gridExp.DeleteRows(0, self.gridExp.GetNumberRows())
+        if self.gridExp.GetNumberRows() > 0:
+            self.gridExp.DeleteRows(0, self.gridExp.GetNumberRows())
         self.controller.grid_setup()
         self.controller.update_grid()
 

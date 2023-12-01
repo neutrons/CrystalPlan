@@ -1,0 +1,20 @@
+name: CrystalPlan2
+channels:
+  - free
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=2.7
+  - traitsui=5.0.0
+  - mayavi=4.5.0
+  - apptools=4.4.0
+  - jsoncpp=0.10.6
+  - wxpython=3.0.0
+  - numpy
+  - matplotlib
+  - vtk
+  - weave
+  - scipy
+  - gdk-pixbuf
+  - atk

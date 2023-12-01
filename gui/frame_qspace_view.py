@@ -150,10 +150,11 @@ class QspaceViewController(HasTraits):
         #Remove the scene from engine
         self.engine.remove_scene(self.scene)
         self.engine.stop()
-        model.messages.unsubscribe(self.update_stats_panel)
-        model.messages.unsubscribe(self.update_data_volume)
-        model.messages.unsubscribe(self.update_data_points)
-        model.messages.unsubscribe(self.init_view_objects)
+        model.messages.unsubscribe(self.update_stats_panel, model.messages.MSG_EXPERIMENT_QSPACE_CHANGED)
+        model.messages.unsubscribe(self.update_stats_panel, model.messages.MSG_EXPERIMENT_REFLECTIONS_CHANGED)
+        model.messages.unsubscribe(self.update_data_volume, model.messages.MSG_EXPERIMENT_QSPACE_CHANGED)
+        model.messages.unsubscribe(self.update_data_points, model.messages.MSG_EXPERIMENT_REFLECTIONS_CHANGED)
+        model.messages.unsubscribe(self.init_view_objects, model.messages.MSG_EXPERIMENT_QSPACE_SETTINGS_CHANGED)
         #Also close child windows
         if not self.reflection_info_child_frame is None:
             self.reflection_info_child_frame.Destroy()

@@ -21,7 +21,7 @@ from string import replace, strip, find
 import numpy as np
 from numpy import array, sin, cos, pi, dot
 import scipy.optimize
-from scipy import weave
+import weave
 
 #--- Model Imports ---
 import numpy_utils

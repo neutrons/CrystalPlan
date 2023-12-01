@@ -9,7 +9,7 @@ Holds various useful functions for crystallography, like lattice calculations, e
 #--- General Imports ---
 import numpy as np
 from numpy import array, sin, cos, pi, sign
-from scipy import weave
+import weave
 
 #--- Model Imports ---
 import numpy_utils

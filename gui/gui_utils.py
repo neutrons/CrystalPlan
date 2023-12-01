@@ -113,7 +113,7 @@ def dialog_to_save_experiment_to_CSV(parent):
 last_experiment_path = ''
 def save_experiment_file_dialog(parent):
     """Opens a dialog asking the user where to save the experiment."""
-    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
+    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*'
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)
@@ -132,7 +132,7 @@ def save_experiment_file_dialog(parent):
 
 def load_experiment_file_dialog(parent):
     """Opens a dialog asking the user where to load the experiment."""
-    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*|'
+    filters = 'CrystalPlan Experiment files (*.exp)|*.exp|All files (*)|*'
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_experiment_path
     (path, filename) = os.path.split(last_experiment_path)
@@ -158,7 +158,7 @@ def load_experiment_file_dialog(parent):
 last_integrate_path = ''
 def load_integrate_file_dialog(parent, sequential_detector_numbers):
     """Opens a dialog asking the user where to load the integrate."""
-    filters = 'ISAW .integrate or .peaks files (*.peaks;*.integrate)|*.peaks;*.integrate|All files (*)|*|'
+    filters = 'ISAW .integrate or .peaks files (*.peaks;*.integrate)|*.peaks;*.integrate|All files (*)|*'
     if is_mac(): filters = '' #Filters tend to crash on mac
     global last_integrate_path
     (path, filename) = os.path.split(last_integrate_path)

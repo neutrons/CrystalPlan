@@ -7,7 +7,7 @@ Class definitions for detector geometries.
 
 #--- General Imports ---
 import numpy as np
-import scipy.weave as weave
+import weave
 
 #--- Model Imports ---
 import numpy_utils
