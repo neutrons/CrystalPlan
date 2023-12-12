@@ -1,4 +1,4 @@
-#!/usr/bin/env/ python
+#!/usr/bin/env python
 # whether or not to use vglrun
 import os
 os.environ['ETS_TOOLKIT'] = 'wx'
