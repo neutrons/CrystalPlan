@@ -1642,7 +1642,6 @@ class Experiment:
         else:
             #--------------- Inline C version (about 17x faster than Python) ---------------
             code = """
-
             //-- Calculate  the hkl array ---
             int ix, iy, iz;
             int eix, eiy, eiz, eindex;
