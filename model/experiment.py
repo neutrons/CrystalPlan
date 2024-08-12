@@ -1700,8 +1700,7 @@ class Experiment:
                         
                     }
                 }
-            }
-            """
+            }"""
             qres = inst.q_resolution
             n = len(self.inst.qx_list)
             table = np.array(pg.table) #Turn the list of 3x3 arrays into a Nx3x3 array
@@ -1778,8 +1777,7 @@ class Experiment:
                         //printf("%d\\n", index);
                     }
                 }
-            }
-            """
+            }"""
             varlist = ['old_q', 'qspace_flat', 'numpix', 'order', 'symm']
             weave.inline(code, varlist, compiler='gcc', support_code=support)
             #Reshape it back as a 3D array.
@@ -2032,8 +2030,7 @@ class Experiment:
             results[0] = overall_points;
             results[1] = overall_covered_points;
             results[2] = overall_redundant_points;
-            return_val = results;
-            """
+            return_val = results;"""
             ret_val = weave.inline(code,['qspace', 'qspace_radius', 'q_step', 'qlim', 'total_points', 'qspace_size', 'num', 'covered_points0', 'covered_points1', 'covered_points2', 'covered_points3'],
                                 compiler='gcc', support_code = support)
             #The function returns a tuple

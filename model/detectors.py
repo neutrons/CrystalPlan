@@ -413,8 +413,7 @@ class FlatDetector(Detector):
                 hits_it[i] = (v > -height/2) && (v < height/2) && (h > -width/2) && (h < width/2);
             }
         }
-        return_val = error_count;
-        """
+        return_val = error_count;"""
 
         #Generate a list of the variables used
         varlist = ['base_point', 'horizontal', 'vertical', 'normal']

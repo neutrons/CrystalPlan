@@ -270,7 +270,7 @@ The 'a' vector is parallel to x; 'b' is in the XY plane towards +y;
     def OnButtonReadUB(self, event):
         """Ask the user to find the UB matrix file"""
         filename = self.crystal.ub_matrix_last_filename
-        (path, ignored) = os.path.split( os.path.abspath(filename) )
+        (path, filename) = os.path.split( os.path.abspath(filename) )
         filters = 'All files (*)|*|Text files (*.txt)|*.txt'
         dialog = wx.FileDialog ( self, defaultFile=filename, defaultDir=path, message='Choose a UB matrix file', wildcard=filters, style=wx.OPEN )
         if dialog.ShowModal() == wx.ID_OK:

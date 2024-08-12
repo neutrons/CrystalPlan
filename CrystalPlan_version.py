@@ -16,7 +16,7 @@
 #            revision = re.match("Revision: (\d+)", line).group(1)
 #    return revision
 
-version = '1.5'
+version = '1.6'
 package_name = 'CrystalPlan'
 description = \
 """CrystalPlan is an experiment planning tool for crystallography. You can choose an instrument and supply your sample's lattice parameters to simulate which reflections will be measured, by which detectors and at what wavelengths."""

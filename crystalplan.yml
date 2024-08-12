@@ -1,0 +1,26 @@
+---
+
+name: crystalplan
+
+channels:
+  - free
+  - conda-forge
+
+dependencies:
+  - python=2.7
+  - traitsui=5.0.0
+  - mayavi=4.5.0
+  - apptools=4.4.0
+  - jsoncpp=0.10.6
+  - wxpython=3.0.0
+  - numpy
+  - matplotlib
+  - vtk=7.1.0
+  - weave
+  - scipy
+  - gdk-pixbuf
+  - atk
+  - gxx_linux-64
+  - pip
+
+

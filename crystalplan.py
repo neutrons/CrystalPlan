@@ -33,4 +33,4 @@ Version: $Id$
 
 import CrystalPlan.gui.main
 if __name__ == '__main__':
-    CrystalPlan.gui.main.handle_arguments_and_launch(InstalledVersion=True)
+    CrystalPlan.gui.main.handle_arguments_and_launch(InstalledVersion=False)

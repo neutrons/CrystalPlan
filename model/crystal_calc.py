@@ -378,7 +378,6 @@ getq_code_header = """py::tuple getq(double wl_output, double az, double elevati
 {
     py::tuple return_val(3);
     double wl_input = wl_output;
-    
 """
 
 
@@ -418,7 +417,7 @@ getq_code = """
     q[1]=qx * rot_matrix[3+0] + qy * rot_matrix[3+1] + qz * rot_matrix[3+2];
     q[2]=qx * rot_matrix[6+0] + qy * rot_matrix[6+1] + qz * rot_matrix[6+2];
     return_val = q;
-    """
+"""
 getq_code_footer = "return return_val; }"
 
 

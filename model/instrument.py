@@ -662,8 +662,7 @@ class Instrument:
                         }
                     }
                 //return q_out;
-            }
-            """
+            }"""
             
     _code_calculate_coverage = """
             //Loop through pixels using the list given before.
@@ -759,8 +758,7 @@ class Instrument:
 
                 } //for iiy
 
-            }
-            """
+            }"""
 
 
     #========================================================================================================
@@ -1155,10 +1153,7 @@ class Instrument:
                         }// for iy
                     }
                 } //for ix
-
-
-            }
-            """
+            }"""
             varlist = ['number_of_ints', 'coverage', 'coverage_size', 'mask1', 'mask2', 'num_coverage', 'coverage_list']
             weave.inline(code, varlist, compiler='gcc', support_code = support)
 
@@ -1339,8 +1334,7 @@ class InstrumentInelastic(Instrument):
                     } //numfrac > 0 so we can draw the line
 
                 } //for iiy
-            }
-            """
+            }"""
             
     #========================================================================================================
     def calculate_coverage(self, det_list, angles, sample_U_matrix=np.identity(3), use_inline_c=True):
@@ -1632,8 +1626,7 @@ class InstrumentInelastic(Instrument):
                 } //for ix
 
 
-            }
-            """
+            }"""
             varlist = ['number_of_ints', 'coverage', 'coverage_size', 'num_coverage', 'coverage_list']
             weave.inline(code, varlist, compiler='gcc', support_code = support)
 

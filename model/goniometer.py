@@ -524,7 +524,7 @@ class Goniometer(HasTraits):
         if not allowed:
             #Can't reach this position
             fileobj.write("#"" ----- ERROR! This sample orientation could not be achieved with the goniometer, because of '%s'. THE FOLLOWING LINE HAS BEEN COMMENTED OUT ------ ""\n" % reason )
-            fileobj.write('#' + csv_line( comment, das_angles + [stopping_criterion, count_value] ) )
+            fileobj.write('#' + csv_line( [comment]+ das_angles + [stopping_criterion, count_value] ) )
         else:
             #They are okay
             fileobj.write(csv_line( [comment] + das_angles + [stopping_criterion, count_value] ) )
@@ -626,8 +626,7 @@ class LimitedGoniometer(Goniometer):
             // if (omega < omega_min || omega > omega_max) fitness += 10;
 
             return fitness;
-        }
-        """ % (args)
+        }""" % (args)
         return s
 
 
@@ -860,8 +859,7 @@ class LimitedGoniometer(Goniometer):
             phi_list.append(phi);
             chi_list.append(chi);
             omega_list.append(omega);
-        }
-        """
+        }"""
         #Workaround for bug in weave, where it ignores any changes in the support code.
         code += "\n\n // " + self.__class__.__name__ + "\n"
         code += "/* " + self.get_fitness_function_c_code() + " */"
@@ -1095,8 +1093,7 @@ class TOPAZCryoGoniometer(LimitedGoniometer):
             if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
 
             return fitness;
-        }
-        """ % (args)
+        }""" % (args)
         return s
 
     #-------------------------------------------------------------------------------
@@ -1236,8 +1233,7 @@ class SNAPLimitedGoniometer(LimitedGoniometer):
             if (phi > phi_max) fitness += (phi - phi_max) * 1.0;
 
             return fitness;
-        }
-        """ % (args)
+        }""" % (args)
         return s
 
 
@@ -1512,8 +1508,7 @@ class MandiVaryOmegaGoniometer(LimitedGoniometer):
             if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
 
             return fitness;
-        }
-        """ % (args)
+        }""" % (args)
         return s
 
 
@@ -1791,8 +1786,7 @@ class ImagineMiniKappaGoniometer(LimitedGoniometer):
             // if (omega < omega_min || omega > omega_max) fitness += 10;
 
             return fitness;
-        }
-        """ % (args)
+        }""" % (args)
         return s
 
     #-------------------------------------------------------------------------------
@@ -1977,8 +1971,7 @@ class TopazAmbientGoniometer(LimitedGoniometer):
             if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
 
             return fitness;
-        }
-        """ % (args)
+        } """ % (args)
         return s
 
 
@@ -2849,8 +2842,7 @@ class HB3AGoniometer(LimitedGoniometer):
             
             return absolute(chi) + omegadiff + absolute(phi)/1000.0;
             //return absolute(chi) + omegadiff + absolute(phi);
-        }
-        """
+        }"""
 
 
     #-------------------------------------------------------------------------
@@ -2944,8 +2936,7 @@ class CorelliGoniometer(LimitedGoniometer):
             if (omega > omega_max) fitness += (omega - omega_max) * 1.0;
 
             return fitness;
-        }
-        """ % (args)
+        }""" % (args)
         return s
 
 
